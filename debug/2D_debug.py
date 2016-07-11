@@ -13,9 +13,9 @@ import matplotlib.pyplot as plt
 get_ipython().magic('pylab inline')
 
 
-# In[2]:
+# In[9]:
 
-def sitk_show(img, title=None, margin=0.05, dpi=40, scale=2, interpolation=None):
+def sitk_show(img, title=None, margin=0.05, dpi=40, scale=2, interpolation=None ):
     """
     scale is a scaling factor for the shown image
     """
@@ -35,7 +35,7 @@ def sitk_show(img, title=None, margin=0.05, dpi=40, scale=2, interpolation=None)
     plt.show()
 
 
-# In[3]:
+# In[10]:
 
 # Directory where the DICOM files are being stored (in this
 # case the 'data/cropped_CT' folder). 
@@ -53,7 +53,7 @@ labelPlastic = 1
 labelFilling = 2
 
 
-# In[4]:
+# In[11]:
 
 reader = SimpleITK.ImageSeriesReader()
 filenamesDICOM = reader.GetGDCMSeriesFileNames(pathDicom)
@@ -61,41 +61,63 @@ reader.SetFileNames(filenamesDICOM)
 imgOriginal = reader.Execute()
 
 
-# In[5]:
+# In[12]:
 
 # For now we'll only look at a single 2D image
 imgOriginal_slice = imgOriginal[:,:,idxSlice]
 
 
-# In[6]:
+# In[13]:
 
 # and look at it
-sitk_show(imgOriginal_slice, title="nearest", interpolation='nearest')
-sitk_show(imgOriginal_slice, title="spline16", interpolation='spline16')
-sitk_show(imgOriginal_slice, title="none")
+sitk_show(imgOriginal_slice, title="immer noch Supa")
 
 
-# In[7]:
+# In[14]:
 
 imgSmooth = SimpleITK.CurvatureFlow(image1=imgOriginal_slice,
                                     timeStep=0.125,
                                     numberOfIterations=5)
 
-# blurFilter = SimpleITK.CurvatureFlowImageFilter()
-# blurFilter.SetNumberOfIterations(5)
-# blurFilter.SetTimeStep(0.125)
-# imgSmooth = blurFilter.Execute(imgOriginal)
+# imgSmooth[14,14]= 400
+# imgSmooth[15,15]= 0
+# get maximum values of plastic:
+a = SimpleITK.GetArrayFromImage(imgSmooth)
+i,j = where(a>120)
+maxPlastic = np.array(where(a>120))
+# maxPlastic =numpy.nonzero(a> 120)
+a[i,j] = 1000
+plt.imshow(a)
+#seedPlastic = list(map(tuple, maxPlastic))
+seedPlastic = list(map(tuple, maxPlastic.T))
 
-sitk_show(imgSmooth)
+sitk_show(imgSmooth, interpolation="nearest")
 
-
-# In[8]:
-
-lstSeeds = [(16,22)]
+#seedPlastic = [(12,14), (15,15)]
+seedFilling = [(14,14)]
 
 imgFilling = SimpleITK.ConnectedThreshold(image1=imgSmooth, 
-                                              seedList=lstSeeds, 
-                                              lower=130, 
-                                              upper=190,
+                                              seedList=seedFilling, 
+                                              lower=00, 
+                                              upper=110,
                                               replaceValue=labelFilling)
 
+
+sitk_show(imgFilling)
+#sitk_show(imgFilling, interpolation="nearest")
+
+imgPlastic = SimpleITK.ConnectedThreshold(image1=imgSmooth, 
+                                              seedList=seedPlastic, 
+                                              lower=110, 
+                                              upper=200,
+                                              replaceValue=labelPlastic)
+
+
+sitk_show(imgPlastic)
+#sitk_show(imgPlastic, interpolation="nearest")
+
+
+print("Seed Plastic Value:", imgSmooth[12,14])
+print("Seed Filling Value:", imgSmooth[14,14])
+
+# print(plt.hist((imgSmooth), bins = 40))
