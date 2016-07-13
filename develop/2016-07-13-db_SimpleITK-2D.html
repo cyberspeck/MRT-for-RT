@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head><meta charset="utf-8" />
-<title>2016-07-08-db_SimpleITK-2D</title>
+<title>2016-07-13-db_SimpleITK-2D</title>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
@@ -12680,8 +12680,8 @@ kUAojCKBUBhFAqEwigRCYRQJxP8DAf2vgzERlCMAAAAASUVORK5CYII=
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># make a list out of array:</span>
-<span class="n">listPlastic</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">tuple</span><span class="p">,</span> <span class="n">maxPlastic</span><span class="p">))</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;listPlastic: </span><span class="se">\n</span><span class="s2"> type:&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">listPlastic</span><span class="p">),</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2"> value:&quot;</span><span class="p">,</span> <span class="n">listPlastic</span><span class="p">)</span>
+<span class="n">seedPlastic</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">tuple</span><span class="p">,</span> <span class="n">maxPlastic</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;seedPlastic: </span><span class="se">\n</span><span class="s2"> type:&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">seedPlastic</span><span class="p">),</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2"> value:&quot;</span><span class="p">,</span> <span class="n">seedPlastic</span><span class="p">)</span>
 </pre></div>
 
 </div>
@@ -12694,7 +12694,7 @@ kUAojCKBUBhFAqEwigRCYRQJxP8DAf2vgzERlCMAAAAASUVORK5CYII=
 
 <div class="output_area"><div class="prompt"></div>
 <div class="output_subarea output_stream output_stdout output_text">
-<pre>listPlastic: 
+<pre>seedPlastic: 
  type: &lt;class &#39;list&#39;&gt; 
  value: [(12, 14), (13, 13), (13, 15), (14, 12), (14, 16), (16, 14)]
 </pre>
@@ -12712,12 +12712,11 @@ kUAojCKBUBhFAqEwigRCYRQJxP8DAf2vgzERlCMAAAAASUVORK5CYII=
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># now I&#39;d like to use this list for the segmentation of the plastic</span>
 
-<span class="n">seedPlastic</span> <span class="o">=</span> <span class="n">SimpleITK</span><span class="o">.</span><span class="n">VectorUIntList</span><span class="p">(</span><span class="n">listPlastic</span><span class="p">)</span>
-<span class="c1">#imgPlastic = SimpleITK.ConnectedThreshold(image1=imgSmooth, </span>
-<span class="c1">#                                              seedList=seedPlastic, </span>
-<span class="c1">#                                              lower=110, </span>
-<span class="c1">#                                              upper=200,</span>
-<span class="c1">#                                              replaceValue=labelPlastic)</span>
+<span class="n">imgPlastic</span> <span class="o">=</span> <span class="n">SimpleITK</span><span class="o">.</span><span class="n">ConnectedThreshold</span><span class="p">(</span><span class="n">image1</span><span class="o">=</span><span class="n">imgSmooth</span><span class="p">,</span> 
+                                              <span class="n">seedList</span><span class="o">=</span><span class="n">seedPlastic</span><span class="p">,</span> 
+                                              <span class="n">lower</span><span class="o">=</span><span class="mi">110</span><span class="p">,</span> 
+                                              <span class="n">upper</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
+                                              <span class="n">replaceValue</span><span class="o">=</span><span class="n">labelPlastic</span><span class="p">)</span>
 </pre></div>
 
 </div>
@@ -12732,28 +12731,20 @@ kUAojCKBUBhFAqEwigRCYRQJxP8DAf2vgzERlCMAAAAASUVORK5CYII=
 <div class="output_subarea output_text output_error">
 <pre>
 <span class="ansi-red-fg">---------------------------------------------------------------------------</span>
-<span class="ansi-red-fg">NotImplementedError</span>                       Traceback (most recent call last)
-<span class="ansi-green-fg">&lt;ipython-input-11-2c7e853581d7&gt;</span> in <span class="ansi-cyan-fg">&lt;module&gt;</span><span class="ansi-blue-fg">()</span>
-<span class="ansi-green-intense-fg ansi-bold">      1</span> <span class="ansi-red-fg"># now I&#39;d like to use this list for the segmentation of the plastic</span>
-<span class="ansi-green-intense-fg ansi-bold">      2</span> 
-<span class="ansi-green-fg">----&gt; 3</span><span class="ansi-red-fg"> </span>seedPlastic <span class="ansi-blue-fg">=</span> SimpleITK<span class="ansi-blue-fg">.</span>VectorUIntList<span class="ansi-blue-fg">(</span>listPlastic<span class="ansi-blue-fg">)</span>
-<span class="ansi-green-intense-fg ansi-bold">      4</span> <span class="ansi-red-fg">#imgPlastic = SimpleITK.ConnectedThreshold(image1=imgSmooth,</span>
-<span class="ansi-green-intense-fg ansi-bold">      5</span> <span class="ansi-red-fg">#                                              seedList=seedPlastic,</span>
+<span class="ansi-red-fg">TypeError</span>                                 Traceback (most recent call last)
+<span class="ansi-green-fg">&lt;ipython-input-11-3778f06cb99e&gt;</span> in <span class="ansi-cyan-fg">&lt;module&gt;</span><span class="ansi-blue-fg">()</span>
+<span class="ansi-green-intense-fg ansi-bold">      5</span>                                               lower<span class="ansi-blue-fg">=</span><span class="ansi-cyan-fg">110</span><span class="ansi-blue-fg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">      6</span>                                               upper<span class="ansi-blue-fg">=</span><span class="ansi-cyan-fg">200</span><span class="ansi-blue-fg">,</span>
+<span class="ansi-green-fg">----&gt; 7</span><span class="ansi-red-fg">                                               replaceValue=labelPlastic)
+</span>
+<span class="ansi-green-fg">/usr/local/lib/python3.4/dist-packages/SimpleITK/SimpleITK.py</span> in <span class="ansi-cyan-fg">ConnectedThreshold</span><span class="ansi-blue-fg">(*args, **kwargs)</span>
+<span class="ansi-green-intense-fg ansi-bold">  24839</span> 
+<span class="ansi-green-intense-fg ansi-bold">  24840</span>     &#34;&#34;&#34;
+<span class="ansi-green-fg">&gt; 24841</span><span class="ansi-red-fg">     </span><span class="ansi-green-fg">return</span> _SimpleITK<span class="ansi-blue-fg">.</span>ConnectedThreshold<span class="ansi-blue-fg">(</span><span class="ansi-blue-fg">*</span>args<span class="ansi-blue-fg">,</span> <span class="ansi-blue-fg">**</span>kwargs<span class="ansi-blue-fg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">  24842</span> <span class="ansi-green-fg">class</span> RegionOfInterestImageFilter<span class="ansi-blue-fg">(</span>ImageFilter_1<span class="ansi-blue-fg">)</span><span class="ansi-blue-fg">:</span>
+<span class="ansi-green-intense-fg ansi-bold">  24843</span>     &#34;&#34;&#34;
 
-<span class="ansi-green-fg">/usr/local/lib/python3.4/dist-packages/SimpleITK/SimpleITK.py</span> in <span class="ansi-cyan-fg">__init__</span><span class="ansi-blue-fg">(self, *args)</span>
-<span class="ansi-green-intense-fg ansi-bold">   2910</span>         __init__<span class="ansi-blue-fg">(</span>std<span class="ansi-blue-fg">:</span><span class="ansi-blue-fg">:</span>vector<span class="ansi-blue-fg">&lt;</span><span class="ansi-blue-fg">(</span>std<span class="ansi-blue-fg">:</span><span class="ansi-blue-fg">:</span>vector<span class="ansi-blue-fg">&lt;</span><span class="ansi-blue-fg">(</span>unsigned int<span class="ansi-blue-fg">)</span><span class="ansi-blue-fg">&gt;</span><span class="ansi-blue-fg">)</span><span class="ansi-blue-fg">&gt;</span> self<span class="ansi-blue-fg">,</span> std<span class="ansi-blue-fg">:</span><span class="ansi-blue-fg">:</span>vector<span class="ansi-blue-fg">&lt;</span> std<span class="ansi-blue-fg">:</span><span class="ansi-blue-fg">:</span>vector<span class="ansi-blue-fg">&lt;</span> unsigned int <span class="ansi-blue-fg">&gt;</span> <span class="ansi-blue-fg">&gt;</span><span class="ansi-blue-fg">:</span><span class="ansi-blue-fg">:</span>size_type size<span class="ansi-blue-fg">,</span> VectorUInt32 value<span class="ansi-blue-fg">)</span> <span class="ansi-blue-fg">-&gt;</span> VectorUIntList
-<span class="ansi-green-intense-fg ansi-bold">   2911</span>         &#34;&#34;&#34;
-<span class="ansi-green-fg">-&gt; 2912</span><span class="ansi-red-fg">         </span>this <span class="ansi-blue-fg">=</span> _SimpleITK<span class="ansi-blue-fg">.</span>new_VectorUIntList<span class="ansi-blue-fg">(</span><span class="ansi-blue-fg">*</span>args<span class="ansi-blue-fg">)</span>
-<span class="ansi-green-intense-fg ansi-bold">   2913</span>         <span class="ansi-green-fg">try</span><span class="ansi-blue-fg">:</span>
-<span class="ansi-green-intense-fg ansi-bold">   2914</span>             self<span class="ansi-blue-fg">.</span>this<span class="ansi-blue-fg">.</span>append<span class="ansi-blue-fg">(</span>this<span class="ansi-blue-fg">)</span>
-
-<span class="ansi-red-fg">NotImplementedError</span>: Wrong number or type of arguments for overloaded function &#39;new_VectorUIntList&#39;.
-  Possible C/C++ prototypes are:
-    std::vector&lt; std::vector&lt; unsigned int &gt; &gt;::vector()
-    std::vector&lt; std::vector&lt; unsigned int &gt; &gt;::vector(std::vector&lt; std::vector&lt; unsigned int,std::allocator&lt; unsigned int &gt; &gt; &gt; const &amp;)
-    std::vector&lt; std::vector&lt; unsigned int &gt; &gt;::vector(std::vector&lt; std::vector&lt; unsigned int &gt; &gt;::size_type)
-    std::vector&lt; std::vector&lt; unsigned int &gt; &gt;::vector(std::vector&lt; std::vector&lt; unsigned int &gt; &gt;::size_type,std::vector&lt; std::vector&lt; unsigned int &gt; &gt;::value_type const &amp;)
-</pre>
+<span class="ansi-red-fg">TypeError</span>: in method &#39;ConnectedThreshold&#39;, argument 2 of type &#39;std::vector&lt; std::vector&lt; uint32_t,std::allocator&lt; uint32_t &gt; &gt;,std::allocator&lt; std::vector&lt; uint32_t,std::allocator&lt; uint32_t &gt; &gt; &gt; &gt; const &amp;&#39;</pre>
 </div>
 </div>
 
@@ -12795,41 +12786,18 @@ kUAojCKBUBhFAqEwigRCYRQJxP8DAf2vgzERlCMAAAAASUVORK5CYII=
 
 
 <div class="output_area"><div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>pixel:
- type: &lt;class &#39;tuple&#39;&gt; 
- value: (12, 14) 
-
-</pre>
-</div>
-</div>
-
-<div class="output_area"><div class="prompt"></div>
 <div class="output_subarea output_text output_error">
 <pre>
 <span class="ansi-red-fg">---------------------------------------------------------------------------</span>
-<span class="ansi-red-fg">NotImplementedError</span>                       Traceback (most recent call last)
+<span class="ansi-red-fg">NameError</span>                                 Traceback (most recent call last)
 <span class="ansi-green-fg">&lt;ipython-input-12-1b143ddf16d4&gt;</span> in <span class="ansi-cyan-fg">&lt;module&gt;</span><span class="ansi-blue-fg">()</span>
+<span class="ansi-green-intense-fg ansi-bold">     11</span> 
+<span class="ansi-green-intense-fg ansi-bold">     12</span> seedPlastic1 <span class="ansi-blue-fg">=</span> SimpleITK<span class="ansi-blue-fg">.</span>VectorUIntList<span class="ansi-blue-fg">(</span><span class="ansi-blue-fg">)</span>
+<span class="ansi-green-fg">---&gt; 13</span><span class="ansi-red-fg"> </span><span class="ansi-green-fg">for</span> pixel <span class="ansi-green-fg">in</span> listPlastic<span class="ansi-blue-fg">:</span>
 <span class="ansi-green-intense-fg ansi-bold">     14</span>     <span class="ansi-red-fg"># for debugging purposes I want to see the type of pixel and seed</span>
 <span class="ansi-green-intense-fg ansi-bold">     15</span>     print<span class="ansi-blue-fg">(</span><span class="ansi-blue-fg">&#34;pixel:\n type:&#34;</span><span class="ansi-blue-fg">,</span> type<span class="ansi-blue-fg">(</span>pixel<span class="ansi-blue-fg">)</span><span class="ansi-blue-fg">,</span> <span class="ansi-blue-fg">&#34;\n value:&#34;</span><span class="ansi-blue-fg">,</span> pixel<span class="ansi-blue-fg">,</span><span class="ansi-blue-fg">&#34;\n&#34;</span><span class="ansi-blue-fg">)</span>
-<span class="ansi-green-fg">---&gt; 16</span><span class="ansi-red-fg">     </span>seed <span class="ansi-blue-fg">=</span> SimpleITK<span class="ansi-blue-fg">.</span>VectorUInt32<span class="ansi-blue-fg">(</span>pixel<span class="ansi-blue-fg">)</span>
-<span class="ansi-green-intense-fg ansi-bold">     17</span>     print<span class="ansi-blue-fg">(</span><span class="ansi-blue-fg">&#34;seed:\n type:&#34;</span><span class="ansi-blue-fg">,</span> type<span class="ansi-blue-fg">(</span>seed<span class="ansi-blue-fg">)</span><span class="ansi-blue-fg">,</span> <span class="ansi-blue-fg">&#34;\n value:&#34;</span><span class="ansi-blue-fg">,</span> seed<span class="ansi-blue-fg">)</span>
-<span class="ansi-green-intense-fg ansi-bold">     18</span>     seedPlastic1<span class="ansi-blue-fg">.</span>push_back<span class="ansi-blue-fg">(</span>seed<span class="ansi-blue-fg">)</span>
 
-<span class="ansi-green-fg">/usr/local/lib/python3.4/dist-packages/SimpleITK/SimpleITK.py</span> in <span class="ansi-cyan-fg">__init__</span><span class="ansi-blue-fg">(self, *args)</span>
-<span class="ansi-green-intense-fg ansi-bold">   1503</span>         __init__<span class="ansi-blue-fg">(</span>std<span class="ansi-blue-fg">:</span><span class="ansi-blue-fg">:</span>vector<span class="ansi-blue-fg">&lt;</span><span class="ansi-blue-fg">(</span>uint32_t<span class="ansi-blue-fg">)</span><span class="ansi-blue-fg">&gt;</span> self<span class="ansi-blue-fg">,</span> std<span class="ansi-blue-fg">:</span><span class="ansi-blue-fg">:</span>vector<span class="ansi-blue-fg">&lt;</span> unsigned int <span class="ansi-blue-fg">&gt;</span><span class="ansi-blue-fg">:</span><span class="ansi-blue-fg">:</span>size_type size<span class="ansi-blue-fg">,</span> std<span class="ansi-blue-fg">:</span><span class="ansi-blue-fg">:</span>vector<span class="ansi-blue-fg">&lt;</span> unsigned int <span class="ansi-blue-fg">&gt;</span><span class="ansi-blue-fg">:</span><span class="ansi-blue-fg">:</span>value_type const <span class="ansi-blue-fg">&amp;</span> value<span class="ansi-blue-fg">)</span> <span class="ansi-blue-fg">-&gt;</span> VectorUInt32
-<span class="ansi-green-intense-fg ansi-bold">   1504</span>         &#34;&#34;&#34;
-<span class="ansi-green-fg">-&gt; 1505</span><span class="ansi-red-fg">         </span>this <span class="ansi-blue-fg">=</span> _SimpleITK<span class="ansi-blue-fg">.</span>new_VectorUInt32<span class="ansi-blue-fg">(</span><span class="ansi-blue-fg">*</span>args<span class="ansi-blue-fg">)</span>
-<span class="ansi-green-intense-fg ansi-bold">   1506</span>         <span class="ansi-green-fg">try</span><span class="ansi-blue-fg">:</span>
-<span class="ansi-green-intense-fg ansi-bold">   1507</span>             self<span class="ansi-blue-fg">.</span>this<span class="ansi-blue-fg">.</span>append<span class="ansi-blue-fg">(</span>this<span class="ansi-blue-fg">)</span>
-
-<span class="ansi-red-fg">NotImplementedError</span>: Wrong number or type of arguments for overloaded function &#39;new_VectorUInt32&#39;.
-  Possible C/C++ prototypes are:
-    std::vector&lt; uint32_t &gt;::vector()
-    std::vector&lt; uint32_t &gt;::vector(std::vector&lt; uint32_t &gt; const &amp;)
-    std::vector&lt; uint32_t &gt;::vector(std::vector&lt; unsigned int &gt;::size_type)
-    std::vector&lt; uint32_t &gt;::vector(std::vector&lt; unsigned int &gt;::size_type,std::vector&lt; unsigned int &gt;::value_type const &amp;)
-</pre>
+<span class="ansi-red-fg">NameError</span>: name &#39;listPlastic&#39; is not defined</pre>
 </div>
 </div>
 
@@ -12871,7 +12839,7 @@ kUAojCKBUBhFAqEwigRCYRQJxP8DAf2vgzERlCMAAAAASUVORK5CYII=
 
 seed:
  type: &lt;class &#39;SimpleITK.SimpleITK.VectorUInt32&#39;&gt; 
- value: &lt;SimpleITK.SimpleITK.VectorUInt32; proxy of &lt;Swig Object of type &#39;std::vector&lt; unsigned int &gt; *&#39; at 0x7fc768ee4d20&gt; &gt;
+ value: &lt;SimpleITK.SimpleITK.VectorUInt32; proxy of &lt;Swig Object of type &#39;std::vector&lt; unsigned int &gt; *&#39; at 0x7f894cc7ad50&gt; &gt;
 </pre>
 </div>
 </div>

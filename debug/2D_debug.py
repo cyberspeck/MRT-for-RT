@@ -50,6 +50,28 @@ imgSmooth = SimpleITK.CurvatureFlow(image1=imgOriginal_slice,
                                     numberOfIterations=5)
 
 
+'''
+x= (12,14)
+seedFilling = [(14,14),(14,15),x]
+imgFilling = SimpleITK.ConnectedThreshold(image1=imgSmooth, 
+                                              seedList=seedFilling, 
+                                              lower=00, 
+                                              upper=110,
+                                              replaceValue=labelFilling)
+sitk_show(imgFilling)
+'''
+
+connectedFilling = SimpleITK.ConnectedThresholdImageFilter()
+connectedFilling.SetLower(00)
+connectedFilling.SetUpper(110)
+connectedFilling.SetReplaceValue(labelFilling)
+connectedFilling.AddSeed((14,14))
+connectedFilling.AddSeed((14,15))
+
+imgFillingb = connectedFilling.Execute(imgSmooth)
+sitk_show(imgFillingb)
+
+
 # -get maximum values of plastic for seedList-
 # first make array out of denoised img:
 arraySmooth = SimpleITK.GetArrayFromImage(imgSmooth)
@@ -65,46 +87,39 @@ for x,y in maxPlastic:
     arraySmooth[x,y] = 1000
 plt.imshow(arraySmooth)
 
-#seedPlastic = list(map(tuple, maxPlastic))
 listPlastic = list(map(tuple, maxPlastic))
+print("listPlastic: \n type:", type(listPlastic), "\n value:", listPlastic)
 
-sitk_show(imgSmooth, interpolation="nearest")
-
-# use Seeds as seedList
-# seedPlastic = [(12,14), (15,15)]
-seedFilling = [(14,14)]
-
-seedPlastic = SimpleITK.VectorUIntList()
-for pixel in listPlastic:
-    print(type(a))
-    print(pixel)
-    seed = SimpleITK.VectorUInt32(pixel)
-    print(type(seed))
-    print(seed)
-#    seedPlastic.push_back(seed)
-
-imgFilling = SimpleITK.ConnectedThreshold(image1=imgSmooth, 
-                                              seedList=seedFilling, 
-                                              lower=00, 
-                                              upper=110,
-                                              replaceValue=labelFilling)
-
-
-sitk_show(imgFilling)
-#sitk_show(imgFilling, interpolation="nearest")
-
+# this doesn't work:
+'''
 imgPlastic = SimpleITK.ConnectedThreshold(image1=imgSmooth, 
-                                              seedList=seedPlastic, 
+                                              seedList=listPlastic, 
                                               lower=110, 
                                               upper=200,
                                               replaceValue=labelPlastic)
+'''
 
+# neither does this:
+'''
+seedPlastic = SimpleITK.VectorUIntList()
+for pixel in listPlastic:
+    print("pixel:\n type:", type(pixel), "\n value:", pixel,"\n")
+    seed = SimpleITK.VectorUInt32(pixel)
+    print("seed:\n type:", type(seed), "\n value:", seed)
+    seedPlastic.push_back(seed)
+'''
 
+# or this:
+'''
+connectedPlastic = SimpleITK.ConnectedThresholdImageFilter()
+connectedPlastic.SetLower(110)
+connectedPlastic.SetUpper(200)
+connectedPlastic.SetReplaceValue(labelPlastic)
+for pixel in listPlastic:
+    print("pixel:\n type:", type(pixel), "\n value:", pixel,"\n")
+    connectedPlastic.AddSeed(pixel)
+
+imgPlastic = connectedPlastic.Execute(imgSmooth)
 sitk_show(imgPlastic)
-#sitk_show(imgPlastic, interpolation="nearest")
+'''
 
-
-print("Seed Plastic Value:", imgSmooth[12,14])
-print("Seed Filling Value:", imgSmooth[14,14])
-
-# print(plt.hist((imgSmooth), bins = 40))

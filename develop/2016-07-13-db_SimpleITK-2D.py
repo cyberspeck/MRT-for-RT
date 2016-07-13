@@ -116,20 +116,19 @@ for x,y in maxPlastic:
 # In[10]:
 
 # make a list out of array:
-listPlastic = list(map(tuple, maxPlastic))
-print("listPlastic: \n type:", type(listPlastic), "\n value:", listPlastic)
+seedPlastic = list(map(tuple, maxPlastic))
+print("seedPlastic: \n type:", type(seedPlastic), "\n value:", seedPlastic)
 
 
 # In[11]:
 
 # now I'd like to use this list for the segmentation of the plastic
 
-seedPlastic = SimpleITK.VectorUIntList(listPlastic)
-#imgPlastic = SimpleITK.ConnectedThreshold(image1=imgSmooth, 
-#                                              seedList=seedPlastic, 
-#                                              lower=110, 
-#                                              upper=200,
-#                                              replaceValue=labelPlastic)
+imgPlastic = SimpleITK.ConnectedThreshold(image1=imgSmooth, 
+                                              seedList=seedPlastic, 
+                                              lower=110, 
+                                              upper=200,
+                                              replaceValue=labelPlastic)
 
 
 # In[12]:
