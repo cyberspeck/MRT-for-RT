@@ -1,3 +1,12 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Jul 8 2016
+
+@author: david
+based on:
+https://pyscience.wordpress.com/2014/10/19/image-segmentation-with-python-and-simpleitk/
+"""
+
 import os
 import numpy
 import SimpleITK
@@ -68,8 +77,8 @@ connectedFilling.SetReplaceValue(labelFilling)
 connectedFilling.AddSeed((14,14))
 connectedFilling.AddSeed((14,15))
 
-imgFillingb = connectedFilling.Execute(imgSmooth)
-sitk_show(imgFillingb)
+imgFilling = connectedFilling.Execute(imgSmooth)
+sitk_show(imgFilling)
 
 
 # -get maximum values of plastic for seedList-

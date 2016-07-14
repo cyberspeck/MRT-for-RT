@@ -1,10 +1,12 @@
 
 # coding: utf-8
 
-# In[1]:
+# In[2]:
 
 # This notebook is based on the very helpfull blog
 # https://pyscience.wordpress.com/2014/10/19/image-segmentation-with-python-and-simpleitk/
+# more information:
+# http://insightsoftwareconsortium.github.io/SimpleITK-Notebooks/
 
 import os
 import numpy
@@ -63,12 +65,16 @@ imgOriginal = reader.Execute()
 # In[5]:
 
 # For now we'll only look at a single 2D image
+# if we leave this out, the rest of the code will work with the 3D vomlume,
+# so each time we'd like to visualize it, we'd have to choose one slice to be plotted:
+# use imgOriginal[:,:,idxSlice] instead of imgOriginal_slice
 imgOriginal_slice = imgOriginal[:,:,idxSlice]
 
 
 # In[6]:
 
 # and look at it
+# if working with 3D volume: use imgOriginal[:,:,idxSlice] instead of imgOriginal_slice here
 sitk_show(imgOriginal_slice, title="interpolation: 'nearest'", interpolation='nearest')
 sitk_show(imgOriginal_slice, title="interpolation: 'none'")
 
@@ -76,6 +82,7 @@ sitk_show(imgOriginal_slice, title="interpolation: 'none'")
 # In[7]:
 
 # denoise the image
+# for denoising the whole volume we'd use imgOriginal instead of imgOriginal_slice
 imgSmooth = SimpleITK.CurvatureFlow(image1=imgOriginal_slice,
                                     timeStep=0.125,
                                     numberOfIterations=5)
@@ -153,7 +160,7 @@ for pixel in listPlastic:
     seedPlastic1.push_back(seed)
 
 
-# In[13]:
+# In[1]:
 
 # does not work, but that's weird, because this works:
 
@@ -166,4 +173,8 @@ seedPlastic2.push_back(seed)
 
 print("pixel:\n type:", type(pixel), "\n value:", pixel,"\n")
 print("seed:\n type:", type(seed), "\n value:", seed)
+
+# maybe this is a solution:
+# http://stackoverflow.com/questions/3761391/boostpython-python-list-to-stdvector
+# http://stackoverflow.com/questions/4819707/passing-python-list-to-c-vector-using-boost-python
 
