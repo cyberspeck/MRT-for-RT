@@ -1,7 +1,7 @@
 
 # coding: utf-8
 
-# In[4]:
+# In[1]:
 
 import dicom
 import os
@@ -10,7 +10,7 @@ from matplotlib import pyplot, cm
 get_ipython().magic('pylab inline')
 
 
-# In[5]:
+# In[2]:
 
 def dicomShow(volume, ref, plane=0,  title=None, margin=0.05, dpi=40, scale=2, interpolation=None ):
     """
@@ -32,7 +32,7 @@ def dicomShow(volume, ref, plane=0,  title=None, margin=0.05, dpi=40, scale=2, i
     plt.show()
 
 
-# In[6]:
+# In[3]:
 
 pathCT = "../data/cropped_CT/"
 pathMR = "../data/cropped_MR-d/"
@@ -67,7 +67,7 @@ ConstPixelSpacingMR = (float(refMR.PixelSpacing[0]),
                      float(refMR.SliceThickness))
 
 
-# In[8]:
+# In[4]:
 
 
 xCT = numpy.arange(0.0, (ConstPixelDimsCT[0]+1)*ConstPixelSpacingCT[0], ConstPixelSpacingCT[0])
@@ -102,7 +102,7 @@ for filenameDCM in lstFilesMR:
 
 
 
-# In[9]:
+# In[5]:
 
 dicomShow(ArrayDicomCT, refCT, plane=10, title='ArrayDicomCT', interpolation='nearest')
 

@@ -11,7 +11,8 @@ https://pyscience.wordpress.com/2014/10/19/image-segmentation-with-python-and-si
 import dicom
 import os
 import numpy
-from matplotlib import pyplot, cm
+import matplotlib.pyplot as plt
+import matplotlib.cm
 
 def dicomShow(volume, ref, plane=0,  title=None, margin=0.05, dpi=40, scale=2, interpolation=None ):
     """
