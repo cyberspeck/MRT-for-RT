@@ -13,6 +13,7 @@ import os
 import numpy
 import matplotlib.pyplot as plt
 import matplotlib.cm
+import SimplestITK
 
 def dicomShow(volume, ref, plane=0,  title=None, margin=0.05, dpi=40, scale=2, interpolation=None ):
     """
