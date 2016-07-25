@@ -16,13 +16,13 @@ import matplotlib.pyplot as plt
 
 import FunITK as fun
 
-pathCT = "../data/cropped_CT/"
-pathMR = "../data/cropped_MR-d/"
+pathCT = "../data/cropped_CT-a/"
+pathMR = "../data/cropped_MR-d-a/"
 
 imgOriginalCT = fun.sitk_read(pathCT)
 imgOriginalMR = fun.sitk_read(pathMR)
 
-idxSlice = 20
+idxSlice = 10
 
 labelRod = 1
 
@@ -44,7 +44,7 @@ fun.sitk_show(imgSmoothMR[:,:,idxSlice], title="MR, denoised")
 
 
 
-seedFillingCT = [(14,14,idxSlice)]
+seedFillingCT = [(8,8,idxSlice)]
 seedFillingMR = [(8,8,idxSlice)]
 
 # https://itk.org/SimpleITKDoxygen/html/classitk_1_1simple_1_1ConnectedThresholdImageFilter.html
@@ -100,3 +100,19 @@ for slice in range(zCT):
 fun.array_show(imgCentroidCT[0,:,:])
 sitkCentroidCT = sitk.GetImageFromArray(imgCentroidCT)
 fun.sitk_show(sitkCentroidCT[:,:,idxSlice])
+
+if zCT == zMR:
+    centroidDiff = np.zeros((zCT, 2))
+    for slice in range(zCT):
+        centroidDiff[slice,0] = centroidCT[slice,0] - centroidMR[slice, 0]
+        centroidDiff[slice,1] = centroidCT[slice,1] - centroidMR[slice, 1]
+
+
+
+'''
+imgSmoothCT_int = sitk.Cast(sitk.RescaleIntensity(imgSmoothCT[:,:,idxSlice]),
+                            sitkCentroidCT[:,:,idxSlice].GetPixelID())
+sitkCentroidCT_int = sitk.Cast(sitk.RescaleIntensity(sitkCentroidCT[:,:,idxSlice]),
+                               sitkCentroidCT[:,:,idxSlice].GetPixelID())
+fun.sitk_show(sitk.LabelOverlay(imgSmoothCT_int, sitkCentroidCT))
+'''

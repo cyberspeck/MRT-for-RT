@@ -35,8 +35,8 @@ def dicomShow(volume, ref, plane=0,  title=None, margin=0.05, dpi=40, scale=2, i
     
     
 
-pathCT = "../data/cropped_CT/"
-pathMR = "../data/cropped_MR-d/"
+pathCT = ".../data/cropped_CT/"
+pathMR = ".../data/cropped_MR-d/"
 
 lstFilesCT = []  # create an empty list for CT files
 for dirName, subdirList, fileList in os.walk(pathCT):
