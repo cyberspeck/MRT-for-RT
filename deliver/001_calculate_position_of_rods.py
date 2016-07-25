@@ -13,7 +13,7 @@ get_ipython().magic('pylab inline')
 import FunctionsCustom as fun
 
 
-# In[3]:
+# In[2]:
 
 pathCT = "../data/cropped_CT/"
 pathMR = "../data/cropped_MR-d/"
@@ -38,7 +38,7 @@ fun.sitk_show(imgSmoothCT[:,:,idxSlice], title="CT, denoised")
 fun.sitk_show(imgSmoothMR[:,:,idxSlice], title="MR, denoised")
 
 
-# In[4]:
+# In[3]:
 
 # set seed for segmentation
 seedFillingCT = [(14,14,idxSlice)]
@@ -62,7 +62,7 @@ fun.sitk_show(maskRodCT[:,:,idxSlice], title="CT, denoised, rod mask")
 fun.sitk_show(maskRodMR[:,:,idxSlice], title="MR, denoised, rod mask")
 
 
-# In[5]:
+# In[9]:
 
 # now we use a custom function (see "FunctionCustom") to get rid of everything but the rod in the denoised image
 # since it is denoised already, this will not make a huge difference
@@ -74,7 +74,13 @@ fun.sitk_show(imgRodCT[:,:,idxSlice], title="CT, denoised, rod")
 fun.sitk_show(imgRodMR[:,:,idxSlice], title="MR, denoised, rod")
 
 
-# In[6]:
+# In[11]:
+
+get_ipython().magic('env SITK_SHOW_COMMAND /home/david/Downloads/Slicer-4.5.0-1-linux-amd64/Slicer')
+sitk.Show(imgRodMR)
+
+
+# In[5]:
 
 # important to remember:
 # sitk.Image saves Volume like this (x,y,z)
@@ -99,7 +105,7 @@ for slice in range(zMR):
     centroidMR[slice,:] = np.array(ndimage.measurements.center_of_mass(rodMR[slice,:,:]))
 
 
-# In[9]:
+# In[6]:
 
 # to make the result visible in our image, we can set the pixel closest to the centroid to 1
 # everything else will be black (value of 0)
@@ -112,7 +118,16 @@ for slice in range(zCT):
 fun.array_show(imgCentroidCT[0,:,:])
 
 
-# In[10]:
+centroidMR_int = centroidMR.astype(int)
+
+imgCentroidMR = np.zeros((zMR, yMR, xMR))
+for slice in range(zMR):
+    imgCentroidMR[slice, centroidMR_int[slice,0], centroidMR_int[slice,1]] = 1
+    
+fun.array_show(imgCentroidMR[0,:,:])
+
+
+# In[8]:
 
 # if the CT nd MR image were aligned and had the same pixel density,
 # calculating the position difference in each slice would be easy

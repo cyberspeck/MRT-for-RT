@@ -11588,10 +11588,8 @@ ul.typeahead-list > li > a {
 .highlight .err { border: 1px solid #FF0000 } /* Error */
 .highlight .k { color: #008000; font-weight: bold } /* Keyword */
 .highlight .o { color: #666666 } /* Operator */
-.highlight .ch { color: #408080; font-style: italic } /* Comment.Hashbang */
 .highlight .cm { color: #408080; font-style: italic } /* Comment.Multiline */
 .highlight .cp { color: #BC7A00 } /* Comment.Preproc */
-.highlight .cpf { color: #408080; font-style: italic } /* Comment.PreprocFile */
 .highlight .c1 { color: #408080; font-style: italic } /* Comment.Single */
 .highlight .cs { color: #408080; font-style: italic } /* Comment.Special */
 .highlight .gd { color: #A00000 } /* Generic.Deleted */
@@ -11626,7 +11624,6 @@ ul.typeahead-list > li > a {
 .highlight .nv { color: #19177C } /* Name.Variable */
 .highlight .ow { color: #AA22FF; font-weight: bold } /* Operator.Word */
 .highlight .w { color: #bbbbbb } /* Text.Whitespace */
-.highlight .mb { color: #666666 } /* Literal.Number.Bin */
 .highlight .mf { color: #666666 } /* Literal.Number.Float */
 .highlight .mh { color: #666666 } /* Literal.Number.Hex */
 .highlight .mi { color: #666666 } /* Literal.Number.Integer */
@@ -11751,12 +11748,12 @@ div#notebook {
 <div class="prompt input_prompt">In&nbsp;[1]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<div class=" highlight hl-ipython3"><pre><span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">scipy</span> <span class="k">import</span> <span class="n">ndimage</span>
 <span class="kn">import</span> <span class="nn">SimpleITK</span> <span class="k">as</span> <span class="nn">sitk</span>
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
-<span class="n">get_ipython</span><span class="p">()</span><span class="o">.</span><span class="n">magic</span><span class="p">(</span><span class="s1">&#39;pylab inline&#39;</span><span class="p">)</span>
+<span class="n">get_ipython</span><span class="p">()</span><span class="o">.</span><span class="n">magic</span><span class="p">(</span><span class="s">&#39;pylab inline&#39;</span><span class="p">)</span>
 
 <span class="kn">import</span> <span class="nn">FunctionsCustom</span> <span class="k">as</span> <span class="nn">fun</span>
 </pre></div>
@@ -11776,25 +11773,17 @@ div#notebook {
 </div>
 </div>
 
-<div class="output_area"><div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/usr/local/lib/python3.4/dist-packages/matplotlib/backends/backend_gtk3agg.py:18: UserWarning: The Gtk3Agg backend is known to not work on Python 3.x with pycairo. Try installing cairocffi.
-  &#34;The Gtk3Agg backend is known to not work on Python 3.x with pycairo. &#34;
-</pre>
-</div>
-</div>
-
 </div>
 </div>
 
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">pathCT</span> <span class="o">=</span> <span class="s2">&quot;../data/cropped_CT/&quot;</span>
-<span class="n">pathMR</span> <span class="o">=</span> <span class="s2">&quot;../data/cropped_MR-d/&quot;</span>
+<div class=" highlight hl-ipython3"><pre><span class="n">pathCT</span> <span class="o">=</span> <span class="s">&quot;../data/cropped_CT/&quot;</span>
+<span class="n">pathMR</span> <span class="o">=</span> <span class="s">&quot;../data/cropped_MR-d/&quot;</span>
 
 <span class="n">imgOriginalCT</span> <span class="o">=</span> <span class="n">fun</span><span class="o">.</span><span class="n">sitk_read</span><span class="p">(</span><span class="n">pathCT</span><span class="p">)</span>
 <span class="n">imgOriginalMR</span> <span class="o">=</span> <span class="n">fun</span><span class="o">.</span><span class="n">sitk_read</span><span class="p">(</span><span class="n">pathMR</span><span class="p">)</span>
@@ -11802,7 +11791,7 @@ div#notebook {
 <span class="n">idxSlice</span> <span class="o">=</span> <span class="mi">20</span>
 <span class="n">labelRod</span> <span class="o">=</span> <span class="mi">1</span>
 
-<span class="c1"># denoise:</span>
+<span class="c"># denoise:</span>
 
 <span class="n">imgSmoothCT</span> <span class="o">=</span> <span class="n">sitk</span><span class="o">.</span><span class="n">CurvatureFlow</span><span class="p">(</span><span class="n">image1</span><span class="o">=</span><span class="n">imgOriginalCT</span><span class="p">,</span>
                                     <span class="n">timeStep</span><span class="o">=</span><span class="mf">0.125</span><span class="p">,</span>
@@ -11812,8 +11801,8 @@ div#notebook {
                                     <span class="n">timeStep</span><span class="o">=</span><span class="mf">0.125</span><span class="p">,</span>
                                     <span class="n">numberOfIterations</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
                                     
-<span class="n">fun</span><span class="o">.</span><span class="n">sitk_show</span><span class="p">(</span><span class="n">imgSmoothCT</span><span class="p">[:,:,</span><span class="n">idxSlice</span><span class="p">],</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;CT, denoised&quot;</span><span class="p">)</span>
-<span class="n">fun</span><span class="o">.</span><span class="n">sitk_show</span><span class="p">(</span><span class="n">imgSmoothMR</span><span class="p">[:,:,</span><span class="n">idxSlice</span><span class="p">],</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;MR, denoised&quot;</span><span class="p">)</span>
+<span class="n">fun</span><span class="o">.</span><span class="n">sitk_show</span><span class="p">(</span><span class="n">imgSmoothCT</span><span class="p">[:,:,</span><span class="n">idxSlice</span><span class="p">],</span> <span class="n">title</span><span class="o">=</span><span class="s">&quot;CT, denoised&quot;</span><span class="p">)</span>
+<span class="n">fun</span><span class="o">.</span><span class="n">sitk_show</span><span class="p">(</span><span class="n">imgSmoothMR</span><span class="p">[:,:,</span><span class="n">idxSlice</span><span class="p">],</span> <span class="n">title</span><span class="o">=</span><span class="s">&quot;MR, denoised&quot;</span><span class="p">)</span>
 </pre></div>
 
 </div>
@@ -12004,15 +11993,15 @@ TkSuQmCC
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># set seed for segmentation</span>
+<div class=" highlight hl-ipython3"><pre><span class="c"># set seed for segmentation</span>
 <span class="n">seedFillingCT</span> <span class="o">=</span> <span class="p">[(</span><span class="mi">14</span><span class="p">,</span><span class="mi">14</span><span class="p">,</span><span class="n">idxSlice</span><span class="p">)]</span>
 <span class="n">seedFillingMR</span> <span class="o">=</span> <span class="p">[(</span><span class="mi">8</span><span class="p">,</span><span class="mi">8</span><span class="p">,</span><span class="n">idxSlice</span><span class="p">)]</span>
 
-<span class="c1"># using ConnectedThresholdImageFilter we can create a mask of just the rod</span>
-<span class="c1"># https://itk.org/SimpleITKDoxygen/html/classitk_1_1simple_1_1ConnectedThresholdImageFilter.html</span>
+<span class="c"># using ConnectedThresholdImageFilter we can create a mask of just the rod</span>
+<span class="c"># https://itk.org/SimpleITKDoxygen/html/classitk_1_1simple_1_1ConnectedThresholdImageFilter.html</span>
 <span class="n">maskRodCT</span> <span class="o">=</span> <span class="n">sitk</span><span class="o">.</span><span class="n">ConnectedThreshold</span><span class="p">(</span><span class="n">image1</span><span class="o">=</span><span class="n">imgSmoothCT</span><span class="p">,</span> 
                                               <span class="n">seedList</span><span class="o">=</span><span class="n">seedFillingCT</span><span class="p">,</span> 
                                               <span class="n">lower</span><span class="o">=</span><span class="mi">00</span><span class="p">,</span> 
@@ -12025,8 +12014,8 @@ TkSuQmCC
                                               <span class="n">upper</span><span class="o">=</span><span class="mi">1500</span><span class="p">,</span>
                                               <span class="n">replaceValue</span><span class="o">=</span><span class="n">labelRod</span><span class="p">)</span>
 
-<span class="n">fun</span><span class="o">.</span><span class="n">sitk_show</span><span class="p">(</span><span class="n">maskRodCT</span><span class="p">[:,:,</span><span class="n">idxSlice</span><span class="p">],</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;CT, denoised, rod mask&quot;</span><span class="p">)</span>
-<span class="n">fun</span><span class="o">.</span><span class="n">sitk_show</span><span class="p">(</span><span class="n">maskRodMR</span><span class="p">[:,:,</span><span class="n">idxSlice</span><span class="p">],</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;MR, denoised, rod mask&quot;</span><span class="p">)</span>
+<span class="n">fun</span><span class="o">.</span><span class="n">sitk_show</span><span class="p">(</span><span class="n">maskRodCT</span><span class="p">[:,:,</span><span class="n">idxSlice</span><span class="p">],</span> <span class="n">title</span><span class="o">=</span><span class="s">&quot;CT, denoised, rod mask&quot;</span><span class="p">)</span>
+<span class="n">fun</span><span class="o">.</span><span class="n">sitk_show</span><span class="p">(</span><span class="n">maskRodMR</span><span class="p">[:,:,</span><span class="n">idxSlice</span><span class="p">],</span> <span class="n">title</span><span class="o">=</span><span class="s">&quot;MR, denoised, rod mask&quot;</span><span class="p">)</span>
 </pre></div>
 
 </div>
@@ -12193,17 +12182,17 @@ F6OTDC5GJxlcjE4yuBidZHAxOsngYnSSwcXoJMP/AdzG2NjzPPGBAAAAAElFTkSuQmCC
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[5]:</div>
+<div class="prompt input_prompt">In&nbsp;[9]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># now we use a custom function (see &quot;FunctionCustom&quot;) to get rid of everything but the rod in the denoised image</span>
-<span class="c1"># since it is denoised already, this will not make a huge difference</span>
+<div class=" highlight hl-ipython3"><pre><span class="c"># now we use a custom function (see &quot;FunctionCustom&quot;) to get rid of everything but the rod in the denoised image</span>
+<span class="c"># since it is denoised already, this will not make a huge difference</span>
 
 <span class="n">imgRodCT</span> <span class="o">=</span> <span class="n">fun</span><span class="o">.</span><span class="n">sitk_mask</span><span class="p">(</span><span class="n">imgSmoothCT</span><span class="p">,</span> <span class="n">maskRodCT</span><span class="p">)</span>
 <span class="n">imgRodMR</span> <span class="o">=</span> <span class="n">fun</span><span class="o">.</span><span class="n">sitk_mask</span><span class="p">(</span><span class="n">imgSmoothMR</span><span class="p">,</span> <span class="n">maskRodMR</span><span class="p">)</span>
 
-<span class="n">fun</span><span class="o">.</span><span class="n">sitk_show</span><span class="p">(</span><span class="n">imgRodCT</span><span class="p">[:,:,</span><span class="n">idxSlice</span><span class="p">],</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;CT, denoised, rod&quot;</span><span class="p">)</span>
-<span class="n">fun</span><span class="o">.</span><span class="n">sitk_show</span><span class="p">(</span><span class="n">imgRodMR</span><span class="p">[:,:,</span><span class="n">idxSlice</span><span class="p">],</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;MR, denoised, rod&quot;</span><span class="p">)</span>
+<span class="n">fun</span><span class="o">.</span><span class="n">sitk_show</span><span class="p">(</span><span class="n">imgRodCT</span><span class="p">[:,:,</span><span class="n">idxSlice</span><span class="p">],</span> <span class="n">title</span><span class="o">=</span><span class="s">&quot;CT, denoised, rod&quot;</span><span class="p">)</span>
+<span class="n">fun</span><span class="o">.</span><span class="n">sitk_show</span><span class="p">(</span><span class="n">imgRodMR</span><span class="p">[:,:,</span><span class="n">idxSlice</span><span class="p">],</span> <span class="n">title</span><span class="o">=</span><span class="s">&quot;MR, denoised, rod&quot;</span><span class="p">)</span>
 </pre></div>
 
 </div>
@@ -12373,22 +12362,50 @@ RU5ErkJggg==
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[6]:</div>
+<div class="prompt input_prompt">In&nbsp;[11]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># important to remember:</span>
-<span class="c1"># sitk.Image saves Volume like this (x,y,z)</span>
-<span class="c1"># array returned by sitk.GetArrayFromImage(Image)</span>
-<span class="c1"># is transposed: (z,y,x)</span>
+<div class=" highlight hl-ipython3"><pre><span class="o">%</span><span class="k">env</span> SITK_SHOW_COMMAND /home/david/Downloads/Slicer-4.5.0-1-linux-amd64/Slicer
+<span class="n">sitk</span><span class="o">.</span><span class="n">Show</span><span class="p">(</span><span class="n">imgRodMR</span><span class="p">)</span>
+</pre></div>
 
-<span class="c1"># we now use numpy to calculate the centroid of the rod</span>
+</div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area"><div class="prompt"></div>
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>env: SITK_SHOW_COMMAND=/home/david/Downloads/Slicer-4.5.0-1-linux-amd64/Slicer
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[5]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span class="c"># important to remember:</span>
+<span class="c"># sitk.Image saves Volume like this (x,y,z)</span>
+<span class="c"># array returned by sitk.GetArrayFromImage(Image)</span>
+<span class="c"># is transposed: (z,y,x)</span>
+
+<span class="c"># we now use numpy to calculate the centroid of the rod</span>
 <span class="n">rodCT</span> <span class="o">=</span> <span class="n">sitk</span><span class="o">.</span><span class="n">GetArrayFromImage</span><span class="p">(</span><span class="n">imgRodCT</span><span class="p">)</span>
 <span class="n">zCT</span><span class="p">,</span> <span class="n">yCT</span><span class="p">,</span> <span class="n">xCT</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">rodCT</span><span class="p">)</span>
 
 <span class="n">rodMR</span> <span class="o">=</span> <span class="n">sitk</span><span class="o">.</span><span class="n">GetArrayFromImage</span><span class="p">(</span><span class="n">imgRodMR</span><span class="p">)</span>
 <span class="n">zMR</span><span class="p">,</span> <span class="n">yMR</span><span class="p">,</span> <span class="n">xMR</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">rodMR</span><span class="p">)</span>
 
-<span class="c1"># create array with centroid of rod in each slice of CT and MRT</span>
+<span class="c"># create array with centroid of rod in each slice of CT and MRT</span>
 <span class="n">centroidCT</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">zCT</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
 <span class="n">centroidMR</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">zMR</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
 
@@ -12406,11 +12423,11 @@ RU5ErkJggg==
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[9]:</div>
+<div class="prompt input_prompt">In&nbsp;[6]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># to make the result visible in our image, we can set the pixel closest to the centroid to 1</span>
-<span class="c1"># everything else will be black (value of 0)</span>
+<div class=" highlight hl-ipython3"><pre><span class="c"># to make the result visible in our image, we can set the pixel closest to the centroid to 1</span>
+<span class="c"># everything else will be black (value of 0)</span>
 <span class="n">centroidCT_int</span> <span class="o">=</span> <span class="n">centroidCT</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
 
 <span class="n">imgCentroidCT</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">zCT</span><span class="p">,</span> <span class="n">yCT</span><span class="p">,</span> <span class="n">xCT</span><span class="p">))</span>
@@ -12418,6 +12435,15 @@ RU5ErkJggg==
     <span class="n">imgCentroidCT</span><span class="p">[</span><span class="nb">slice</span><span class="p">,</span> <span class="n">centroidCT_int</span><span class="p">[</span><span class="nb">slice</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span> <span class="n">centroidCT_int</span><span class="p">[</span><span class="nb">slice</span><span class="p">,</span><span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="mi">1</span>
     
 <span class="n">fun</span><span class="o">.</span><span class="n">array_show</span><span class="p">(</span><span class="n">imgCentroidCT</span><span class="p">[</span><span class="mi">0</span><span class="p">,:,:])</span>
+
+
+<span class="n">centroidMR_int</span> <span class="o">=</span> <span class="n">centroidMR</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+
+<span class="n">imgCentroidMR</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">zMR</span><span class="p">,</span> <span class="n">yMR</span><span class="p">,</span> <span class="n">xMR</span><span class="p">))</span>
+<span class="k">for</span> <span class="nb">slice</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">zMR</span><span class="p">):</span>
+    <span class="n">imgCentroidMR</span><span class="p">[</span><span class="nb">slice</span><span class="p">,</span> <span class="n">centroidMR_int</span><span class="p">[</span><span class="nb">slice</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span> <span class="n">centroidMR_int</span><span class="p">[</span><span class="nb">slice</span><span class="p">,</span><span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="mi">1</span>
+    
+<span class="n">fun</span><span class="o">.</span><span class="n">array_show</span><span class="p">(</span><span class="n">imgCentroidMR</span><span class="p">[</span><span class="mi">0</span><span class="p">,:,:])</span>
 </pre></div>
 
 </div>
@@ -12496,17 +12522,93 @@ pEaMtiQ1YrQlqRGjLUmNGG1JasRoS1IjRluSGjHaktTI/wFgQ9+Nb5OwhwAAAABJRU5ErkJggg==
 
 </div>
 
+<div class="output_area"><div class="prompt"></div>
+
+
+<div class="output_png output_subarea ">
+<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAW0AAAEACAYAAAB4ayemAAAABHNCSVQICAgIfAhkiAAAAAlwSFlz
+AAALEgAACxIB0t1+/AAADkpJREFUeJzt3X+sZGddx/H3B5cm/JBaa9pGCgvVFBOklIaCUgJHiJZg
+oMREAsQgmKBRfgUJoa0me/nHAEawUfkD2W6KsjGACNTwozZ1JEUrCG13KaXUKG2p9PJrgRAjUvv1
+jzu7XObe2TOcmbn3PrPvVzLZM899zpzvydn95NlnzrlPqgpJUhsetNsFSJJmZ2hLUkMMbUlqiKEt
+SQ0xtCWpIYa2JDWkN7STHEyynuTIpraLk3wqyc3jP5+83DIlSTDbSPsQcOlE21uBP6yqJwEHgD9e
+dGGSpK16Q7uqbgSOTTR/BTh9vP0TwL0LrkuStI3M8kRkkv3AtVV1wfj9o4FPAgUEeFpV3bPMQiVJ
+w7+IPAi8uqoeDbwOuHpxJUmSphk60v5OVT1i08+/XVWnT9nXX24iSQNUVSbbZh1pZ/w67s4kzwRI
+8mzgiz0HXtnXgQMHdr0Gz9vz9rxX77yn2deb1slhoAPOTHI3G3eL/DbwjiSnAf8zfi9JWrLe0K6q
+l0z50VMXXIskqYdPRM6p67rdLmFXeN6nFs9775jpi8i5DpDUso8hSasmCTXHF5GSpD3A0Jakhhja
+ktQQQ1uSGmJoS1JDDG1JakjvwzWaLtlyN46kgbw1eDaOtCWpIYa2JDXE0JakhhjaktQQQ1uSGmJo
+S1JDDG1JakhvaCc5mGQ9yZGJ9lcnuT3J0SRvXl6JkqTjZnm45hDwZ8C7jzck6YDnAU+oqvuT/NRy
+ypMkbdY70q6qG4FjE82/C7y5qu4f9/n6EmqTJE0YOqd9PvCMJDcl+cckT15kUZKk7Q393SP7gDOq
+6heSXAy8FzhvWue1tbUT213X7cl11yRpN41GI0ajUW+/mdaITLIfuLaqLhi//wjwlqr6p/H7fwee
+WlXf2GbflV0j0l8YJS3OqubEUPOuEZnx67gPAs8af/D5wIO3C2xJ0mL1To8kOQx0wJlJ7gYOAFcD
+h5IcBb4HvHSZRUqSNsw0PTLXAZwekTSDVc2JoeadHpEk7QGGtiQ1xNCWpIYY2pLUEENbkhpiaEtS
+QwxtSWqIoS1JDTG0JakhhrYkNcTQlqSGGNqS1BBDW5IaYmhLUkMMbUlqiKEtSQ3pDe0kB5OsJzmy
+zc9en+SBJD+5nPIkSZvNMtI+BFw62ZjkXOCXgbsWXZQkaXu9oV1VNwLHtvnR24E3LLwiSdJUg+a0
+kzwfuKeqji64HknSSfSuxj4pyUOAK9mYGjnRfLJ91tbWTmx3XUfXdT/qYSVppY1GI0ajUW+/mVZj
+T7IfuLaqLkjy88D1wH+zEdbnAvcCT6mqr26zr6uxS+q1qjkx1LTV2GcdaWf8oqo+B5yz6YP/E7io
+qrab95YkLdAst/wdBv4ZOD/J3UlePtGl6JkekSQtxkzTI3MdwOkRSTNY1ZwYatr0iE9ESlJDDG1J
+aoihLUkNMbQlqSGGtiQ1xNCWpIYY2pLUEENbkhpiaEtSQwxtSWqIoS1JDTG0JakhhrYkNcTQlqSG
+GNqS1BBDW5IaMsvKNQeTrCc5sqntrUluT3JLkr9N8ojllilJgtlG2oeASyfargMeX1UXAncCVyy6
+MEnSVr2hXVU3Ascm2q6vqgfGb29iY0V2SdKSLWJO+7eAjy7gcyRJPfbNs3OSPwC+X1WHT9ZvbW3t
+xHbXdXRdN89hJWnljEYjRqNRb7+ZVmNPsh+4tqou2NT2MuAVwLOq6nsn2dfV2CX1WtWcGGraauyz
+jrQzfh3/sOcAbwCecbLAliQtVu9IO8lhoAPOBNaBA8CVwGnAN8bdbqqq35uyvyNtSb1WNSeGmjbS
+nml6ZM4DG9qSeq1qTgw1LbR9IlKSGmJoS1JDDG1JaoihLUkNMbQlqSGGtiQ1xNCWpIYY2pLUEENb
+khpiaEtSQwxtSWqIoS1JDTG0JakhhrYkNcTQlqSG9IZ2koNJ1pMc2dR2RpLrktyR5ONJTl9umZIk
+mG2kfQi4dKLtcuD6qnoccANwxaILkyRt1RvaVXUjcGyi+TLgmvH2NcALFlyXJGkbQ+e0z6qqdYCq
+ug84a3ElSZKmWdQXkS7uJkk7YN/A/daTnF1V60nOAb56ss5ra2sntruuo+u6gYeVpNU0Go0YjUa9
+/WZajT3JY4Brq+oJ4/dvAb5ZVW9J8kbgjKq6fMq+rsYuqdeq5sRQ01Zj7w3tJIeBDjgTWAcOAB8E
+3gc8CrgLeGFVfWvK/oa2pF6rmhNDDQ7tBRzY0JbUa1VzYqhpoe0TkZLUEENbkhpiaEtSQwxtSWqI
+oS1JDTG0JakhhrYkNcTQlqSGGNqS1JChvzBKWqof9ek4n07VqcKRtiQ1xNCWpIYY2pLUEENbkhpi
+aEtSQwxtSWrIXKGd5IoktyU5kuQ9SU5bVGGSpK0Gh3aS/cArgCdV1QVs3PP9okUVJknaap6Ha74D
+/C/wsCQPAA8F/mshVUmStjV4pF1Vx4A/Ae4G7gW+VVXXL6owSdJW80yPnAe8DtgP/DTw8CQvWVRh
+kqSt5pkeeTLwyar6JkCSDwBPAw5PdlxbWzux3XUdXdfNcVidCvxdIjrVjEYjRqNRb78MXbY+yROB
+vwYuBr4HHAI+XVV/MdGvhh5jrzNYpMVZ1ZwYKglVtSVk5pnTvhV4N/AZ4FYgwDsHVyhJ6jV4pD3z
+ARxpS5rBqubEUAsfaUuSdp6hLUkNMbQlqSGGtiQ1xNCWpIYY2pLUEENbkhpiaEtSQwxtSWqIoS1J
+DTG0JakhhrYkNcTQlqSGGNqS1BBDW5IaYmhLUkPmCu0kpyd5X5Lbk9yW5KmLKkyStNU8C/sCXAV8
+pKp+Pck+4KELqEmSNMU8C/s+Ari5qn6mp5/LjUnqtao5MdQylht7LPD1JIeSfDbJO5M8ZI7PkyT1
+mGd6ZB9wEfDKqvq3JH8KXA4cmOy4trZ2YrvrOrqum+OwkrR6RqMRo9Got9880yNnA/9SVeeN3z8d
+eGNVPW+in9Mjknqtak4MtfDpkapaB+5Jcv646dnA54d+niSp3+CRNkCSJwLvAh4M/Afw8qr69kQf
+R9qSeq1qTgw1baQ9V2jPeGBDW1KvVc2JoZZx94gkaYcZ2pLUEENbkhpiaEtSQwxtSWqIoS1JDTG0
+JakhhrYkNcTQlqSGGNqS1BBDW5IaYmhLUkMMbUlqiKEtSQ0xtCWpIYa2JDVk7tBO8qDxauwfXkRB
+kqTpFjHSfi2uDSlJO2Ku0E5yLvBcNtaJlCQt2bwj7bcDbwBc3E2SdsC+oTsm+VVgvapuSdIBU1e5
+XVtbO7HddR1d1w09rCStpNFoxGg06u03eDX2JH8E/AZwP/AQ4MeBD1TVSyf6uRq7pF6rmhNDTVuN
+fXBoT3z4M4HXV9Xzt/mZoS2p16rmxFDTQtv7tCWpIQsZaZ/0AI60Jc1gVXNiKEfakrQCDG1Jaoih
+LUkNMbQlqSGGtiQ1xNCWpIYY2pLUEENbkhpiaEtSQwxtSWqIoS1JDTG0JakhhrYkNcTQlqSGGNqS
+1BBDW5IaMji0k5yb5IYktyU5muQ1iyxMkrTVPAv7ngOcM16N/eHAZ4DLquoLE/1cuUZSr1XNiaEW
+vnJNVd1XVbeMt78L3A48cniJkqQ+C5nTTvIY4ELgXxfxeZKk7e2b9wPGUyPvB147HnFvsba2dmK7
+6zq6rpv3sJK0UkajEaPRqLffXKuxJ9kH/D3w0aq6akof57Ql9VrVnBhqWauxXw18flpgS5IWa567
+Ry4BPgEcBWr8urKqPjbRz5G2pF6rmhNDTRtpzzU9MuOBDW1JvVY1J4Za1vSIJGkHGdqS1BBDW5Ia
+YmhLUkMMbUlqiKEtSQ0xtCWpIYa2JDXE0JakhhjaktQQQ1uSGmJoS1JDDG1JaoihLUkNMbQlqSFz
+hXaS5yT5QpIvJnnjooqSJG1vcGgneRDw58ClwOOBFyf5uUUVJkm7bZaFdnfaPCPtpwB3VtVdVfV9
+4G+AyxZTliTtvlUL7UcC92x6/+VxmyRpSfwiUpIasm+Ofe8FHr3p/bnjti1cAFdSn72aE29605t2
+u4QfMng19iQ/BtwBPBv4CvAp4MVVdfviypMkbTZ4pF1V/5fkVcB1bEyzHDSwJWm5Bo+0JUk7zy8i
+BzpVHyxK8qUktya5OcmndrueZUlyMMl6kiOb2s5Icl2SO5J8PMnpu1njMkw57wNJvpzks+PXc3az
+xmVIcm6SG5LcluRokteM2/fcNTe0BzjFHyx6AOiq6klV9ZTdLmaJDrFxfTe7HLi+qh4H3ABcseNV
+Ld925w3wtqq6aPz62E4XtQPuB36/qh4P/CLwyvG/6T13zQ3tYU7lB4vCKfD3pqpuBI5NNF8GXDPe
+vgZ4wY4WtQOmnDdsXPeVVVX3VdUt4+3vArezcUfcnrvmK/+Pb0lO5QeLCviHJJ9O8ordLmaHnVVV
+67Dxjxw4a5fr2UmvSnJLknfthSmCZUryGOBC4Cbg7L12zQ1t/aguqaqLgOey8V/Ip+92QbvoVPkW
+/x3AeVV1IXAf8LZdrmdpkjwceD/w2vGIe/Ia7/o1N7SHmfnBolVTVV8Z//k14O/YmCo6VawnORsg
+yTnAV3e5nh1RVV+rH9xm9pfAxbtZz7Ik2cdGYP9VVX1o3LznrrmhPcyngZ9Nsj/JacCLgA/vck1L
+l+Sh45EISR4G/Arwud2taqnCD8/lfhh42Xj7N4EPTe6wIn7ovMdhddyvsbrX/Grg81V11aa2PXfN
+vU97oPFtT1fxgweL3rzLJS1dkseyMbouNh7Mes+qnneSw0AHnAmsAweADwLvAx4F3AW8sKq+tVs1
+LsOU8/4lNuZ4HwC+BPzO8XneVZHkEuATwFE2/n4XcCUbT3q/lz10zQ1tSWqI0yOS1BBDW5IaYmhL
+UkMMbUlqiKEtSQ0xtCWpIYa2JDXE0Jakhvw/9IYX9OU464wAAAAASUVORK5CYII=
+"
+>
+</div>
+
+</div>
+
 </div>
 </div>
 
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[10]:</div>
+<div class="prompt input_prompt">In&nbsp;[8]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># if the CT nd MR image were aligned and had the same pixel density,</span>
-<span class="c1"># calculating the position difference in each slice would be easy</span>
+<div class=" highlight hl-ipython3"><pre><span class="c"># if the CT nd MR image were aligned and had the same pixel density,</span>
+<span class="c"># calculating the position difference in each slice would be easy</span>
 </pre></div>
 
 </div>
