@@ -15,13 +15,15 @@ import FunctionsCustom as fun
 
 # In[2]:
 
-pathCT = "../data/cropped_CT/"
-pathMR = "../data/cropped_MR-d/"
+# path to the cropped, aligned CT and MR images
+
+pathCT = "../data/cropped_CT-a/"
+pathMR = "../data/cropped_MR-d-a/"
 
 imgOriginalCT = fun.sitk_read(pathCT)
 imgOriginalMR = fun.sitk_read(pathMR)
 
-idxSlice = 20
+idxSlice = 10
 labelRod = 1
 
 # denoise:
@@ -41,7 +43,7 @@ fun.sitk_show(imgSmoothMR[:,:,idxSlice], title="MR, denoised")
 # In[3]:
 
 # set seed for segmentation
-seedFillingCT = [(14,14,idxSlice)]
+seedFillingCT = [(8,8,idxSlice)]
 seedFillingMR = [(8,8,idxSlice)]
 
 # using ConnectedThresholdImageFilter we can create a mask of just the rod
@@ -62,7 +64,7 @@ fun.sitk_show(maskRodCT[:,:,idxSlice], title="CT, denoised, rod mask")
 fun.sitk_show(maskRodMR[:,:,idxSlice], title="MR, denoised, rod mask")
 
 
-# In[9]:
+# In[4]:
 
 # now we use a custom function (see "FunctionCustom") to get rid of everything but the rod in the denoised image
 # since it is denoised already, this will not make a huge difference
@@ -74,18 +76,18 @@ fun.sitk_show(imgRodCT[:,:,idxSlice], title="CT, denoised, rod")
 fun.sitk_show(imgRodMR[:,:,idxSlice], title="MR, denoised, rod")
 
 
-# In[11]:
-
-get_ipython().magic('env SITK_SHOW_COMMAND /home/david/Downloads/Slicer-4.5.0-1-linux-amd64/Slicer')
-sitk.Show(imgRodMR)
-
-
 # In[5]:
+
+# Using this command we can look at imgRodMR with 3D Slicer:
+# %env SITK_SHOW_COMMAND /home/david/Downloads/Slicer-4.5.0-1-linux-amd64/Slicer
+# sitk.Show(imgRodMR)
+
+
+# In[6]:
 
 # important to remember:
 # sitk.Image saves Volume like this (x,y,z)
-# array returned by sitk.GetArrayFromImage(Image)
-# is transposed: (z,y,x)
+# array returned by sitk.GetArrayFromImage(Image) is transposed: (z,y,x)
 
 # we now use numpy to calculate the centroid of the rod
 rodCT = sitk.GetArrayFromImage(imgRodCT)
@@ -105,7 +107,7 @@ for slice in range(zMR):
     centroidMR[slice,:] = np.array(ndimage.measurements.center_of_mass(rodMR[slice,:,:]))
 
 
-# In[6]:
+# In[7]:
 
 # to make the result visible in our image, we can set the pixel closest to the centroid to 1
 # everything else will be black (value of 0)
@@ -129,6 +131,14 @@ fun.array_show(imgCentroidMR[0,:,:])
 
 # In[8]:
 
-# if the CT nd MR image were aligned and had the same pixel density,
-# calculating the position difference in each slice would be easy
+# this looks pretty good already
+# lets calculate the centroid shift in every slice:
+
+if zCT == zMR:
+    centroidDiff = np.zeros((zCT, 2))
+    for slice in range(zCT):
+        centroidDiff[slice,0] = centroidCT[slice,0] - centroidMR[slice, 0]
+        centroidDiff[slice,1] = centroidCT[slice,1] - centroidMR[slice, 1]
+        
+print(centroidDiff)
 

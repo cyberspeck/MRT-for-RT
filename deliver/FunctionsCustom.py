@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 
 # In[2]:
 
-def sitk_show(img, title=None, margin=0.05, dpi=40, scale=2,
+def sitk_show(img, title=None, margin=0.05, dpi=40, scale=3,
               interpolation='nearest'):
     """
     scale is a scaling factor for the shown image
