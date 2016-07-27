@@ -97,6 +97,16 @@ imgCentroidCT = np.zeros((zCT, yCT, xCT))
 for slice in range(zCT):
     imgCentroidCT[slice, centroidCT_int[slice,0], centroidCT_int[slice,1]] = 1
     
-fun.array_show(imgCentroidCT[0,:,:])
 sitkCentroidCT = sitk.GetImageFromArray(imgCentroidCT)
 fun.sitk_show(sitkCentroidCT[:,:,idxSlice])
+
+# this looks pretty good already
+# lets calculate the centroid shift in every slice:
+
+if zCT == zMR:
+    centroidDiff = np.zeros((zCT, 2))
+    for slice in range(zCT):
+        centroidDiff[slice,0] = centroidCT[slice,0] - centroidMR[slice, 0]
+        centroidDiff[slice,1] = centroidCT[slice,1] - centroidMR[slice, 1]
+        
+print(centroidDiff)

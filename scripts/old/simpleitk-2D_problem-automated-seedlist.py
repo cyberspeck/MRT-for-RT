@@ -14,7 +14,6 @@ import matplotlib.pyplot as plt
 get_ipython().magic('pylab inline')
 
 
-
 def sitk_show(img, title=None, margin=0.05, dpi=40, scale=2, interpolation=None ):
     """
     scale is a scaling factor for the shown image
