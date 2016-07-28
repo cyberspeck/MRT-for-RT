@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head><meta charset="utf-8" />
-<title>FunctionsCustom</title>
+<title>centroid_distortion_3D</title>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
@@ -11751,13 +11751,30 @@ div#notebook {
 <div class="prompt input_prompt">In&nbsp;[2]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">scipy</span> <span class="k">import</span> <span class="n">ndimage</span>
-<span class="kn">import</span> <span class="nn">SimpleITK</span> <span class="k">as</span> <span class="nn">sitk</span>
-<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">FunctionsCustom</span> <span class="k">as</span> <span class="nn">fun</span>
+<span class="kn">from</span> <span class="nn">FunctionsCustom</span> <span class="k">import</span> <span class="n">Volume</span>
+<span class="n">get_ipython</span><span class="p">()</span><span class="o">.</span><span class="n">magic</span><span class="p">(</span><span class="s1">&#39;pylab inline&#39;</span><span class="p">)</span>
+
+<span class="n">pathCT</span> <span class="o">=</span> <span class="s2">&quot;../data/cropped_CT-a/&quot;</span>
+<span class="n">pathMR</span> <span class="o">=</span> <span class="s2">&quot;../data/cropped_MR-d-a/&quot;</span>
+<span class="n">idxSlice</span> <span class="o">=</span> <span class="mi">10</span>
 </pre></div>
 
 </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area"><div class="prompt"></div>
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Populating the interactive namespace from numpy and matplotlib
+</pre>
+</div>
+</div>
+
 </div>
 </div>
 
@@ -11767,127 +11784,26 @@ div#notebook {
 <div class="prompt input_prompt">In&nbsp;[3]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">sitk_read</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="n">denoise</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">    returns DICOM files as &quot;SimpleITK.Image&quot; data type (3D)</span>
-<span class="sd">    </span>
-<span class="sd">    if denoise is true: uses SimpleITK to denoise data</span>
-<span class="sd">    &#39;&#39;&#39;</span>
-    <span class="n">reader</span> <span class="o">=</span> <span class="n">sitk</span><span class="o">.</span><span class="n">ImageSeriesReader</span><span class="p">()</span>
-    <span class="n">filenames</span> <span class="o">=</span> <span class="n">reader</span><span class="o">.</span><span class="n">GetGDCMSeriesFileNames</span><span class="p">(</span><span class="n">directory</span><span class="p">)</span>
-    <span class="n">reader</span><span class="o">.</span><span class="n">SetFileNames</span><span class="p">(</span><span class="n">filenames</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">denoise</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">reader</span><span class="o">.</span><span class="n">Execute</span><span class="p">()</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">imgOriginal</span> <span class="o">=</span> <span class="n">reader</span><span class="o">.</span><span class="n">Execute</span><span class="p">()</span>
-        <span class="k">return</span> <span class="n">sitk</span><span class="o">.</span><span class="n">CurvatureFlow</span><span class="p">(</span><span class="n">image1</span><span class="o">=</span><span class="n">imgOriginal</span><span class="p">,</span>
-                                  <span class="n">timeStep</span><span class="o">=</span><span class="mf">0.125</span><span class="p">,</span>
-                                  <span class="n">numberOfIterations</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
-
-
-<span class="k">def</span> <span class="nf">sitk_show</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">ref</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="s1">&#39;nearest&#39;</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    shows plot of img at z=ref</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">arr</span> <span class="o">=</span> <span class="n">sitk</span><span class="o">.</span><span class="n">GetArrayFromImage</span><span class="p">(</span><span class="n">img</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">ref</span><span class="p">])</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">set_cmap</span><span class="p">(</span><span class="s2">&quot;gray&quot;</span><span class="p">)</span>
-
-    <span class="k">if</span> <span class="n">title</span><span class="p">:</span>
-        <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="n">title</span><span class="p">)</span>
-
-    <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span> <span class="n">origin</span><span class="o">=</span><span class="s2">&quot;lower&quot;</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="n">interpolation</span><span class="p">)</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
-
-
-<span class="k">def</span> <span class="nf">sitk_centroid</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">percentLimit</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="s1">&#39;nearest&#39;</span><span class="p">,</span>
-                  <span class="n">title</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">    returns array with y&amp;x coordinate of centroid for every slice of img</span>
-<span class="sd">    centroid[slice, y&amp;x-coordinate]</span>
-<span class="sd">    </span>
-<span class="sd">    if method is None: compute centroid using only brightest 10% of pixels</span>
-<span class="sd">    if method is CT or MR: using pixels above thershold</span>
-<span class="sd">        for CT threshold = -900</span>
-<span class="sd">        for MR threshold = 30</span>
-<span class="sd">    &#39;&#39;&#39;</span>
-    <span class="n">arr</span> <span class="o">=</span> <span class="n">sitk</span><span class="o">.</span><span class="n">GetArrayFromImage</span><span class="p">(</span><span class="n">img</span><span class="p">)</span>
-    <span class="n">z</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">arr</span><span class="p">)</span>
-    <span class="c1"># create array with centroid coordinates of rod in each slice</span>
-    <span class="n">com</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">z</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
-
-    <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;CT&quot;</span><span class="p">:</span>
-        <span class="k">for</span> <span class="nb">slice</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">z</span><span class="p">):</span>
-            <span class="c1"># Set Threshold at -900 (air level measured in 3D slicer)</span>
-            <span class="n">marr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">masked_less</span><span class="p">(</span><span class="n">arr</span><span class="p">[</span><span class="nb">slice</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:],</span> <span class="o">-</span><span class="mi">900</span><span class="p">)</span>
-            <span class="n">com</span><span class="p">[</span><span class="nb">slice</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">ndimage</span><span class="o">.</span><span class="n">measurements</span><span class="o">.</span><span class="n">center_of_mass</span><span class="p">(</span><span class="n">marr</span><span class="p">)</span>
-
-    <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;MR&quot;</span><span class="p">:</span>
-        <span class="k">for</span> <span class="nb">slice</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">z</span><span class="p">):</span>
-            <span class="c1"># Set Threshold at 30 (air level measured in 3D slicer)</span>
-            <span class="n">marr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">masked_less</span><span class="p">(</span><span class="n">arr</span><span class="p">[</span><span class="nb">slice</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:],</span> <span class="mi">30</span><span class="p">)</span>
-            <span class="n">com</span><span class="p">[</span><span class="nb">slice</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">ndimage</span><span class="o">.</span><span class="n">measurements</span><span class="o">.</span><span class="n">center_of_mass</span><span class="p">(</span><span class="n">marr</span><span class="p">)</span>
-
-    <span class="k">if</span> <span class="p">(</span><span class="n">method</span> <span class="o">!=</span> <span class="s2">&quot;MR&quot;</span> <span class="ow">and</span> <span class="n">method</span> <span class="o">!=</span> <span class="s2">&quot;CT&quot;</span><span class="p">):</span>
-        <span class="k">for</span> <span class="nb">slice</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">z</span><span class="p">):</span>
-            <span class="n">hist</span><span class="p">,</span> <span class="n">bins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">histogram</span><span class="p">(</span><span class="n">arr</span><span class="p">[</span><span class="nb">slice</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span><span class="o">.</span><span class="n">ravel</span><span class="p">(),</span>
-                                      <span class="n">density</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
-            <span class="n">threshold</span> <span class="o">=</span> <span class="n">bins</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">hist</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">bins</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">bins</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">&gt;</span> <span class="n">percentLimit</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
-            <span class="n">marr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">masked_less</span><span class="p">(</span><span class="n">arr</span><span class="p">[</span><span class="nb">slice</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:],</span> <span class="n">threshold</span><span class="p">)</span>
-            <span class="n">com</span><span class="p">[</span><span class="nb">slice</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">ndimage</span><span class="o">.</span><span class="n">measurements</span><span class="o">.</span><span class="n">center_of_mass</span><span class="p">(</span><span class="n">marr</span><span class="p">)</span>
-
-    <span class="k">if</span> <span class="n">show</span><span class="p">:</span>
-        <span class="n">plt</span><span class="o">.</span><span class="n">set_cmap</span><span class="p">(</span><span class="s2">&quot;gray&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">title</span><span class="p">:</span>
-            <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="n">title</span> <span class="o">+</span> <span class="s2">&quot;, centroid&quot;</span><span class="p">)</span>
-
-        <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">arr</span><span class="p">[</span><span class="n">show</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:],</span> <span class="n">origin</span><span class="o">=</span><span class="s2">&quot;lower&quot;</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="n">interpolation</span><span class="p">)</span>
-        <span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="o">*</span><span class="n">com</span><span class="p">[</span><span class="nb">slice</span><span class="p">,</span> <span class="p">::</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
-        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
-
-    <span class="k">return</span> <span class="n">com</span>
-
-
-<span class="k">def</span> <span class="nf">coordShift</span><span class="p">(</span><span class="n">first</span><span class="p">,</span> <span class="n">second</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">    returns array with difference of y&amp;x coordinates for every</span>
-<span class="sd">    centroid[slice, y&amp;x-coordinate]</span>
-
-<span class="sd">    if method is None: compute centroid using only brightest 10% of pixels</span>
-<span class="sd">    if method is CT or MR: using pixels above thershold</span>
-<span class="sd">        for CT threshold = -900</span>
-<span class="sd">        for MR threshold = 30</span>
-<span class="sd">    &#39;&#39;&#39;</span>
-    <span class="k">if</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">first</span><span class="p">)</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">second</span><span class="p">)</span> <span class="ow">and</span>
-            <span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">first</span><span class="p">)))</span> <span class="o">==</span> <span class="p">(</span><span class="mi">2</span><span class="p">,)):</span>
-        <span class="n">z</span><span class="p">,</span> <span class="n">xy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">first</span><span class="p">)</span>
-        <span class="n">diff</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">z</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
-        <span class="k">for</span> <span class="nb">slice</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">z</span><span class="p">):</span>
-            <span class="n">diff</span><span class="p">[</span><span class="nb">slice</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">first</span><span class="p">[</span><span class="nb">slice</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">second</span><span class="p">[</span><span class="nb">slice</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
-            <span class="n">diff</span><span class="p">[</span><span class="nb">slice</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">first</span><span class="p">[</span><span class="nb">slice</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">second</span><span class="p">[</span><span class="nb">slice</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
-        <span class="k">return</span> <span class="n">diff</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Wrong shape! coordShift returned &#39;False&#39;&quot;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="kc">False</span>
-
-
-<span class="k">def</span> <span class="nf">sitk_mask</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">mask</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">    masks img (SimpleITK.Image) using mask (SimpleITK.Image)</span>
-<span class="sd">    &#39;&#39;&#39;</span>
-    <span class="n">arr</span> <span class="o">=</span> <span class="n">sitk</span><span class="o">.</span><span class="n">GetArrayFromImage</span><span class="p">(</span><span class="n">img</span><span class="p">)</span>
-    <span class="n">maskA</span> <span class="o">=</span> <span class="n">sitk</span><span class="o">.</span><span class="n">GetArrayFromImage</span><span class="p">(</span><span class="n">mask</span><span class="p">)</span>
-
-    <span class="n">imgMaskedA</span> <span class="o">=</span> <span class="n">arr</span><span class="o">*</span><span class="n">maskA</span>
-
-    <span class="k">return</span> <span class="n">sitk</span><span class="o">.</span><span class="n">GetImageFromArray</span><span class="p">(</span><span class="n">imgMaskedA</span><span class="p">)</span>
-
-
-<span class="c1"># to view in 3D Slicer, type this in IPython console or in jupyter notebook:</span>
-<span class="c1"># %env SITK_SHOW_COMMAND /home/david/Downloads/Slicer-4.5.0-1-linux-amd64/Slicer</span>
-<span class="c1"># sitk.Show(imgFillingCT)</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">ct</span> <span class="o">=</span> <span class="n">Volume</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">pathCT</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;CT&quot;</span><span class="p">,</span> <span class="n">ref</span><span class="o">=</span><span class="n">idxSlice</span><span class="p">)</span>
+<span class="n">mr</span> <span class="o">=</span> <span class="n">Volume</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">pathMR</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;MR&quot;</span><span class="p">,</span> <span class="n">ref</span><span class="o">=</span><span class="n">idxSlice</span><span class="p">)</span>
 </pre></div>
 
 </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area"><div class="prompt"></div>
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Import DICOM Files from:  ../data/cropped_CT-a/
+Import DICOM Files from:  ../data/cropped_MR-d-a/
+</pre>
+</div>
+</div>
+
 </div>
 </div>
 
@@ -11897,60 +11813,521 @@ div#notebook {
 <div class="prompt input_prompt">In&nbsp;[4]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="k">class</span> <span class="nc">Volume</span><span class="p">:</span>
-    <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">    SimpleITK.Image with convenient properties and functions</span>
-<span class="sd">    &#39;&#39;&#39;</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-                 <span class="n">denoise</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">ref</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">info</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-        <span class="k">if</span><span class="p">(</span><span class="n">path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Error: no path given!&quot;</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="o">=</span> <span class="n">path</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">=</span> <span class="n">method</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">denoise</span> <span class="o">=</span> <span class="n">denoise</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">ref</span> <span class="o">=</span> <span class="n">ref</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">info</span> <span class="o">=</span> <span class="n">info</span>
-
-            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Import DICOM Files from: &quot;</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">img</span> <span class="o">=</span> <span class="n">sitk_read</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">denoise</span><span class="p">)</span>
-
-            <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">img</span> <span class="ow">is</span> <span class="kc">True</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">denoise</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">):</span>
-                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">...denoising...&quot;</span><span class="p">)</span>
-
-            <span class="bp">self</span><span class="o">.</span><span class="n">xSpace</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ySpace</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">zSpace</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">img</span><span class="o">.</span><span class="n">GetSpacing</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="n">method</span>
-
-            <span class="k">if</span> <span class="n">denoise</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
-                <span class="n">a</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">title</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="n">a</span> <span class="o">+</span> <span class="s2">&quot; denoised&quot;</span>
-
-            <span class="k">if</span> <span class="n">info</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
-                <span class="n">a</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">title</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="n">a</span> <span class="o">+</span> <span class="s2">&quot;, &quot;</span> <span class="o">+</span> <span class="n">info</span>
-
-    <span class="k">def</span> <span class="nf">show</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ref</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">ref</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">ref</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ref</span>
-
-        <span class="k">if</span> <span class="n">interpolation</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">a</span> <span class="o">=</span> <span class="s1">&#39;nearest&#39;</span>
-
-        <span class="n">sitk_show</span><span class="p">(</span><span class="n">img</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">img</span><span class="p">,</span> <span class="n">ref</span><span class="o">=</span><span class="n">ref</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">title</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="n">a</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">centroid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">percentLimit</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">title</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">title</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">title</span>
-
-        <span class="k">if</span> <span class="n">method</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">method</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">centroid</span> <span class="o">=</span> <span class="n">sitk_centroid</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">img</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="n">show</span><span class="p">,</span>
-                                      <span class="n">percentLimit</span><span class="o">=</span><span class="n">percentLimit</span><span class="p">,</span>
-                                      <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">)</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">ct</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<span class="n">mr</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
 
 </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area"><div class="prompt"></div>
+
+
+<div class="output_png output_subarea ">
+<img src="data:image/png;base64,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
+lNhd+BcuAAAAAElFTkSuQmCC
+"
+>
+</div>
+
+</div>
+
+<div class="output_area"><div class="prompt"></div>
+
+
+<div class="output_png output_subarea ">
+<img src="data:image/png;base64,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
+9H8KZfPh9Xh+RgAAAABJRU5ErkJggg==
+"
+>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[5]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">ct</span><span class="o">.</span><span class="n">centroid</span><span class="p">(</span><span class="n">show</span><span class="o">=</span><span class="n">idxSlice</span><span class="p">)</span>
+<span class="n">mr</span><span class="o">.</span><span class="n">centroid</span><span class="p">(</span><span class="n">show</span><span class="o">=</span><span class="n">idxSlice</span><span class="p">)</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area"><div class="prompt"></div>
+
+
+<div class="output_png output_subarea ">
+<img src="data:image/png;base64,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
+"
+>
+</div>
+
+</div>
+
+<div class="output_area"><div class="prompt"></div>
+
+
+<div class="output_png output_subarea ">
+<img src="data:image/png;base64,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
+"
+>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[6]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">distortion</span> <span class="o">=</span> <span class="n">fun</span><span class="o">.</span><span class="n">coordShift</span><span class="p">(</span><span class="n">ct</span><span class="o">.</span><span class="n">centroid</span><span class="p">,</span> <span class="n">mr</span><span class="o">.</span><span class="n">centroid</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">distortion</span><span class="p">)</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area"><div class="prompt"></div>
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>[[ 2.12774838 -0.19502899]
+ [ 2.12412637 -0.18818472]
+ [ 1.87101585 -0.50180867]
+ [ 1.85592904 -0.50156338]
+ [ 1.83711667 -0.49272504]
+ [ 1.79966078 -0.46996685]
+ [ 1.79309023 -0.44464792]
+ [ 1.78253754 -0.44026311]
+ [ 1.7508088  -0.41006781]
+ [ 1.74773124 -0.37594092]
+ [ 1.74822666 -0.3381849 ]
+ [ 1.75084497 -0.29726032]
+ [ 1.75365779 -0.25488051]
+ [ 1.79410594 -0.20042023]
+ [ 1.76268512 -0.15275259]
+ [ 1.74603053 -0.09676552]
+ [ 1.73209612 -0.06195007]
+ [ 1.71912088 -0.00822556]
+ [ 1.7350771   0.0231203 ]
+ [ 1.72108313  0.04667457]
+ [ 1.71693567  0.08433604]
+ [ 1.70489466  0.10537333]
+ [ 1.68742933  0.14283347]
+ [ 1.64752643  0.19417151]
+ [ 1.57331536  0.24071846]
+ [ 1.5983528   0.26215861]
+ [ 1.55435557  0.28727327]
+ [ 1.53273631  0.30419026]
+ [ 1.54652155  0.33502639]
+ [ 1.50047293  0.38832318]
+ [ 1.49868603  0.42958362]
+ [ 1.49759278  0.46946803]
+ [ 1.49649642  0.50764304]
+ [ 1.49126563  0.54106221]
+ [ 1.4698061   0.5572757 ]
+ [ 1.45839981  0.58312649]
+ [ 1.44436634  0.60655582]
+ [ 1.43160953  0.62870881]
+ [ 1.4200393   0.64937273]
+ [ 1.41059211  0.66918362]
+ [ 1.40194907  0.68695236]
+ [ 1.42135961  0.70246209]
+ [ 1.41203045  0.71695468]
+ [ 1.10706669  0.66624656]
+ [ 1.10089195  0.68279126]
+ [ 1.09471914  0.70157636]
+ [ 0.63923286  0.67005638]
+ [ 0.63685135  0.69480139]
+ [ 0.63444268  0.72500455]
+ [ 0.85479055  0.39246986]
+ [ 0.85172154  0.42859187]
+ [ 0.80796917  0.44538816]
+ [ 0.80235588  0.48181596]
+ [ 0.79507588  0.51616106]
+ [ 0.78476589  0.54758996]
+ [ 0.77515661  0.5762939 ]
+ [ 0.76484859  0.6197989 ]
+ [ 0.763907    0.65820881]
+ [ 0.77505546  0.68919782]
+ [ 0.76889839  0.72662855]
+ [ 0.7635024   0.74760489]
+ [ 0.75588596  0.76835768]
+ [ 0.47583049  0.47755616]
+ [ 0.81831174  0.53708634]
+ [ 0.45794274  0.52386379]
+ [ 0.4353284   0.55499861]
+ [ 0.42766472  0.57706438]
+ [ 0.57282982  0.32606287]
+ [ 0.57178239  0.34739186]
+ [ 0.53843165  0.36512255]
+ [ 0.56303443  0.39079741]
+ [ 0.55574495  0.41499754]
+ [ 0.42076072  0.12788239]
+ [ 0.43989235  0.15917475]
+ [ 0.43175754  0.18140063]
+ [ 0.42547241  0.20260475]
+ [ 0.44794313  0.23294288]
+ [ 0.46816098  0.24095729]
+ [ 0.46886174  0.2616659 ]
+ [ 0.46896424  0.28031764]
+ [ 0.46662973  0.29975781]
+ [ 0.4638591   0.31972439]
+ [ 0.46626504  0.35176702]
+ [ 0.40971785  0.37466906]
+ [ 0.40768277  0.40060309]
+ [ 0.40779315  0.42810597]
+ [ 0.36031263  0.42615074]
+ [ 0.36512165  0.45666771]
+ [ 0.00519302  0.3928408 ]
+ [ 0.06680812  0.07470803]
+ [ 0.06422736 -0.19071185]
+ [ 0.05403344 -0.17447737]
+ [ 0.14040829 -0.15641445]
+ [ 0.14567234 -0.13655699]
+ [ 0.18294246 -0.1209353 ]
+ [ 0.19145354 -0.10424291]
+ [ 0.83752814 -0.07212152]
+ [ 0.86137727 -0.06600055]
+ [ 0.87580758 -0.0544557 ]
+ [ 0.55669518 -0.06639051]
+ [ 0.57649933 -0.03321504]
+ [ 0.57664497 -0.01002735]
+ [ 0.29936713  0.04267637]
+ [ 0.30838096  0.05553503]
+ [ 0.31230917  0.06288566]]
+</pre>
+</div>
+</div>
+
 </div>
 </div>
 
