@@ -1,9 +1,0 @@
-links:
-
-centroid:
-http://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.ndimage.measurements.center_of_mass.html
-http://stackoverflow.com/questions/23020659/fastest-way-to-calculate-the-centroid-of-a-set-of-coordinate-tuples-in-python-wi
-
-agar:
-http://www.agargel.com.br/agar-tec-en.html
-

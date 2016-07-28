@@ -21,7 +21,9 @@ xSpace, ySpace, zSpace = imgOriginalMR.GetSpacing()
 idxSlice = 10
 
 fun.sitk_show(imgOriginalCT[:,:,idxSlice], title="CT, original")
-centroidCT = fun.sitk_centroid(imgOriginalCT, show = 1)
+centroidCT = fun.sitk_centroid(imgOriginalCT, show = idxSlice)
 
 fun.sitk_show(imgOriginalMR[:,:,idxSlice], title="MR, original")
-centroidMR = fun.sitk_centroid(imgOriginalMR, show = 1)
+centroidMR = fun.sitk_centroid(imgOriginalMR, show = idxSlice)
+
+distortion = fun.coordShift(centroidCT, centroidMR)

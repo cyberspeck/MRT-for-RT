@@ -60,29 +60,29 @@ def sitk_show(img, title=None, margin=0.05, dpi=40, scale=3,
     plt.show()
 
 
-def sitk_centroid(img, show=False, percentLimit=0.9, interpolation='nearest'):
+def sitk_centroid(img, show=False, percentLimit=0.9, interpolation='nearest', title=None):
     '''
     returns array with y&x coordinate of centroid for every slice of img
     centroid[slice, y&x-coordinate]
     '''
 #    xSpace, ySpace, zSpace = img.GetSpacing()
     arr = sitk.GetArrayFromImage(img)
-#    z, y, x = np.shape(arr)
+    z, y, x = np.shape(arr)
     # create array with centroid coordinates of rod in each slice
-#    centroid = np.zeros((z, 2))
-#    for slice in range(z):
-        # ndimage returns coordinates this order: x,y?
-#        centroid[slice,:] = np.array(ndimage.measurements.center_of_mass(arr[slice,:,:]))
-    
-    hist, bins = np.histogram(arr.ravel(), density=True, bins=100)
-    threshold = bins[np.cumsum(hist) * (bins[1] - bins[0]) > percentLimit][0]
-    marr = np.ma.masked_less(arr,threshold)
-    com = ndimage.measurements.center_of_mass(marr)
+    com = np.zeros((z, 2))
+    for slice in range(z):
+        hist, bins = np.histogram(arr[slice,:,:].ravel(), density=True, bins=100)
+        threshold = bins[np.cumsum(hist) * (bins[1] - bins[0]) > percentLimit][0]
+        marr = np.ma.masked_less(arr[slice,:,:],threshold)
+        com[slice,:] = ndimage.measurements.center_of_mass(marr)
 
     if show:
         plt.set_cmap("gray")
+        if title:
+            plt.title(title)
+
         plt.imshow(arr[show,:,:], origin="lower", interpolation=interpolation)
-        plt.scatter(*com[::-1])
+        plt.scatter(*com[slice,::-1])
         plt.show()
  #       centroid_int = centroid.astype(int)
  #       arrCentroid = np.zeros((z, y, x))
