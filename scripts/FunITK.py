@@ -31,8 +31,8 @@ class Volume:
     '''
     SimpleITK.Image with convenient properties and functions
     '''
-    def __init__(self, path=None, method=None,
-                 denoise=False, ref=1, info=False):
+    def __init__(self, path=None, method=None, denoise=False, ref=1,
+                 info=False, seeds=None):
         if(path is None):
             print("Error: no path given!")
         else:
@@ -41,6 +41,11 @@ class Volume:
             self.denoise = denoise
             self.ref = ref
             self.info = info
+            self.centroid = False
+            self.mask = False
+            self.masked = False
+            if seeds:
+                self.seeds=seeds
 
             print("Import DICOM Files from: ", path)
             self.img = sitk_read(path, denoise)
@@ -67,8 +72,27 @@ class Volume:
             a = 'nearest'
 
         sitk_show(img=self.img, ref=ref, title=self.title, interpolation=a)
+        
+    def showSeed(self, title=None, interpolation='nearest'):
+        if self.seeds is False:
+            print("Volume has no seeds yet.")
+            return None
 
-    def centroid(self, show=False, percentLimit=0.9, title=None, method=None):
+        x,y,z = self.seeds[0]
+        arr = sitk.GetArrayFromImage(self.img)
+        plt.set_cmap("gray")
+        if title is None:
+            plt.title(self.title + ", seed")
+
+        plt.imshow(arr[z, :, :], interpolation=interpolation)
+        plt.scatter(x,y)
+        plt.show()
+
+    def getCentroid(self, show=False, percentLimit=0.9,
+                      title=None, method=None, new=False):
+        if (self.centroid is not False and new is False):
+            return self.centroid
+
         if title is None:
             title = self.title
 
@@ -78,7 +102,83 @@ class Volume:
         self.centroid = sitk_centroid(self.img, show=show,
                                       percentLimit=percentLimit,
                                       title=title, method=method)
+        return self.centroid        
+        
+    def showCentroid(self, title=None, interpolation='nearest', ref=None):
+        if self.centroid is False:
+            print("Volume has no centroid yet. use Volume.getCentroid() first!")
+            return None
 
+        if title is None:
+            title = self.title
+        if ref is None:
+            ref = self.ref
+        centroid_show(img=self.img, com=self.centroid, title=title,
+                      interpolation=interpolation, ref=ref)
+        
+
+    def getMask(self, lower=None, upper=None, replaceValue=1, new=False):
+        if self.mask and new == False:
+            return self.mask
+
+        if self.method is "CT":
+            if lower is None:
+                lower = 0
+            if upper is None:
+                upper = 300
+                
+        if self.method is "MR":
+            if lower is None:
+                lower = 80
+            if upper is None:
+                upper = 1500
+
+        self.mask = sitk_getMask(img=self.img, seedList=self.seeds,
+                                 lower=lower, upper=upper,
+                                 replaceValue=replaceValue)
+        return self.mask
+
+    def applyMask(self, mask=None):
+        if mask is None:
+            if self.mask:
+                mask = self.mask
+            else:
+                print("Volume has no mask yet. use Volume.getCentroid() first!")
+                return None
+                
+        self.masked = sitk_applyMask(self.img, mask)
+        return self.masked
+        
+    def showMask(self, interpolation=None, ref=None):
+        if self.mask is False:
+            print ("Volume has no mask yet. use Volume.getCentroid() first!")
+            return None
+
+        if ref is None:
+            ref = self.ref
+
+        if interpolation is None:
+            interpolation = 'nearest'
+
+        title = self.title + ", mask"
+
+        sitk_show(img=self.mask, ref=ref, title=title,
+                  interpolation=interpolation)
+        
+    def showMasked(self, interpolation=None, ref=None):
+        if self.masked is False:
+            print ("Volume has not been masked yet. use Volume.getCentroid() first!")
+            return None
+        if ref is None:
+            ref = self.ref
+
+        if interpolation is None:
+            interpolation = 'nearest'
+
+        title = self.title + ", mask"
+
+        sitk_show(img=self.masked, ref=ref, title=title,
+                  interpolation=interpolation)
 
 def sitk_read(directory, denoise=False):
     '''
@@ -107,7 +207,7 @@ def sitk_show(img, ref=1, title=None, interpolation='nearest'):
     if title:
         plt.title(title)
 
-    plt.imshow(arr, origin="lower", interpolation=interpolation)
+    plt.imshow(arr, interpolation=interpolation)
     plt.show()
 
 
@@ -128,36 +228,41 @@ def sitk_centroid(img, show=False, percentLimit=0.9, interpolation='nearest',
     com = np.zeros((z, 2))
 
     if method == "CT":
-        for slice in range(z):
+        threshold = -900 
             # Set Threshold at -900 (air starts at -950)
-            marr = np.ma.masked_less(arr[slice, :, :], -900)
-            com[slice, :] = ndimage.measurements.center_of_mass(marr)
 
     if method == "MR":
-        for slice in range(z):
+        threshold = 30
             # Set Threshold at 30 (air level in 3D slicer)
-            marr = np.ma.masked_less(arr[slice, :, :], 30)
-            com[slice, :] = ndimage.measurements.center_of_mass(marr)
 
     if (method != "MR" and method != "CT"):
         for slice in range(z):
             hist, bins = np.histogram(arr[slice, :, :].ravel(),
                                       density=True, bins=100)
-            threshold = bins[np.cumsum(hist) * (bins[1] - bins[0]) > percentLimit][0]
+            threshold = bins[np.cumsum(hist) * (bins[1] - bins[0])
+                             > percentLimit][0]
             marr = np.ma.masked_less(arr[slice, :, :], threshold)
-            com[slice, :] = ndimage.measurements.center_of_mass(marr)
+            com[slice, ::-1] = ndimage.measurements.center_of_mass(marr)
+    else:        
+        for slice in range(z):
+            marr = np.ma.masked_less(arr[slice, :, :], threshold)
+            com[slice, ::-1] = ndimage.measurements.center_of_mass(marr)
 
     if show:
+        centroid_show(img, com=com, title=title,
+                      interpolation=interpolation, ref=show)
+
+    return com
+
+def centroid_show(img, com, title=None, interpolation='nearest', ref=1):
+        arr = sitk.GetArrayFromImage(img)
         plt.set_cmap("gray")
         if title:
             plt.title(title + ", centroid")
 
-        plt.imshow(arr[show, :, :], origin="lower", interpolation=interpolation)
-        plt.scatter(*com[slice, ::-1])
+        plt.imshow(arr[ref, :, :], interpolation=interpolation)
+        plt.scatter(*com[ref, :])
         plt.show()
-
-    return com
-
 
 def coordShift(first, second):
     '''
@@ -181,8 +286,12 @@ def coordShift(first, second):
         print("Wrong shape! coordShift returned 'False'")
         return False
 
+def sitk_getMask(img, seedList, upper, lower, replaceValue=1):
+    return sitk.ConnectedThreshold(image1=img, seedList=seedList, 
+                                   lower=lower, upper=upper,
+                                   replaceValue=replaceValue)
 
-def sitk_mask(img, mask):
+def sitk_applyMask(img, mask):
     '''
     masks img (SimpleITK.Image) using mask (SimpleITK.Image)
     '''
