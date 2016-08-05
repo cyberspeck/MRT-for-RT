@@ -54,6 +54,7 @@ class Volume:
                 print("\n...denoising...")
 
             self.xSpace, self.ySpace, self.zSpace = self.img.GetSpacing()
+            self.xSize, self.ySize, self.zSize = self.img.GetSize()
             self.title = method
 
             if denoise is True:
@@ -131,27 +132,28 @@ class Volume:
             if lower is None:
                 lower = 80
             if upper is None:
-                upper = 1500
-
+                upper = 1500            
+ 
         self.mask = sitk_getMask(img=self.img, seedList=self.seeds,
                                  lower=lower, upper=upper,
                                  replaceValue=replaceValue)
         return self.mask
 
-    def applyMask(self, mask=None):
-        if mask is None:
+    def applyMask(self, mask=None, replaceArray=False):
+        if (mask is None):
             if self.mask:
                 mask = self.mask
             else:
-                print("Volume has no mask yet. use Volume.getCentroid() first!")
+                print("Volume has no mask yet. use Volume.getMask() first!")
                 return None
-                
-        self.masked = sitk_applyMask(self.img, mask)
+                        
+        self.masked = sitk_applyMask(self.img, mask, replaceArray=replaceArray)
+        
         return self.masked
         
     def showMask(self, interpolation=None, ref=None):
         if self.mask is False:
-            print ("Volume has no mask yet. use Volume.getCentroid() first!")
+            print("Volume has no mask yet. use Volume.getMask() first!")
             return None
 
         if ref is None:
@@ -167,7 +169,7 @@ class Volume:
         
     def showMasked(self, interpolation=None, ref=None):
         if self.masked is False:
-            print ("Volume has not been masked yet. use Volume.getCentroid() first!")
+            print ("Volume has not been masked yet. use Volume.applyMask() first!")
             return None
         if ref is None:
             ref = self.ref
@@ -291,14 +293,33 @@ def sitk_getMask(img, seedList, upper, lower, replaceValue=1):
                                    lower=lower, upper=upper,
                                    replaceValue=replaceValue)
 
-def sitk_applyMask(img, mask):
+def sitk_applyMask(img, mask, replaceArray=False):
     '''
     masks img (SimpleITK.Image) using mask (SimpleITK.Image)
     '''
+    if img.GetSize() != mask.GetSize():
+        print(mask.GetSize())
+        print(img.GetSize())
+        
+        print("mask and image are not the same size!")
+        return False
+    
     arr = sitk.GetArrayFromImage(img)
     maskA = sitk.GetArrayFromImage(mask)
+    xSize, ySize, zSize = img.GetSize()
 
     imgMaskedA = arr*maskA
+    
+    if (np.shape(replaceArray) == (img.GetDepth(), 1) and
+     replaceArray is not False):
+        for slice in range(zSize):
+            for x in range(xSize):
+                for y in range(ySize):
+                    if maskA[slice, y, x] == 1:
+                        #print("a: ", mask[slice, y, x], "type: ", type(mask[slice, y, x]))
+                        #print("b: ", np.uint8(1000*replaceArray[slice]), "type: ", type(np.uint8(1000*replaceArray[slice])))
+                        imgMaskedA[slice, y, x] = 1000*replaceArray[slice]
+                        #print("c: ", mask[slice, y, x]), "type: ", type(mask[slice, y, x])
 
     return sitk.GetImageFromArray(imgMaskedA)
 
