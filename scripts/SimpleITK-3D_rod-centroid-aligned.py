@@ -7,42 +7,41 @@ Created on Sun Jul 17 15:17:57 2016
 
 import FunITK as fun
 from FunITK import Volume
+import numpy as np
 
 pathCT = "../data/cropped_CT-a/"
 pathMR = "../data/cropped_MR-d-a/"
 idxSlice = 10
 
-CT = Volume(path=pathCT, method="CT", ref=idxSlice, seeds=[(6,8,idxSlice)])
-# CT.show()
-# CT.showSeed()
-CT.getMask()
-#CT.applyMask()
-#CT.showMask()
-#CT.showMasked()
+CT = Volume(path=pathCT, method="CT", ref=idxSlice, seeds=[(6, 8, idxSlice)])
 CT.getCentroid()
-#CT.showCentroid()
+CT.showCentroid()
 
 MR = Volume(path=pathMR, method="MR", ref=idxSlice, seeds=[(6,8,idxSlice)])
 MR.getCentroid()
-#MR.showCentroid()
+MR.showCentroid()
 
-distortion = coordShift(CT.centroid, MR.centroid)
-print("CT, centroid[:,:,10]: ", CT.centroid[10])
-print("MR, centroid[:,:,10]: ", MR.centroid[10])
-print("distrotion[:,:,10]: ", distortion[10])
+# this calculates the coordinate difference of MR.centroid relative to CT.centroid
+distortion = fun.coordShift(CT.centroid, MR.centroid)
+print("\n")
+print("CT, centroid[:,:,{}]: {}".format(idxSlice, CT.centroid[idxSlice]))
+print("MR, centroid[:,:,{}]: {}".format(idxSlice, MR.centroid[idxSlice]))
+print("distrotion[:,:,{}]: {}".format(idxSlice, distortion[idxSlice]))
 
-distortionNorm = np.zeros((CT.zSize, 1))
+# this calculates the norm (=absolute distance) between the centroids in each slice
+distortionNorm = fun.coordDist(distortion)
+print("distrotionNorm[:,:,{}]: {}".format(idxSlice, distortionNorm[idxSlice]))
 
-for slice in range(CT.zSize):
-    distortionNorm[slice,:] = np.linalg.norm(distortion[slice,:])
-
-print("distrotionNorm[:,:,10]: ", distortionNorm[10])
-
+# creates mask (pixel values either 0 or 1)
+CT.getMask()
+# creates CT.masked using CT.mask,
+# but assigns each slice the centroid distance as pixel value
 CT.applyMask(replaceArray=distortionNorm)
 
-#CT.mask[6,7,CT.zSize-1]
-#CT.showMask()
-#CT.showMasked()
+# exports 3D image as .mha file
+fun.sitk_write(CT.masked, "../data/", "CT_distortionNorm.mha")
 
-#%env SITK_SHOW_COMMAND /home/david/Downloads/Slicer-4.5.0-1-linux-amd64/Slicer
-#sitk.Show(MR.img)
+# instead of opening the created file manually, you can use this lines in
+# the IPython console to start 3D Slicer and open it automatically:
+# %env SITK_SHOW_COMMAND /home/david/Downloads/Slicer-4.5.0-1-linux-amd64/Slicer
+# sitk.Show(CT.masked)
