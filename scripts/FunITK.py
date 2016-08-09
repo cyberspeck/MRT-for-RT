@@ -6,6 +6,11 @@ Volume class
 custom FUNcitons using SimpleITK
 
 @author: david
+
+works best with cropped CT and MRI images (showing only one rod),
+both Volumes should have the same PixelSpacing
+ and x and y PixelSpacing shoult be equal
+
 based on:
 https://pyscience.wordpress.com/2014/10/19/image-segmentation-with-python-and-SimpleITK/
 http://insightsoftwareconsortium.github.io/SimpleITK-Notebooks/03_Image_Details.html
@@ -139,7 +144,7 @@ class Volume:
                                  replaceValue=replaceValue)
         return self.mask
 
-    def applyMask(self, mask=None, replaceArray=False):
+    def applyMask(self, mask=None, replaceArray=False, spacing=1):
         if (mask is None):
             if self.mask:
                 mask = self.mask
@@ -147,7 +152,7 @@ class Volume:
                 print("Volume has no mask yet. use Volume.getMask() first!")
                 return None
 
-        self.masked = sitk_applyMask(self.img, mask, replaceArray=replaceArray)
+        self.masked = sitk_applyMask(self.img, mask, replaceArray=replaceArray, spacing=spacing)
 
         return self.masked
 
@@ -228,6 +233,7 @@ def sitk_centroid(img, show=False, percentLimit=0.9, interpolation='nearest',
     '''
     returns array with y&x coordinate of centroid for every slice of img
     centroid[slice, y&x-coordinate]
+cing()[0])
 
     if method is None: compute centroid using only brightest 10% of pixels
     if method is CT or MR: using pixels above thershold
@@ -321,11 +327,12 @@ def sitk_getMask(img, seedList, upper, lower, replaceValue=1):
                                    replaceValue=replaceValue)
 
 
-def sitk_applyMask(img, mask, replaceArray=False):
+def sitk_applyMask(img, mask, replaceArray=False, spacing=1):
     '''
     masks img (SimpleITK.Image) using mask (SimpleITK.Image)
-    if a replaceArray is given, the values*1000 of the array will be used
+    if a replaceArray is given, the spacing*values*1000 of the array will be used
     as pixel intensity for an entire slice each
+    
     '''
     if img.GetSize() != mask.GetSize():
         print(mask.GetSize())
@@ -346,7 +353,7 @@ def sitk_applyMask(img, mask, replaceArray=False):
             for x in range(xSize):
                 for y in range(ySize):
                     if maskA[slice, y, x] == 1:
-                        imgMaskedA[slice, y, x] = 1000*replaceArray[slice]
+                        imgMaskedA[slice, y, x] = 1000*replaceArray[slice]*spacing
 
     return sitk.GetImageFromArray(imgMaskedA)
 

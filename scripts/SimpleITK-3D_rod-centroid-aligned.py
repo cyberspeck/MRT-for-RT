@@ -7,7 +7,6 @@ Created on Sun Jul 17 15:17:57 2016
 
 import FunITK as fun
 from FunITK import Volume
-import numpy as np
 
 pathCT = "../data/cropped_CT-a/"
 pathMR = "../data/cropped_MR-d-a/"
@@ -17,7 +16,7 @@ CT = Volume(path=pathCT, method="CT", ref=idxSlice, seeds=[(6, 8, idxSlice)])
 CT.getCentroid()
 CT.showCentroid()
 
-MR = Volume(path=pathMR, method="MR", ref=idxSlice, seeds=[(6,8,idxSlice)])
+MR = Volume(path=pathMR, method="MR", ref=idxSlice, seeds=[(6, 8, idxSlice)])
 MR.getCentroid()
 MR.showCentroid()
 
@@ -35,8 +34,8 @@ print("distrotionNorm[:,:,{}]: {}".format(idxSlice, distortionNorm[idxSlice]))
 # creates mask (pixel values either 0 or 1)
 CT.getMask()
 # creates CT.masked using CT.mask,
-# but assigns each slice the centroid distance as pixel value
-CT.applyMask(replaceArray=distortionNorm)
+# but assigns each slice the centroid distance*1000*spacing as pixel value
+CT.applyMask(replaceArray=distortionNorm, spacing=CT.img.GetSpacing()[0])
 
 # exports 3D image as .mha file
 fun.sitk_write(CT.masked, "../data/", "CT_distortionNorm.mha")
