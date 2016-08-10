@@ -202,6 +202,7 @@ class Volume:
 
         self.dice = dice_circle(self.mask, self.centroid, radius=radii[dcs.argmax()])
         print("max dice-coefficient obtained for {} when compared to circle with radius = {}".format(self.method, radii[dcs.argmax()]))
+        print("max dice-coefficient average for the whole volume is: {}".format(dcs.max()))
         return radii[dcs.argmax()]
 
 
