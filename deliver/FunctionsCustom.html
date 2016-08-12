@@ -11588,10 +11588,8 @@ ul.typeahead-list > li > a {
 .highlight .err { border: 1px solid #FF0000 } /* Error */
 .highlight .k { color: #008000; font-weight: bold } /* Keyword */
 .highlight .o { color: #666666 } /* Operator */
-.highlight .ch { color: #408080; font-style: italic } /* Comment.Hashbang */
 .highlight .cm { color: #408080; font-style: italic } /* Comment.Multiline */
 .highlight .cp { color: #BC7A00 } /* Comment.Preproc */
-.highlight .cpf { color: #408080; font-style: italic } /* Comment.PreprocFile */
 .highlight .c1 { color: #408080; font-style: italic } /* Comment.Single */
 .highlight .cs { color: #408080; font-style: italic } /* Comment.Special */
 .highlight .gd { color: #A00000 } /* Generic.Deleted */
@@ -11626,7 +11624,6 @@ ul.typeahead-list > li > a {
 .highlight .nv { color: #19177C } /* Name.Variable */
 .highlight .ow { color: #AA22FF; font-weight: bold } /* Operator.Word */
 .highlight .w { color: #bbbbbb } /* Text.Whitespace */
-.highlight .mb { color: #666666 } /* Literal.Number.Bin */
 .highlight .mf { color: #666666 } /* Literal.Number.Float */
 .highlight .mh { color: #666666 } /* Literal.Number.Hex */
 .highlight .mi { color: #666666 } /* Literal.Number.Integer */
@@ -11748,13 +11745,15 @@ div#notebook {
 
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<div class=" highlight hl-ipython3"><pre><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">scipy</span> <span class="k">import</span> <span class="n">ndimage</span>
 <span class="kn">import</span> <span class="nn">SimpleITK</span> <span class="k">as</span> <span class="nn">sitk</span>
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">skimage.draw</span> <span class="k">import</span> <span class="n">circle</span>
 </pre></div>
 
 </div>
@@ -11764,13 +11763,12 @@ div#notebook {
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">sitk_read</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="n">denoise</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<div class=" highlight hl-ipython3"><pre><span class="k">def</span> <span class="nf">sitk_read</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="n">denoise</span><span class="o">=</span><span class="k">False</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    returns DICOM files as &quot;SimpleITK.Image&quot; data type (3D)</span>
-<span class="sd">    </span>
 <span class="sd">    if denoise is true: uses SimpleITK to denoise data</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">reader</span> <span class="o">=</span> <span class="n">sitk</span><span class="o">.</span><span class="n">ImageSeriesReader</span><span class="p">()</span>
@@ -11785,26 +11783,34 @@ div#notebook {
                                   <span class="n">numberOfIterations</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">sitk_show</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">ref</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="s1">&#39;nearest&#39;</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">sitk_write</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">output_dir</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="s">&#39;3DImage.mha&#39;</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    saves image as .mha file</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">output_file_name_3D</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
+    <span class="n">sitk</span><span class="o">.</span><span class="n">WriteImage</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">output_file_name_3D</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">sitk_show</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">ref</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="k">None</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="s">&#39;nearest&#39;</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    shows plot of img at z=ref</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">arr</span> <span class="o">=</span> <span class="n">sitk</span><span class="o">.</span><span class="n">GetArrayFromImage</span><span class="p">(</span><span class="n">img</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">ref</span><span class="p">])</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">set_cmap</span><span class="p">(</span><span class="s2">&quot;gray&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">set_cmap</span><span class="p">(</span><span class="s">&quot;gray&quot;</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">title</span><span class="p">:</span>
         <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="n">title</span><span class="p">)</span>
 
-    <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span> <span class="n">origin</span><span class="o">=</span><span class="s2">&quot;lower&quot;</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="n">interpolation</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="n">interpolation</span><span class="p">)</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 
 
-<span class="k">def</span> <span class="nf">sitk_centroid</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">percentLimit</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="s1">&#39;nearest&#39;</span><span class="p">,</span>
-                  <span class="n">title</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">sitk_centroid</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="k">False</span><span class="p">,</span> <span class="n">percentLimit</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="s">&#39;nearest&#39;</span><span class="p">,</span>
+                  <span class="n">title</span><span class="o">=</span><span class="k">None</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="k">None</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    returns array with y&amp;x coordinate of centroid for every slice of img</span>
 <span class="sd">    centroid[slice, y&amp;x-coordinate]</span>
-<span class="sd">    </span>
+
 <span class="sd">    if method is None: compute centroid using only brightest 10% of pixels</span>
 <span class="sd">    if method is CT or MR: using pixels above thershold</span>
 <span class="sd">        for CT threshold = -900</span>
@@ -11812,46 +11818,52 @@ div#notebook {
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">arr</span> <span class="o">=</span> <span class="n">sitk</span><span class="o">.</span><span class="n">GetArrayFromImage</span><span class="p">(</span><span class="n">img</span><span class="p">)</span>
     <span class="n">z</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">arr</span><span class="p">)</span>
-    <span class="c1"># create array with centroid coordinates of rod in each slice</span>
+    <span class="c"># create array with centroid coordinates of rod in each slice</span>
     <span class="n">com</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">z</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
 
-    <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;CT&quot;</span><span class="p">:</span>
-        <span class="k">for</span> <span class="nb">slice</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">z</span><span class="p">):</span>
-            <span class="c1"># Set Threshold at -900 (air level measured in 3D slicer)</span>
-            <span class="n">marr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">masked_less</span><span class="p">(</span><span class="n">arr</span><span class="p">[</span><span class="nb">slice</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:],</span> <span class="o">-</span><span class="mi">900</span><span class="p">)</span>
-            <span class="n">com</span><span class="p">[</span><span class="nb">slice</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">ndimage</span><span class="o">.</span><span class="n">measurements</span><span class="o">.</span><span class="n">center_of_mass</span><span class="p">(</span><span class="n">marr</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s">&quot;CT&quot;</span><span class="p">:</span>
+        <span class="n">threshold</span> <span class="o">=</span> <span class="o">-</span><span class="mi">900</span>
+        <span class="c"># Set Threshold at -900 (air starts at -950)</span>
 
-    <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;MR&quot;</span><span class="p">:</span>
-        <span class="k">for</span> <span class="nb">slice</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">z</span><span class="p">):</span>
-            <span class="c1"># Set Threshold at 30 (air level measured in 3D slicer)</span>
-            <span class="n">marr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">masked_less</span><span class="p">(</span><span class="n">arr</span><span class="p">[</span><span class="nb">slice</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:],</span> <span class="mi">30</span><span class="p">)</span>
-            <span class="n">com</span><span class="p">[</span><span class="nb">slice</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">ndimage</span><span class="o">.</span><span class="n">measurements</span><span class="o">.</span><span class="n">center_of_mass</span><span class="p">(</span><span class="n">marr</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s">&quot;MR&quot;</span><span class="p">:</span>
+        <span class="n">threshold</span> <span class="o">=</span> <span class="mi">30</span>
+        <span class="c"># Set Threshold at 30 (air level in 3D slicer)</span>
 
-    <span class="k">if</span> <span class="p">(</span><span class="n">method</span> <span class="o">!=</span> <span class="s2">&quot;MR&quot;</span> <span class="ow">and</span> <span class="n">method</span> <span class="o">!=</span> <span class="s2">&quot;CT&quot;</span><span class="p">):</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">method</span> <span class="o">!=</span> <span class="s">&quot;MR&quot;</span> <span class="ow">and</span> <span class="n">method</span> <span class="o">!=</span> <span class="s">&quot;CT&quot;</span><span class="p">):</span>
         <span class="k">for</span> <span class="nb">slice</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">z</span><span class="p">):</span>
             <span class="n">hist</span><span class="p">,</span> <span class="n">bins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">histogram</span><span class="p">(</span><span class="n">arr</span><span class="p">[</span><span class="nb">slice</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span><span class="o">.</span><span class="n">ravel</span><span class="p">(),</span>
-                                      <span class="n">density</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
-            <span class="n">threshold</span> <span class="o">=</span> <span class="n">bins</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">hist</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">bins</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">bins</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">&gt;</span> <span class="n">percentLimit</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+                                      <span class="n">density</span><span class="o">=</span><span class="k">True</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+            <span class="n">threshold</span> <span class="o">=</span> <span class="n">bins</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">hist</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">bins</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">bins</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">&gt;</span>
+                             <span class="n">percentLimit</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
             <span class="n">marr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">masked_less</span><span class="p">(</span><span class="n">arr</span><span class="p">[</span><span class="nb">slice</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:],</span> <span class="n">threshold</span><span class="p">)</span>
-            <span class="n">com</span><span class="p">[</span><span class="nb">slice</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">ndimage</span><span class="o">.</span><span class="n">measurements</span><span class="o">.</span><span class="n">center_of_mass</span><span class="p">(</span><span class="n">marr</span><span class="p">)</span>
+            <span class="n">com</span><span class="p">[</span><span class="nb">slice</span><span class="p">,</span> <span class="p">::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">ndimage</span><span class="o">.</span><span class="n">measurements</span><span class="o">.</span><span class="n">center_of_mass</span><span class="p">(</span><span class="n">marr</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">for</span> <span class="nb">slice</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">z</span><span class="p">):</span>
+            <span class="n">marr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">masked_less</span><span class="p">(</span><span class="n">arr</span><span class="p">[</span><span class="nb">slice</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:],</span> <span class="n">threshold</span><span class="p">)</span>
+            <span class="n">com</span><span class="p">[</span><span class="nb">slice</span><span class="p">,</span> <span class="p">::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">ndimage</span><span class="o">.</span><span class="n">measurements</span><span class="o">.</span><span class="n">center_of_mass</span><span class="p">(</span><span class="n">marr</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">show</span><span class="p">:</span>
-        <span class="n">plt</span><span class="o">.</span><span class="n">set_cmap</span><span class="p">(</span><span class="s2">&quot;gray&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">title</span><span class="p">:</span>
-            <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="n">title</span> <span class="o">+</span> <span class="s2">&quot;, centroid&quot;</span><span class="p">)</span>
-
-        <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">arr</span><span class="p">[</span><span class="n">show</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:],</span> <span class="n">origin</span><span class="o">=</span><span class="s2">&quot;lower&quot;</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="n">interpolation</span><span class="p">)</span>
-        <span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="o">*</span><span class="n">com</span><span class="p">[</span><span class="nb">slice</span><span class="p">,</span> <span class="p">::</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
-        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+        <span class="n">centroid_show</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">com</span><span class="o">=</span><span class="n">com</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span>
+                      <span class="n">interpolation</span><span class="o">=</span><span class="n">interpolation</span><span class="p">,</span> <span class="n">ref</span><span class="o">=</span><span class="n">show</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">com</span>
+
+
+<span class="k">def</span> <span class="nf">centroid_show</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">com</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="k">None</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="s">&#39;nearest&#39;</span><span class="p">,</span> <span class="n">ref</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+        <span class="n">arr</span> <span class="o">=</span> <span class="n">sitk</span><span class="o">.</span><span class="n">GetArrayFromImage</span><span class="p">(</span><span class="n">img</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">set_cmap</span><span class="p">(</span><span class="s">&quot;gray&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">title</span><span class="p">:</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="n">title</span> <span class="o">+</span> <span class="s">&quot;, centroid&quot;</span><span class="p">)</span>
+
+        <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">arr</span><span class="p">[</span><span class="n">ref</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:],</span> <span class="n">interpolation</span><span class="o">=</span><span class="n">interpolation</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="o">*</span><span class="n">com</span><span class="p">[</span><span class="n">ref</span><span class="p">,</span> <span class="p">:])</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 
 
 <span class="k">def</span> <span class="nf">coordShift</span><span class="p">(</span><span class="n">first</span><span class="p">,</span> <span class="n">second</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    returns array with difference of y&amp;x coordinates for every</span>
 <span class="sd">    centroid[slice, y&amp;x-coordinate]</span>
-
 <span class="sd">    if method is None: compute centroid using only brightest 10% of pixels</span>
 <span class="sd">    if method is CT or MR: using pixels above thershold</span>
 <span class="sd">        for CT threshold = -900</span>
@@ -11866,25 +11878,131 @@ div#notebook {
             <span class="n">diff</span><span class="p">[</span><span class="nb">slice</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">first</span><span class="p">[</span><span class="nb">slice</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">second</span><span class="p">[</span><span class="nb">slice</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
         <span class="k">return</span> <span class="n">diff</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Wrong shape! coordShift returned &#39;False&#39;&quot;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="kc">False</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s">&quot;Wrong shape! coordShift returned &#39;False&#39;&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="k">False</span>
 
 
-<span class="k">def</span> <span class="nf">sitk_mask</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">mask</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">coordDist</span><span class="p">(</span><span class="n">shift</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    calculates norm for each entry of array</span>
+<span class="sd">    returns array with list of calculated values</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">shift</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s">&quot;shift has wrong shape!&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="k">False</span>
+
+    <span class="n">dist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">shift</span><span class="p">),</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="k">for</span> <span class="nb">slice</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">shift</span><span class="p">)):</span>
+        <span class="n">dist</span><span class="p">[</span><span class="nb">slice</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">shift</span><span class="p">[</span><span class="nb">slice</span><span class="p">,</span> <span class="p">:])</span>
+    <span class="k">return</span> <span class="n">dist</span>
+
+
+<span class="k">def</span> <span class="nf">sitk_getMask</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">seedList</span><span class="p">,</span> <span class="n">upper</span><span class="p">,</span> <span class="n">lower</span><span class="p">):</span>
+
+    <span class="k">return</span> <span class="n">sitk</span><span class="o">.</span><span class="n">ConnectedThreshold</span><span class="p">(</span><span class="n">image1</span><span class="o">=</span><span class="n">img</span><span class="p">,</span> <span class="n">seedList</span><span class="o">=</span><span class="n">seedList</span><span class="p">,</span>
+                                   <span class="n">lower</span><span class="o">=</span><span class="n">lower</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="n">upper</span><span class="p">,</span>
+                                   <span class="n">replaceValue</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">sitk_applyMask</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">mask</span><span class="p">,</span> <span class="n">replaceArray</span><span class="o">=</span><span class="k">False</span><span class="p">,</span> <span class="n">spacing</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    masks img (SimpleITK.Image) using mask (SimpleITK.Image)</span>
+<span class="sd">    if a replaceArray is given, the spacing*values*1000 of the array will be used</span>
+<span class="sd">    as pixel intensity for an entire slice each</span>
 <span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="n">img</span><span class="o">.</span><span class="n">GetSize</span><span class="p">()</span> <span class="o">!=</span> <span class="n">mask</span><span class="o">.</span><span class="n">GetSize</span><span class="p">():</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">mask</span><span class="o">.</span><span class="n">GetSize</span><span class="p">())</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">img</span><span class="o">.</span><span class="n">GetSize</span><span class="p">())</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="s">&quot;mask and image are not the same size!&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="k">False</span>
+
     <span class="n">arr</span> <span class="o">=</span> <span class="n">sitk</span><span class="o">.</span><span class="n">GetArrayFromImage</span><span class="p">(</span><span class="n">img</span><span class="p">)</span>
     <span class="n">maskA</span> <span class="o">=</span> <span class="n">sitk</span><span class="o">.</span><span class="n">GetArrayFromImage</span><span class="p">(</span><span class="n">mask</span><span class="p">)</span>
+    <span class="n">xSize</span><span class="p">,</span> <span class="n">ySize</span><span class="p">,</span> <span class="n">zSize</span> <span class="o">=</span> <span class="n">img</span><span class="o">.</span><span class="n">GetSize</span><span class="p">()</span>
 
     <span class="n">imgMaskedA</span> <span class="o">=</span> <span class="n">arr</span><span class="o">*</span><span class="n">maskA</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">replaceArray</span><span class="p">)</span> <span class="o">==</span> <span class="p">(</span><span class="n">img</span><span class="o">.</span><span class="n">GetDepth</span><span class="p">(),</span> <span class="mi">1</span><span class="p">)</span> <span class="ow">and</span>
+            <span class="n">replaceArray</span> <span class="ow">is</span> <span class="ow">not</span> <span class="k">False</span><span class="p">):</span>
+        <span class="k">for</span> <span class="nb">slice</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">zSize</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">xSize</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ySize</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">maskA</span><span class="p">[</span><span class="nb">slice</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                        <span class="n">imgMaskedA</span><span class="p">[</span><span class="nb">slice</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1000</span><span class="o">*</span><span class="n">replaceArray</span><span class="p">[</span><span class="nb">slice</span><span class="p">]</span><span class="o">*</span><span class="n">spacing</span>
 
     <span class="k">return</span> <span class="n">sitk</span><span class="o">.</span><span class="n">GetImageFromArray</span><span class="p">(</span><span class="n">imgMaskedA</span><span class="p">)</span>
 
 
-<span class="c1"># to view in 3D Slicer, type this in IPython console or in jupyter notebook:</span>
-<span class="c1"># %env SITK_SHOW_COMMAND /home/david/Downloads/Slicer-4.5.0-1-linux-amd64/Slicer</span>
-<span class="c1"># sitk.Show(imgFillingCT)</span>
+<span class="k">def</span> <span class="nf">dice_circle</span><span class="p">(</span><span class="n">input_img</span><span class="p">,</span> <span class="n">centroid</span><span class="p">,</span> <span class="n">radius</span><span class="o">=</span><span class="mf">2.1</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="k">False</span><span class="p">,</span>
+                <span class="n">interpolation</span><span class="o">=</span><span class="s">&#39;nearest&#39;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Dice coefficient, inspired by</span>
+<span class="sd">     Medpy (http://pythonhosted.org/MedPy/_modules/medpy/metric/binary.html)</span>
+
+<span class="sd">    Computes the Dice coefficient (akas Sorensen index) between a binary</span>
+<span class="sd">    object in an image and a circle.</span>
+
+<span class="sd">    The metric is defined as:</span>
+
+<span class="sd">        DC=\frac{2|A\cap B|}{|A|+|B|}</span>
+
+<span class="sd">    where A is the first and B the second set of samples (here: binary objects)</span>
+<span class="sd">    sys.argv[2]</span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    input_umg : SimpleITK.Image</span>
+<span class="sd">        Input data containing objects. Can be any type but will be converted</span>
+<span class="sd">        into binary: background where 0, object everywhere else.</span>
+<span class="sd">    centroid : array_like</span>
+<span class="sd">        array with coordinates for circle centre</span>
+<span class="sd">    radius : float</span>
+<span class="sd">        radius for creating reference circles</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    dc : array_like</span>
+<span class="sd">        The Dice coefficient between the object(s) in ```input``` and the</span>
+<span class="sd">        created cirles. It ranges from 0 (no overlap) to 1 (perfect overlap).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">xSize</span><span class="p">,</span> <span class="n">ySize</span><span class="p">,</span> <span class="n">zSize</span> <span class="o">=</span> <span class="n">input_img</span><span class="o">.</span><span class="n">GetSize</span><span class="p">()</span>
+    <span class="n">profile</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">zSize</span><span class="p">,</span> <span class="n">ySize</span><span class="p">,</span> <span class="n">xSize</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
+    <span class="n">centres</span> <span class="o">=</span> <span class="n">centroid</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+    <span class="k">for</span> <span class="nb">slice</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">zSize</span><span class="p">):</span>
+        <span class="n">rr</span><span class="p">,</span> <span class="n">cc</span> <span class="o">=</span> <span class="n">circle</span><span class="p">(</span><span class="n">centres</span><span class="p">[</span><span class="nb">slice</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">centres</span><span class="p">[</span><span class="nb">slice</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">radius</span><span class="p">)</span>
+        <span class="n">profile</span><span class="p">[</span><span class="nb">slice</span><span class="p">,</span> <span class="n">cc</span><span class="p">,</span> <span class="n">rr</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+
+    <span class="nb">input</span> <span class="o">=</span> <span class="n">sitk</span><span class="o">.</span><span class="n">GetArrayFromImage</span><span class="p">(</span><span class="n">input_img</span><span class="p">)</span>
+
+    <span class="nb">input</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="nb">input</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">bool</span><span class="p">))</span>
+    <span class="n">reference</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">profile</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">bool</span><span class="p">))</span>
+
+    <span class="n">intersection</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">zSize</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="n">size_input</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">zSize</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="n">size_reference</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">zSize</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="n">dc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">zSize</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="k">for</span> <span class="nb">slice</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">zSize</span><span class="p">):</span>
+        <span class="n">intersection</span><span class="p">[</span><span class="nb">slice</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">count_nonzero</span><span class="p">(</span><span class="nb">input</span><span class="p">[</span><span class="nb">slice</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span> <span class="o">&amp;</span> <span class="n">reference</span><span class="p">[</span><span class="nb">slice</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:])</span>
+        <span class="n">size_input</span><span class="p">[</span><span class="nb">slice</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">count_nonzero</span><span class="p">(</span><span class="nb">input</span><span class="p">[</span><span class="nb">slice</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:])</span>
+        <span class="n">size_reference</span><span class="p">[</span><span class="nb">slice</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">count_nonzero</span><span class="p">(</span><span class="n">reference</span><span class="p">[</span><span class="nb">slice</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:])</span>
+<span class="c">#        print(&quot;\n intersection[slice, :]: {}&quot;.format(intersection[slice, :]))</span>
+<span class="c">#        print(&quot;size_input[slice]: {}&quot;.format(size_input[slice]))</span>
+<span class="c">#        print(&quot;size_reference[slice]: {}&quot;.format(size_reference[slice]))</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">dc</span><span class="p">[</span><span class="nb">slice</span><span class="p">]</span> <span class="o">=</span> <span class="mf">2.</span> <span class="o">*</span> <span class="n">intersection</span><span class="p">[</span><span class="nb">slice</span><span class="p">]</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="n">size_input</span><span class="p">[</span><span class="nb">slice</span><span class="p">]</span> <span class="o">+</span> <span class="n">size_reference</span><span class="p">[</span><span class="nb">slice</span><span class="p">])</span>
+        <span class="k">except</span> <span class="ne">ZeroDivisionError</span><span class="p">:</span>
+            <span class="n">dc</span><span class="p">[</span><span class="nb">slice</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+    <span class="k">if</span> <span class="n">show</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">set_cmap</span><span class="p">(</span><span class="s">&quot;gray&quot;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s">&quot;profile, radius: {}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">radius</span><span class="p">))</span>
+
+        <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">profile</span><span class="p">[</span><span class="n">show</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:],</span> <span class="n">interpolation</span><span class="o">=</span><span class="n">interpolation</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="o">*</span><span class="n">centres</span><span class="p">[</span><span class="n">show</span><span class="p">,</span> <span class="p">:])</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">dc</span>
 </pre></div>
 
 </div>
@@ -11894,60 +12012,180 @@ div#notebook {
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="k">class</span> <span class="nc">Volume</span><span class="p">:</span>
+<div class=" highlight hl-ipython3"><pre><span class="k">class</span> <span class="nc">Volume</span><span class="p">:</span>
     <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    SimpleITK.Image with convenient properties and functions</span>
 <span class="sd">    &#39;&#39;&#39;</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-                 <span class="n">denoise</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">ref</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">info</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-        <span class="k">if</span><span class="p">(</span><span class="n">path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Error: no path given!&quot;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="k">None</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="k">None</span><span class="p">,</span> <span class="n">denoise</span><span class="o">=</span><span class="k">False</span><span class="p">,</span> <span class="n">ref</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                 <span class="n">info</span><span class="o">=</span><span class="k">False</span><span class="p">,</span> <span class="n">seeds</span><span class="o">=</span><span class="k">None</span><span class="p">):</span>
+        <span class="k">if</span><span class="p">(</span><span class="n">path</span> <span class="ow">is</span> <span class="k">None</span><span class="p">):</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s">&quot;Error: no path given!&quot;</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="o">=</span> <span class="n">path</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">=</span> <span class="n">method</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">denoise</span> <span class="o">=</span> <span class="n">denoise</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">ref</span> <span class="o">=</span> <span class="n">ref</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">info</span> <span class="o">=</span> <span class="n">info</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">centroid</span> <span class="o">=</span> <span class="k">False</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mask</span> <span class="o">=</span> <span class="k">False</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">masked</span> <span class="o">=</span> <span class="k">False</span>
+            <span class="k">if</span> <span class="n">seeds</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">seeds</span> <span class="o">=</span> <span class="n">seeds</span>
 
-            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Import DICOM Files from: &quot;</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s"> Import DICOM Files from: &quot;</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">img</span> <span class="o">=</span> <span class="n">sitk_read</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">denoise</span><span class="p">)</span>
 
-            <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">img</span> <span class="ow">is</span> <span class="kc">True</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">denoise</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">):</span>
-                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">...denoising...&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">img</span> <span class="ow">is</span> <span class="k">True</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">denoise</span> <span class="ow">is</span> <span class="k">True</span><span class="p">):</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">...denoising...&quot;</span><span class="p">)</span>
 
             <span class="bp">self</span><span class="o">.</span><span class="n">xSpace</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ySpace</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">zSpace</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">img</span><span class="o">.</span><span class="n">GetSpacing</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">xSize</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ySize</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">zSize</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">img</span><span class="o">.</span><span class="n">GetSize</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="n">method</span>
 
-            <span class="k">if</span> <span class="n">denoise</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">denoise</span> <span class="ow">is</span> <span class="k">True</span><span class="p">:</span>
                 <span class="n">a</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">title</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="n">a</span> <span class="o">+</span> <span class="s2">&quot; denoised&quot;</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="n">a</span> <span class="o">+</span> <span class="s">&quot; denoised&quot;</span>
 
-            <span class="k">if</span> <span class="n">info</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">info</span> <span class="ow">is</span> <span class="k">True</span><span class="p">:</span>
                 <span class="n">a</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">title</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="n">a</span> <span class="o">+</span> <span class="s2">&quot;, &quot;</span> <span class="o">+</span> <span class="n">info</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="n">a</span> <span class="o">+</span> <span class="s">&quot;, &quot;</span> <span class="o">+</span> <span class="n">info</span>
 
-    <span class="k">def</span> <span class="nf">show</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ref</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">ref</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">show</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="k">None</span><span class="p">,</span> <span class="n">ref</span><span class="o">=</span><span class="k">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">ref</span> <span class="ow">is</span> <span class="k">None</span><span class="p">:</span>
             <span class="n">ref</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ref</span>
 
-        <span class="k">if</span> <span class="n">interpolation</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">a</span> <span class="o">=</span> <span class="s1">&#39;nearest&#39;</span>
+        <span class="k">if</span> <span class="n">interpolation</span> <span class="ow">is</span> <span class="k">None</span><span class="p">:</span>
+            <span class="n">a</span> <span class="o">=</span> <span class="s">&#39;nearest&#39;</span>
 
         <span class="n">sitk_show</span><span class="p">(</span><span class="n">img</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">img</span><span class="p">,</span> <span class="n">ref</span><span class="o">=</span><span class="n">ref</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">title</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="n">a</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">centroid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">percentLimit</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">title</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">showSeed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="k">None</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="s">&#39;nearest&#39;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">seeds</span> <span class="ow">is</span> <span class="k">False</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s">&quot;Volume has no seeds yet.&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="k">None</span>
+
+        <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">seeds</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">arr</span> <span class="o">=</span> <span class="n">sitk</span><span class="o">.</span><span class="n">GetArrayFromImage</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">img</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">set_cmap</span><span class="p">(</span><span class="s">&quot;gray&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">title</span> <span class="ow">is</span> <span class="k">None</span><span class="p">:</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">title</span> <span class="o">+</span> <span class="s">&quot;, seed&quot;</span><span class="p">)</span>
+
+        <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">arr</span><span class="p">[</span><span class="n">z</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:],</span> <span class="n">interpolation</span><span class="o">=</span><span class="n">interpolation</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">getCentroid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="k">False</span><span class="p">,</span> <span class="n">percentLimit</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span>
+                    <span class="n">title</span><span class="o">=</span><span class="k">None</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="k">None</span><span class="p">,</span> <span class="n">new</span><span class="o">=</span><span class="k">False</span><span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">centroid</span> <span class="ow">is</span> <span class="ow">not</span> <span class="k">False</span> <span class="ow">and</span> <span class="n">new</span> <span class="ow">is</span> <span class="k">False</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">centroid</span>
+
+        <span class="k">if</span> <span class="n">title</span> <span class="ow">is</span> <span class="k">None</span><span class="p">:</span>
             <span class="n">title</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">title</span>
 
-        <span class="k">if</span> <span class="n">method</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">method</span> <span class="ow">is</span> <span class="k">None</span><span class="p">:</span>
             <span class="n">method</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">centroid</span> <span class="o">=</span> <span class="n">sitk_centroid</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">img</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="n">show</span><span class="p">,</span>
                                       <span class="n">percentLimit</span><span class="o">=</span><span class="n">percentLimit</span><span class="p">,</span>
                                       <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">centroid</span>
+
+    <span class="k">def</span> <span class="nf">showCentroid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="k">None</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="s">&#39;nearest&#39;</span><span class="p">,</span> <span class="n">ref</span><span class="o">=</span><span class="k">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">centroid</span> <span class="ow">is</span> <span class="k">False</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s">&quot;Volume has no centroid yet. use Volume.getCentroid() first!&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="k">None</span>
+
+        <span class="k">if</span> <span class="n">title</span> <span class="ow">is</span> <span class="k">None</span><span class="p">:</span>
+            <span class="n">title</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">title</span>
+        <span class="k">if</span> <span class="n">ref</span> <span class="ow">is</span> <span class="k">None</span><span class="p">:</span>
+            <span class="n">ref</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ref</span>
+        <span class="n">centroid_show</span><span class="p">(</span><span class="n">img</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">img</span><span class="p">,</span> <span class="n">com</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">centroid</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span>
+                      <span class="n">interpolation</span><span class="o">=</span><span class="n">interpolation</span><span class="p">,</span> <span class="n">ref</span><span class="o">=</span><span class="n">ref</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">getMask</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="k">None</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="k">None</span><span class="p">,</span> <span class="n">new</span><span class="o">=</span><span class="k">False</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span> <span class="ow">and</span> <span class="n">new</span> <span class="ow">is</span> <span class="k">False</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="ow">is</span> <span class="s">&quot;CT&quot;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">lower</span> <span class="ow">is</span> <span class="k">None</span><span class="p">:</span>
+                <span class="n">lower</span> <span class="o">=</span> <span class="o">-</span><span class="mi">300</span>
+            <span class="k">if</span> <span class="n">upper</span> <span class="ow">is</span> <span class="k">None</span><span class="p">:</span>
+                <span class="n">upper</span> <span class="o">=</span> <span class="mi">300</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="ow">is</span> <span class="s">&quot;MR&quot;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">lower</span> <span class="ow">is</span> <span class="k">None</span><span class="p">:</span>
+                <span class="n">lower</span> <span class="o">=</span> <span class="mi">120</span>
+            <span class="k">if</span> <span class="n">upper</span> <span class="ow">is</span> <span class="k">None</span><span class="p">:</span>
+                <span class="n">upper</span> <span class="o">=</span> <span class="mi">1500</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">mask</span> <span class="o">=</span> <span class="n">sitk_getMask</span><span class="p">(</span><span class="n">img</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">img</span><span class="p">,</span> <span class="n">seedList</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">seeds</span><span class="p">,</span>
+                                 <span class="n">lower</span><span class="o">=</span><span class="n">lower</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="n">upper</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span>
+
+    <span class="k">def</span> <span class="nf">applyMask</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="k">None</span><span class="p">,</span> <span class="n">replaceArray</span><span class="o">=</span><span class="k">False</span><span class="p">,</span> <span class="n">spacing</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">mask</span> <span class="ow">is</span> <span class="k">None</span><span class="p">):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">:</span>
+                <span class="n">mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s">&quot;Volume has no mask yet. use Volume.getMask() first!&quot;</span><span class="p">)</span>
+                <span class="k">return</span> <span class="k">None</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">masked</span> <span class="o">=</span> <span class="n">sitk_applyMask</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">img</span><span class="p">,</span> <span class="n">mask</span><span class="p">,</span> <span class="n">replaceArray</span><span class="o">=</span><span class="n">replaceArray</span><span class="p">,</span>
+                                     <span class="n">spacing</span><span class="o">=</span><span class="n">spacing</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">masked</span>
+
+    <span class="k">def</span> <span class="nf">showMask</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="k">None</span><span class="p">,</span> <span class="n">ref</span><span class="o">=</span><span class="k">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span> <span class="ow">is</span> <span class="k">False</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s">&quot;Volume has no mask yet. use Volume.getMask() first!&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="k">None</span>
+
+        <span class="k">if</span> <span class="n">ref</span> <span class="ow">is</span> <span class="k">None</span><span class="p">:</span>
+            <span class="n">ref</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ref</span>
+
+        <span class="k">if</span> <span class="n">interpolation</span> <span class="ow">is</span> <span class="k">None</span><span class="p">:</span>
+            <span class="n">interpolation</span> <span class="o">=</span> <span class="s">&#39;nearest&#39;</span>
+
+        <span class="n">title</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">title</span> <span class="o">+</span> <span class="s">&quot;, mask&quot;</span>
+
+        <span class="n">sitk_show</span><span class="p">(</span><span class="n">img</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">,</span> <span class="n">ref</span><span class="o">=</span><span class="n">ref</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span>
+                  <span class="n">interpolation</span><span class="o">=</span><span class="n">interpolation</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">showMasked</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="k">None</span><span class="p">,</span> <span class="n">ref</span><span class="o">=</span><span class="k">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">masked</span> <span class="ow">is</span> <span class="k">False</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s">&quot;Volume has not been masked yet. use Volume.applyMask() first!&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="k">None</span>
+        <span class="k">if</span> <span class="n">ref</span> <span class="ow">is</span> <span class="k">None</span><span class="p">:</span>
+            <span class="n">ref</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ref</span>
+
+        <span class="k">if</span> <span class="n">interpolation</span> <span class="ow">is</span> <span class="k">None</span><span class="p">:</span>
+            <span class="n">interpolation</span> <span class="o">=</span> <span class="s">&#39;nearest&#39;</span>
+
+        <span class="n">title</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">title</span> <span class="o">+</span> <span class="s">&quot;, mask&quot;</span>
+
+        <span class="n">sitk_show</span><span class="p">(</span><span class="n">img</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">masked</span><span class="p">,</span> <span class="n">ref</span><span class="o">=</span><span class="n">ref</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span>
+                  <span class="n">interpolation</span><span class="o">=</span><span class="n">interpolation</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">getDice</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="k">False</span><span class="p">,</span> <span class="n">showAll</span><span class="o">=</span><span class="k">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        calculates max dice coefficient by trying different radii</span>
+<span class="sd">        returns radius that leads to best result</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">radii</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">2</span><span class="p">,</span> <span class="mf">2.1</span><span class="p">,</span> <span class="mf">2.3</span><span class="p">,</span> <span class="mf">2.9</span><span class="p">,</span> <span class="mf">3.1</span><span class="p">,</span> <span class="mf">3.2</span><span class="p">,</span> <span class="mf">3.7</span><span class="p">,</span> <span class="mf">4.1</span><span class="p">,</span> <span class="mf">4.2</span><span class="p">])</span>
+        <span class="n">dcs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">radii</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">radii</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+            <span class="n">dcs</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">average</span><span class="p">(</span><span class="n">dice_circle</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">centroid</span><span class="p">,</span>
+                                    <span class="n">radius</span><span class="o">=</span><span class="n">r</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="n">showAll</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">dice</span> <span class="o">=</span> <span class="n">dice_circle</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">centroid</span><span class="p">,</span>
+                                <span class="n">radius</span><span class="o">=</span><span class="n">radii</span><span class="p">[</span><span class="n">dcs</span><span class="o">.</span><span class="n">argmax</span><span class="p">()],</span> <span class="n">show</span><span class="o">=</span><span class="n">show</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s">&quot;max dice-coefficient obtained for {} when compared to circle with radius = {}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="p">,</span> <span class="n">radii</span><span class="p">[</span><span class="n">dcs</span><span class="o">.</span><span class="n">argmax</span><span class="p">()]))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s">&quot;max dice-coefficient average for the whole volume is: {}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">dcs</span><span class="o">.</span><span class="n">max</span><span class="p">()))</span>
+        <span class="k">return</span> <span class="n">radii</span><span class="p">[</span><span class="n">dcs</span><span class="o">.</span><span class="n">argmax</span><span class="p">()]</span>
 </pre></div>
 
 </div>
