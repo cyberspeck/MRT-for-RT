@@ -155,7 +155,8 @@ class Volume:
                 print("Volume has no mask yet. use Volume.getMask() first!")
                 return None
 
-        self.masked = sitk_applyMask(self.img, mask, replaceArray=replaceArray, spacing=spacing)
+        self.masked = sitk_applyMask(self.img, mask, replaceArray=replaceArray,
+                                     spacing=spacing)
 
         return self.masked
 
@@ -190,7 +191,7 @@ class Volume:
         sitk_show(img=self.masked, ref=ref, title=title,
                   interpolation=interpolation)
 
-    def getDice(self):
+    def getDice(self, show=False, showAll=False):
         '''
         calculates max dice coefficient by trying different radii
         returns radius that leads to best result
@@ -198,10 +199,13 @@ class Volume:
         radii = np.array([2, 2.1, 2.3, 2.9, 3.1, 3.2, 3.7, 4.1, 4.2])
         dcs = np.zeros(len(radii))
         for index, r in enumerate(radii, start=0):
-            dcs[index] = np.average(dice_circle(self.mask, self.centroid, radius=r))
+            dcs[index] = np.average(dice_circle(self.mask, self.centroid,
+                                    radius=r, show=showAll))
 
-        self.dice = dice_circle(self.mask, self.centroid, radius=radii[dcs.argmax()])
-        print("max dice-coefficient obtained for {} when compared to circle with radius = {}".format(self.method, radii[dcs.argmax()]))
+        self.dice = dice_circle(self.mask, self.centroid,
+                                radius=radii[dcs.argmax()], show=show)
+        print("max dice-coefficient obtained for {} when compared to circle with radius = {}".format(
+        self.method, radii[dcs.argmax()]))
         print("max dice-coefficient average for the whole volume is: {}".format(dcs.max()))
         return radii[dcs.argmax()]
 

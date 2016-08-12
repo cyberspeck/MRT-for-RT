@@ -13,25 +13,28 @@ pathCT = "../data/cropped_CT-a/"
 pathMR = "../data/cropped_MR-d-a/"
 idxSlice = 10
 
+
 CT = Volume(path=pathCT, method="CT", ref=idxSlice, seeds=[(6, 8, idxSlice)])
 CT.getCentroid()
+CT.showCentroid()
 CT.getMask()
+CT.showMask()
+
+rCT=CT.getDice(show=idxSlice)
 
 MR = Volume(path=pathMR, method="MR", ref=idxSlice, seeds=[(6, 8, idxSlice)])
-MR.getCentroid(new=True)
+MR.getCentroid()
 MR.showCentroid()
-MR.getMask(new=True)
+MR.getMask()
 MR.showMask()
 
-rCT=CT.getDice()
-rMR=MR.getDice()
+rMR=MR.getDice(show=idxSlice)
 
 
-CT.applyMask(replaceArray=CT.dice)
+# CT.applyMask(replaceArray=CT.dice)
 # fun.sitk_write(CT.masked)
 
-# print("Dice coefficient for each slice of MR-Volume (radius = 2.3): \n{}".format(
-# fun.dice(MR.mask, MR.centroid, radius=2.3)))
+print("Dice coefficient for each slice of MR-Volume (radius = 2.3): \n{}".format(fun.dice_circle(MR.mask, MR.centroid, radius=rMR)))
 
 
 # instead of opening the created file manually, you can use this lines in
