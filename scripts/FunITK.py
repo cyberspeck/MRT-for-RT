@@ -255,6 +255,7 @@ def sitk_centroid(img, show=False, percentLimit=0.9, interpolation='nearest',
     returns array with y&x coordinate of centroid for every slice of img
     centroid[slice, y&x-coordinate]
 
+    Experimental:
     if method is None: compute centroid using only brightest 10% of pixels
     if method is CT or MR: using pixels above thershold
         for CT threshold = -900
@@ -264,7 +265,7 @@ def sitk_centroid(img, show=False, percentLimit=0.9, interpolation='nearest',
     z, y, x = np.shape(arr)
     # create array with centroid coordinates of rod in each slice
     com = np.zeros((z, 2))
-
+    '''
     if method == "CT":
         threshold = -900
         # Set Threshold at -900 (air starts at -950)
@@ -273,18 +274,17 @@ def sitk_centroid(img, show=False, percentLimit=0.9, interpolation='nearest',
         threshold = 30
         # Set Threshold at 30 (air level in 3D slicer)
 
-    if (method != "MR" and method != "CT"):
-        for slice in range(z):
-            hist, bins = np.histogram(arr[slice, :, :].ravel(),
-                                      density=True, bins=100)
-            threshold = bins[np.cumsum(hist) * (bins[1] - bins[0]) >
-                             percentLimit][0]
-            marr = np.ma.masked_less(arr[slice, :, :], threshold)
-            com[slice, ::-1] = ndimage.measurements.center_of_mass(marr)
-    else:
-        for slice in range(z):
-            marr = np.ma.masked_less(arr[slice, :, :], threshold)
-            com[slice, ::-1] = ndimage.measurements.center_of_mass(marr)
+    for slice in range(z):
+        marr = np.ma.masked_less(arr[slice, :, :], threshold)
+        com[slice, ::-1] = ndimage.measurements.center_of_mass(marr)
+    '''
+    for slice in range(z):
+        hist, bins = np.histogram(arr[slice, :, :].ravel(),
+                                  density=True, bins=100)
+        threshold = bins[np.cumsum(hist) * (bins[1] - bins[0]) >
+                         percentLimit][0]
+        marr = np.ma.masked_less(arr[slice, :, :], threshold)
+        com[slice, ::-1] = ndimage.measurements.center_of_mass(marr)
 
     if show:
         centroid_show(img, com=com, title=title,
