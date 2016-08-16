@@ -18,18 +18,29 @@ pathMR_012 = "../data/cropped_MR_resample_012/"
 idxSlice = 10
 
 
-CT = Volume(path=pathCT, method="CT", ref=idxSlice, seeds=[(8, 6, idxSlice)])
+CT = Volume(path=pathCT, denoise=True, method="CT", ref=idxSlice, seeds=[(8, 6, idxSlice)])
 CT.show()
-centroid_09= CT.getCentroid(percentLimit=0.9, show=idxSlice, new=True)
-# centroid_08= CT.getCentroid(percentLimit=0.8, show=idxSlice, new=True)
-# print(centroid_09-centroid_08)
-# CT.showCentroid()
-# CT.getMask()
-# CT.showMask()
-# rCT=CT.getDice()
-
 '''
-CT_04 = Volume(path=pathCT_04, method="CT", ref=idxSlice, seeds=[(6, 8, idxSlice)])
+CT.getCentroid()
+CT.showCentroid()
+CT.getMask()
+CT.showMask()
+rCT=CT.getDice()
+
+reader = sitk.ImageSeriesReader()
+filenames = reader.GetGDCMSeriesFileNames(pathCT_012)
+reader.SetFileNames(filenames)
+img = reader.Execute()
+fun.sitk_show(img)
+centroid=fun.sitk_centroid(img)
+fun.centroid_show(img, centroid)
+blub=fun.dice_circle(img, radius=30, centroid=centroid, show=1)
+
+
+CT_4 = Volume(path=pathCT_04)
+CT_4.show(ref=10)
+fun.sitk_show(CT_4.img, ref=10)
+
 CT_04.getCentroid()
 CT_04.showCentroid()
 CT_04.getMask()
