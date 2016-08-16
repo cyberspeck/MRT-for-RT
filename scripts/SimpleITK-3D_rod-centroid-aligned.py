@@ -2,6 +2,9 @@
 """
 Created on Sun Jul 17 15:17:57 2016
 
+For future developer: Segmentation and automatic registration of separate rods
+could be done similar to this:https://blancosilva.wordpress.com/2010/12/15/image-processing-with-numpy-scipy-and-matplotlibs-in-sage/
+
 @author: david
 """
 
