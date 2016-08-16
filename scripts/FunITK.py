@@ -54,26 +54,24 @@ class Volume:
             self.centroid = False
             self.mask = False
             self.masked = False
+            self.title = method
             if seeds:
                 self.seeds = seeds
 
             print("\n Import DICOM Files from: ", path)
-            self.img = sitk_read(path, denoise)
+            self.img = sitk_read(path, self.denoise)
 
             if (self.img is True and self.denoise is True):
-                print("\n...denoising...")
-
-            self.xSpace, self.ySpace, self.zSpace = self.img.GetSpacing()
-            self.xSize, self.ySize, self.zSize = self.img.GetSize()
-            self.title = method
-
-            if denoise is True:
+                print("\n...denoising...")                
                 a = self.title
                 self.title = a + " denoised"
 
             if info is True:
                 a = self.title
                 self.title = a + ", " + info
+
+            self.xSpace, self.ySpace, self.zSpace = self.img.GetSpacing()
+            self.xSize, self.ySize, self.zSize = self.img.GetSize()
 
     def show(self, interpolation=None, ref=None):
         if ref is None:
@@ -99,7 +97,7 @@ class Volume:
         plt.scatter(x, y)
         plt.show()
 
-    def getCentroid(self, show=False, percentLimit=0.9,
+    def getCentroid(self, show=False, percentLimit=0.9, threshold=False,
                     title=None, method=None, new=False):
         if (self.centroid is not False and new is False):
             return self.centroid
@@ -110,7 +108,7 @@ class Volume:
         if method is None:
             method = self.method
 
-        self.centroid = sitk_centroid(self.img, show=show,
+        self.centroid = sitk_centroid(self.img, show=show, threshold=threshold,
                                       percentLimit=percentLimit,
                                       title=title, method=method)
         return self.centroid
@@ -249,8 +247,8 @@ def sitk_show(img, ref=1, title=None, interpolation='nearest'):
     plt.show()
 
 
-def sitk_centroid(img, show=False, percentLimit=0.9, interpolation='nearest',
-                  title=None, method=None):
+def sitk_centroid(img, show=False, percentLimit=0.9, threshold=False,
+                  interpolation='nearest', title=None, method=None):
     '''
     returns array with y&x coordinate of centroid for every slice of img
     centroid[slice, y&x-coordinate]
@@ -281,11 +279,19 @@ def sitk_centroid(img, show=False, percentLimit=0.9, interpolation='nearest',
     for slice in range(z):
         hist, bins = np.histogram(arr[slice, :, :].ravel(),
                                   density=True, bins=100)
-        threshold = bins[np.cumsum(hist) * (bins[1] - bins[0]) >
-                         percentLimit][0]
-        marr = np.ma.masked_less(arr[slice, :, :], threshold)
-        com[slice, ::-1] = ndimage.measurements.center_of_mass(marr)
-
+        if threshold is False:
+            threshold = bins[np.concatenate((np.array([0]), np.cumsum(hist))) *
+                                            (bins[1] - bins[0]) > percentLimit][0]
+  
+        # structuring_element=[[1,1,1],[1,1,1],[1,1,1]]
+        segmentation,segments=ndimage.label(arr[slice]>threshold)
+        # add ', structuring_element' to label() for recognising
+        # diagonal pixels as part of object
+        com[slice, ::-1] = ndimage.center_of_mass(arr[slice, :, :],
+                                                           segmentation)
+        # add ', range(1,segments)' to center_of_mass for list of centroids
+        # in each slice (multiple rods!)
+        
     if show:
         centroid_show(img, com=com, title=title,
                       interpolation=interpolation, ref=show)
