@@ -18,43 +18,50 @@ pathMR_012 = "../data/cropped_MR_resample_012/"
 idxSlice = 10
 
 
-CT = Volume(path=pathCT, denoise=True, method="CT", ref=idxSlice, seeds=[(8, 6, idxSlice)])
-CT.show()
+CT = Volume(path=pathCT, method="CT", ref=idxSlice, seeds=[(8, 6, idxSlice)])
+#CT.getThresholds()
+#CT.getMask()
+#CT.applyMask()
+#CT.getCentroid(threshold='auto', scale = 1)
+#CT.showCentroid()
 '''
-CT.getCentroid()
-CT.showCentroid()
-CT.getMask()
-CT.showMask()
-rCT=CT.getDice()
+limits = np.linspace(0.1, 1.9, num=20)
+centroids = np.zeros((len(limits), CT.zSize, 2))
+cts = np.zeros((len(limits), 2))
+for index, p in enumerate(limits, start=0):
+    centroids[index] = CT.getCentroid(threshold='auto', scale = p)
+    print(p)
+    cts[index] = centroids[index,idxSlice]
+# plot differences in centroids compared to centroid calculated with
+# threshold='auto' using coordDist()!
+'''
 
-reader = sitk.ImageSeriesReader()
-filenames = reader.GetGDCMSeriesFileNames(pathCT_012)
-reader.SetFileNames(filenames)
-img = reader.Execute()
-fun.sitk_show(img)
-centroid=fun.sitk_centroid(img)
-fun.centroid_show(img, centroid)
-blub=fun.dice_circle(img, radius=30, centroid=centroid, show=1)
+'''
+MR = Volume(path=pathMR, method="MR", ref = idxSlice, seeds=[(8, 6, idxSlice)])
+MR.getCentroid()
+MR.showCentroid()
+MR.getMask()
+MR.showMask()
 
 
-CT_4 = Volume(path=pathCT_04)
-CT_4.show(ref=10)
-fun.sitk_show(CT_4.img, ref=10)
-
-CT_04.getCentroid()
-CT_04.showCentroid()
-CT_04.getMask()
-CT_04.showMask()
-rCT_04=CT_04.getDice()
-
-CT_012 = Volume(path=pathCT_012, method="CT", ref=idxSlice, seeds=[(6, 8, idxSlice)])
+CT_012 = Volume(path=pathCT_012, method="CT", ref=idxSlice, seeds=[(80, 60, idxSlice)])
+#CT_012.show()
+#CT_012.getThresholds()
 CT_012.getCentroid()
 CT_012.showCentroid()
 CT_012.getMask()
 CT_012.showMask()
-rCT_012=CT_012.getDice()
+'''
+#CT_04 = Volume(path=pathCT_04, method="CT", ref=idxSlice, seeds=[(25, 20, idxSlice)])
+#CT_04.getThreshold()
+#CT_04.showCentroid()
+#CT_04.showMask()
+
+#MR_04 = Volume(path=pathMR_04, method="MR", ref = idxSlice, seeds=[(25, 20, idxSlice)])
+#MR_04.getThreshold()
 
 
+'''
 MR = Volume(path=pathMR, method="MR", ref=idxSlice, seeds=[(6, 8, idxSlice)])
 MR.getCentroid()
 MR.showCentroid()

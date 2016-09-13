@@ -42,8 +42,8 @@ class Volume:
     SimpleITK.Image with convenient properties and functions
     '''
     def __init__(self, path=None, method=None, denoise=False, ref=1,
-                 info=False, seeds=None):
-        if(path is None):
+                 info=False, seeds=None, radius=False):
+        if(path == None):
             print("Error: no path given!")
         else:
             self.path = path
@@ -51,22 +51,24 @@ class Volume:
             self.denoise = denoise
             self.ref = ref
             self.info = info
+            self.seeds = seeds
             self.centroid = False
             self.mask = False
             self.masked = False
             self.title = method
-            if seeds:
-                self.seeds = seeds
+            self.radius = radius
+            self.lower = False
+            self.upper = False
 
             print("\n Import DICOM Files from: ", path)
             self.img = sitk_read(path, self.denoise)
 
-            if (self.img is True and self.denoise is True):
+            if (self.img and self.denoise):
                 print("\n...denoising...")                
                 a = self.title
                 self.title = a + " denoised"
 
-            if info is True:
+            if info == True:
                 a = self.title
                 self.title = a + ", " + info
 
@@ -74,79 +76,155 @@ class Volume:
             self.xSize, self.ySize, self.zSize = self.img.GetSize()
 
     def show(self, interpolation=None, ref=None):
-        if ref is None:
+        if ref == None:
             ref = self.ref
 
-        if interpolation is None:
+        if interpolation == None:
             a = 'nearest'
 
         sitk_show(img=self.img, ref=ref, title=self.title, interpolation=a)
 
     def showSeed(self, title=None, interpolation='nearest'):
-        if self.seeds is False:
+        if self.seeds == False:
             print("Volume has no seeds yet.")
             return None
 
         x, y, z = self.seeds[0]
         arr = sitk.GetArrayFromImage(self.img)
         plt.set_cmap("gray")
-        if title is None:
+        if title == None:
             plt.title(self.title + ", seed")
 
         plt.imshow(arr[z, :, :], interpolation=interpolation)
         plt.scatter(x, y)
         plt.show()
 
-    def getCentroid(self, show=False, percentLimit=0.9, threshold=False,
-                    title=None, method=None, new=False):
-        if (self.centroid is not False and new is False):
+    def getThresholds(self, pixelNumber=0, scale=1):
+        # approx. number of pixels being part of rod pixel Number = pn
+        # pn = real raduis^2 * pi / pixelSpacing^2
+
+        pn = pixelNumber
+        if self.method =="CT" and pn == 0:
+            realRadius=4
+            pn = np.power(realRadius,2)*np.pi/np.power(self.xSpace,2)*scale
+        if self.method == "MR" and pn == 0:
+            realRadius=2
+            pn = np.power(realRadius,2)*np.pi/np.power(self.xSpace,2)*scale
+            
+        if pn == 0:
+            print("method is unknown, so please also set pixelNumber!")
+            return None
+
+        arr = sitk.GetArrayFromImage(self.img)
+        up = arr.max()
+        self.upper = np.double(up)
+
+        hist, bins = np.histogram(arr[self.ref, :, :].ravel(), bins=100)
+        low = bins[np.argmax((np.cumsum(hist[::-1])<pn)[::-1])]
+        self.lower = np.double(low)
+        print("number of pixels (pn): {}\n lower: {}\n upper: {}".format(pn,low, up))
+
+        return (self.lower, self.upper)
+        
+    def getCentroid(self, show=False, percentLimit=False, threshold=False,
+                    pixelNumber=0, scale=1):
+        '''
+        Either used with percentLimit = within (0,1) or "auto"
+        or with threshold = number or "auto"
+        '''
+
+        if percentLimit=="auto" and threshold == False:
+#            if self.mask == False:
+#                print("For this method a mask is required! Use Volume.applyMask() first!")
+#                return None
+
+            limits = np.linspace(0.65, 0.95, num=13)
+            cts = np.zeros(len(limits))
+            centroids = np.zeros((len(limits), self.zSize, 2))            
+            for index, p in enumerate(limits, start=0):
+                centroids[index] = sitk_centroid(self.img, show=show,
+                                                 threshold=threshold,
+                                                 percentLimit=limits[index],
+                                                 title=self.title)
+                cts[index] = self.getDice(centroid=centroids[index])
+                                        
+            print("max dice-coefficient obtained using {} % of all pixels".format(
+            limits[dcs.argmax()]*100))
+            self.centroid=centroids[dcs.argmax()]
             return self.centroid
 
-        if title is None:
-            title = self.title
+        if percentLimit != "auto" and percentLimit != False:
+            self.centroid = sitk_centroid(self.img, show=show,
+                                          percentLimit=percentLimit,
+                                          title=self.title)
 
-        if method is None:
-            method = self.method
+        if threshold == "auto" and percentLimit != False or threshold != False and percentLimit == "auto":
+            print("Either threshold or percentLimit has to be False")
 
-        self.centroid = sitk_centroid(self.img, show=show, threshold=threshold,
-                                      percentLimit=percentLimit,
-                                      title=title, method=method)
-        return self.centroid
+        if threshold == 'auto' and percentLimit == False:
+            self.getThresholds(scale=scale)
+ #           self.centroid = sitk_centroid(self.img, show=show,
+ #                                         threshold=self.lower,
+ #                                         title=self.title)      
+
+            arr = sitk.GetArrayFromImage(self.img)
+            z, y, x = np.shape(arr)
+            # create array with centroid coordinates of rod in each slice
+            com = np.zeros((z, 2))
+
+            for slice in range(z):
+                segmentation,segments=ndimage.label(arr[slice]>self.lower)
+                min=np.min(arr[slice])
+                com[slice, ::-1] = ndimage.center_of_mass(arr[slice, :, :]+min,
+                                                      segmentation)     
+            self.centroid = com
+            return com           
+            
+        if threshold != "auto" and threshold != False:
+            self.centroid = sitk_centroid(self.img, show=show,
+                                          threshold=threshold,
+                                          title=self.title)
+
+        if threshold == False and percentLimit == False:
+            print("how to calculate centroid?")
 
     def showCentroid(self, title=None, interpolation='nearest', ref=None):
-        if self.centroid is False:
+        if self.centroid == False:
             print("Volume has no centroid yet. use Volume.getCentroid() first!")
             return None
 
-        if title is None:
+        if title == None:
             title = self.title
-        if ref is None:
+        if ref == None:
             ref = self.ref
         centroid_show(img=self.img, com=self.centroid, title=title,
                       interpolation=interpolation, ref=ref)
 
-    def getMask(self, lower=None, upper=None, new=False):
-        if self.mask and new is False:
-            return self.mask
+    def getMask(self, lower=False, upper=False):
 
-        if self.method is "CT":
-            if lower is None:
-                lower = -300
-            if upper is None:
-                upper = 300
+        if self.seeds == False:
+            print("no seeds given!")
+            return None
 
-        if self.method is "MR":
-            if lower is None:
-                lower = 120
-            if upper is None:
-                upper = 1500
+        if lower == False and self.lower != False:
+            lower = self.lower
+        if upper == False and self.upper != False:
+            upper = self.upper
 
-        self.mask = sitk_getMask(img=self.img, seedList=self.seeds,
-                                 lower=lower, upper=upper)
+        if lower == False:
+            print("Lower threshold missing!")
+            return None
+        if upper == False:
+            print("Upper threshold missing!")
+            return None
+
+        self.mask = sitk.ConnectedThreshold(image1=self.img, seedList=self.seeds,                                   
+                                   lower=lower, upper=upper,
+                                   replaceValue=1)
         return self.mask
 
     def applyMask(self, mask=None, replaceArray=False, spacing=1):
-        if (mask is None):
+        if (mask == None):
             if self.mask:
                 mask = self.mask
             else:
@@ -159,14 +237,14 @@ class Volume:
         return self.masked
 
     def showMask(self, interpolation=None, ref=None):
-        if self.mask is False:
+        if self.mask == False:
             print("Volume has no mask yet. use Volume.getMask() first!")
             return None
 
-        if ref is None:
+        if ref == None:
             ref = self.ref
 
-        if interpolation is None:
+        if interpolation == None:
             interpolation = 'nearest'
 
         title = self.title + ", mask"
@@ -175,13 +253,13 @@ class Volume:
                   interpolation=interpolation)
 
     def showMasked(self, interpolation=None, ref=None):
-        if self.masked is False:
+        if self.masked == False:
             print("Volume has not been masked yet. use Volume.applyMask() first!")
             return None
-        if ref is None:
+        if ref == None:
             ref = self.ref
 
-        if interpolation is None:
+        if interpolation == None:
             interpolation = 'nearest'
 
         title = self.title + ", mask"
@@ -189,40 +267,54 @@ class Volume:
         sitk_show(img=self.masked, ref=ref, title=title,
                   interpolation=interpolation)
 
-    def getDice(self, show=False, showAll=False):
+    def getDice(self, centroid="no", show=False, showAll=False):
         '''
-        calculates max dice coefficient by trying different radii
-        returns radius that leads to best result
-        '''
-        radii = np.array([2, 2.1, 2.3, 2.9, 3.1, 3.2, 3.7, 4.1, 4.2])
-        dcs = np.zeros(len(radii))
-        for index, r in enumerate(radii, start=0):
-            dcs[index] = np.average(dice_circle(self.mask, self.centroid,
-                                    radius=r, show=showAll))
+        calculates average dice coefficient ('dc') of the rod by trying
+        different radii, and sets self.radius to the value yielding best result
+        returns max obtained average dc after trying different radii
 
-        self.dice = dice_circle(self.mask, self.centroid,
+        uses xSpace (should be same as ySpace) to be used with any resolution
+        calculating dc for rods with 1.5mm < r < 4mm
+        '''
+#        radii = np.array([2, 2.1, 2.3, 2.9, 3.1, 3.2, 3.7, 4.1, 4.2])
+
+        if centroid == "no":
+            centroid = self.centroid
+
+        if self.radius == False:
+            radii = np.linspace(1.5, 4, num = 11)*self.xSpace 
+            dcs = np.zeros(len(radii))
+            for index, r in enumerate(radii, start=0):
+                dcs[index] = np.average(dice_circle(self.mask, centroid,
+                                        radius=r, show=showAll))
+                                        
+            self.dice = dice_circle(self.mask, self.centroid,
                                 radius=radii[dcs.argmax()], show=show)
-        print("max dice-coefficient obtained for {} when compared to circle with radius = {}".format(
-        self.method, radii[dcs.argmax()]))
-        print("max dice-coefficient average for the whole volume is: {}".format(dcs.max()))
-        return radii[dcs.argmax()]
+            print("max dice-coefficient obtained for {} when compared to circle with radius = {}".format(
+            self.method, radii[dcs.argmax()]))
 
+        else:    
+            self.dice = dice_circle(self.mask, self.centroid,
+                                radius=self.raduis, show=show)
+        print("max dice-coefficient average for the whole volume is: {}".format(dcs.max()))
+        self.raduis = radii[dcs.argmax()]
+        return dsc.max()
 
 def sitk_read(directory, denoise=False):
     '''
     returns DICOM files as "SimpleITK.Image" data type (3D)
-    if denoise is true: uses SimpleITK to denoise data
+    if denoise == True: uses SimpleITK to denoise data
     '''
     reader = sitk.ImageSeriesReader()
     filenames = reader.GetGDCMSeriesFileNames(directory)
     reader.SetFileNames(filenames)
     if denoise:
-        return reader.Execute()
-    else:
         imgOriginal = reader.Execute()
         return sitk.CurvatureFlow(image1=imgOriginal,
                                   timeStep=0.125,
                                   numberOfIterations=5)
+    else:
+        return reader.Execute()
 
 
 def sitk_write(image, output_dir='', filename='3DImage.mha'):
@@ -253,42 +345,27 @@ def sitk_centroid(img, show=False, percentLimit=0.9, threshold=False,
     returns array with y&x coordinate of centroid for every slice of img
     centroid[slice, y&x-coordinate]
 
-    Experimental:
-    if method is None: compute centroid using only brightest 10% of pixels
-    if method is CT or MR: using pixels above thershold
-        for CT threshold = -900
-        for MR threshold = 30
+    if threshold == False: compute centroid using only brightest 10% of pixels
     '''
     arr = sitk.GetArrayFromImage(img)
     z, y, x = np.shape(arr)
     # create array with centroid coordinates of rod in each slice
     com = np.zeros((z, 2))
-    '''
-    if method == "CT":
-        threshold = -900
-        # Set Threshold at -900 (air starts at -950)
-
-    if method == "MR":
-        threshold = 30
-        # Set Threshold at 30 (air level in 3D slicer)
 
     for slice in range(z):
-        marr = np.ma.masked_less(arr[slice, :, :], threshold)
-        com[slice, ::-1] = ndimage.measurements.center_of_mass(marr)
-    '''
-    for slice in range(z):
-        hist, bins = np.histogram(arr[slice, :, :].ravel(),
-                                  density=True, bins=100)
-        if threshold is False:
+        if threshold == False:
+            hist, bins = np.histogram(arr[slice, :, :].ravel(),
+                                      density=True, bins=100)
             threshold = bins[np.concatenate((np.array([0]), np.cumsum(hist))) *
-                                            (bins[1] - bins[0]) > percentLimit][0]
-  
+            (bins[1] - bins[0]) > percentLimit][0]
+
         # structuring_element=[[1,1,1],[1,1,1],[1,1,1]]
         segmentation,segments=ndimage.label(arr[slice]>threshold)
+        # print("segments: {}".format(segments))
         # add ', structuring_element' to label() for recognising
         # diagonal pixels as part of object
         com[slice, ::-1] = ndimage.center_of_mass(arr[slice, :, :],
-                                                           segmentation)
+                                              segmentation)
         # add ', range(1,segments)' to center_of_mass for list of centroids
         # in each slice (multiple rods!)
         
@@ -314,10 +391,6 @@ def coordShift(first, second):
     '''
     returns array with difference of y&x coordinates for every
     centroid[slice, y&x-coordinate]
-    if method is None: compute centroid using only brightest 10% of pixels
-    if method is CT or MR: using pixels above thershold
-        for CT threshold = -900
-        for MR threshold = 30
     '''
     if (np.shape(first) == np.shape(second) and
             np.shape((np.shape(first))) == (2,)):
@@ -374,7 +447,7 @@ def sitk_applyMask(img, mask, replaceArray=False, spacing=1):
     imgMaskedA = arr*maskA
 
     if (np.shape(replaceArray) == (img.GetDepth(), 1) and
-            replaceArray is not False):
+            replaceArray):
         for slice in range(zSize):
             for x in range(xSize):
                 for y in range(ySize):
