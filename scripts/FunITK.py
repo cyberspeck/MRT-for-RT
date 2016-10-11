@@ -40,10 +40,13 @@ from skimage.draw import circle
 class Volume:
     '''
     SimpleITK.Image with convenient properties and functions
+    recommended use:
+    create new Volume (optional use denoise=True)
+    Volume.getThresholds()
     '''
     def __init__(self, path=None, method=None, denoise=False, ref=1,
                  info=False, seeds=None, radius=False):
-        if(path == None):
+        if(path is None):
             print("Error: no path given!")
         else:
             self.path = path
@@ -64,11 +67,11 @@ class Volume:
             self.img = sitk_read(path, self.denoise)
 
             if (self.img and self.denoise):
-                print("\n...denoising...")                
+                print("\n...denoising...")
                 a = self.title
                 self.title = a + " denoised"
 
-            if info == True:
+            if info is True:
                 a = self.title
                 self.title = a + ", " + info
 
@@ -76,23 +79,23 @@ class Volume:
             self.xSize, self.ySize, self.zSize = self.img.GetSize()
 
     def show(self, interpolation=None, ref=None):
-        if ref == None:
+        if ref is None:
             ref = self.ref
 
-        if interpolation == None:
+        if interpolation is None:
             a = 'nearest'
 
         sitk_show(img=self.img, ref=ref, title=self.title, interpolation=a)
 
     def showSeed(self, title=None, interpolation='nearest'):
-        if self.seeds == False:
+        if self.seeds is False:
             print("Volume has no seeds yet.")
             return None
 
         x, y, z = self.seeds[0]
         arr = sitk.GetArrayFromImage(self.img)
         plt.set_cmap("gray")
-        if title == None:
+        if title is None:
             plt.title(self.title + ", seed")
 
         plt.imshow(arr[z, :, :], interpolation=interpolation)
@@ -104,28 +107,26 @@ class Volume:
         # pn = real raduis^2 * pi / pixelSpacing^2
 
         pn = pixelNumber
-        if self.method =="CT" and pn == 0:
-            realRadius=4
-            pn = np.power(realRadius,2)*np.pi/np.power(self.xSpace,2)*scale
+        if self.method == "CT" and pn == 0:
+            realRadius = 4
+            pn = np.power(realRadius, 2)*np.pi/np.power(self.xSpace, 2)*scale
         if self.method == "MR" and pn == 0:
-            realRadius=2
-            pn = np.power(realRadius,2)*np.pi/np.power(self.xSpace,2)*scale
-            
+            realRadius = 2
+            pn = np.power(realRadius, 2)*np.pi/np.power(self.xSpace, 2)*scale
+
         if pn == 0:
             print("method is unknown, so please also set pixelNumber!")
             return None
 
         arr = sitk.GetArrayFromImage(self.img)
-        up = arr.max()
-        self.upper = np.double(up)
+        self.upper = np.double(arr.max())
 
         hist, bins = np.histogram(arr[self.ref, :, :].ravel(), bins=100)
-        low = bins[np.argmax((np.cumsum(hist[::-1])<pn)[::-1])]
-        self.lower = np.double(low)
-        print("number of pixels (pn): {}\n lower: {}\n upper: {}".format(pn,low, up))
+        self.lower = np.double(bins[np.argmax((np.cumsum(hist[::-1]) < pn)[::-1])])
+        print("number of pixels (pn): {}\n lower: {}\n upper: {}".format(pn, self.lower, self.upper))
 
         return (self.lower, self.upper)
-        
+
     def getCentroid(self, show=False, percentLimit=False, threshold=False,
                     pixelNumber=0, scale=1):
         '''
@@ -133,88 +134,78 @@ class Volume:
         or with threshold = number or "auto"
         '''
 
-        if percentLimit=="auto" and threshold == False:
-#            if self.mask == False:
+        if (threshold is False and percentLimit is False) or (threshold is True and percentLimit is True):
+            print("Please use either percentLimit or threshold!")
+            return None
+
+        if percentLimit == "auto" and threshold is False:
+#            if self.mask is False:
 #                print("For this method a mask is required! Use Volume.applyMask() first!")
 #                return None
-
+            # calculates 13 centroids with different percentLimits
+            # gets dice coefficient for each centroid percentLimit combination
+            # returns best result
             limits = np.linspace(0.65, 0.95, num=13)
-            cts = np.zeros(len(limits))
-            centroids = np.zeros((len(limits), self.zSize, 2))            
+            centroidScore = np.zeros(len(limits))
+            centroids = np.zeros((len(limits), self.zSize, 2))
             for index, p in enumerate(limits, start=0):
-                centroids[index] = sitk_centroid(self.img, show=show,
-                                                 threshold=threshold,
+                centroids[index] = sitk_centroid(self.img, ref=self.ref, show=show,
                                                  percentLimit=limits[index],
                                                  title=self.title)
-                cts[index] = self.getDice(centroid=centroids[index])
-                                        
+                                                 
+                centroidScore[index] = self.getDice(centroid=centroids[index])
+
             print("max dice-coefficient obtained using {} % of all pixels".format(
-            limits[dcs.argmax()]*100))
-            self.centroid=centroids[dcs.argmax()]
+            limits[centroidScore.argmax()]*100))
+            self.centroid = centroids[centroidScore.argmax()]
             return self.centroid
 
-        if percentLimit != "auto" and percentLimit != False:
-            self.centroid = sitk_centroid(self.img, show=show,
+        if percentLimit != "auto" and percentLimit is True:
+            self.centroid = sitk_centroid(self.img, ref=self.ref, show=show,
                                           percentLimit=percentLimit,
                                           title=self.title)
+            return self.centroid
 
-        if threshold == "auto" and percentLimit != False or threshold != False and percentLimit == "auto":
-            print("Either threshold or percentLimit has to be False")
-
-        if threshold == 'auto' and percentLimit == False:
+        if threshold == 'auto':
             self.getThresholds(scale=scale)
- #           self.centroid = sitk_centroid(self.img, show=show,
- #                                         threshold=self.lower,
- #                                         title=self.title)      
+            self.centroid = sitk_centroid(self.img, ref=self.ref, show=show,
+                                          threshold=self.lower,
+                                          title=self.title)
+            return self.centroid
 
-            arr = sitk.GetArrayFromImage(self.img)
-            z, y, x = np.shape(arr)
-            # create array with centroid coordinates of rod in each slice
-            com = np.zeros((z, 2))
-
-            for slice in range(z):
-                segmentation,segments=ndimage.label(arr[slice]>self.lower)
-                min=np.min(arr[slice])
-                com[slice, ::-1] = ndimage.center_of_mass(arr[slice, :, :]+min,
-                                                      segmentation)     
-            self.centroid = com
-            return com           
-            
-        if threshold != "auto" and threshold != False:
-            self.centroid = sitk_centroid(self.img, show=show,
+        if threshold != "auto" and threshold is True:
+            self.centroid = sitk_centroid(self.img, ref=self.ref, show=show,
                                           threshold=threshold,
                                           title=self.title)
-
-        if threshold == False and percentLimit == False:
-            print("how to calculate centroid?")
+            return self.centroid
 
     def showCentroid(self, title=None, interpolation='nearest', ref=None):
-        if self.centroid == False:
+        if self.centroid is False:
             print("Volume has no centroid yet. use Volume.getCentroid() first!")
             return None
 
-        if title == None:
+        if title is None:
             title = self.title
-        if ref == None:
+        if ref is None:
             ref = self.ref
         centroid_show(img=self.img, com=self.centroid, title=title,
                       interpolation=interpolation, ref=ref)
 
     def getMask(self, lower=False, upper=False):
 
-        if self.seeds == False:
+        if self.seeds is False:
             print("no seeds given!")
             return None
 
-        if lower == False and self.lower != False:
+        if lower is False and self.lower is not False:
             lower = self.lower
-        if upper == False and self.upper != False:
+        if upper is False and self.upper is not False:
             upper = self.upper
 
-        if lower == False:
+        if lower is False:
             print("Lower threshold missing!")
             return None
-        if upper == False:
+        if upper is False:
             print("Upper threshold missing!")
             return None
 
@@ -224,7 +215,7 @@ class Volume:
         return self.mask
 
     def applyMask(self, mask=None, replaceArray=False, spacing=1):
-        if (mask == None):
+        if (mask is None):
             if self.mask:
                 mask = self.mask
             else:
@@ -237,14 +228,14 @@ class Volume:
         return self.masked
 
     def showMask(self, interpolation=None, ref=None):
-        if self.mask == False:
+        if self.mask is False:
             print("Volume has no mask yet. use Volume.getMask() first!")
             return None
 
-        if ref == None:
+        if ref is None:
             ref = self.ref
 
-        if interpolation == None:
+        if interpolation is None:
             interpolation = 'nearest'
 
         title = self.title + ", mask"
@@ -253,13 +244,13 @@ class Volume:
                   interpolation=interpolation)
 
     def showMasked(self, interpolation=None, ref=None):
-        if self.masked == False:
+        if self.masked is False:
             print("Volume has not been masked yet. use Volume.applyMask() first!")
             return None
-        if ref == None:
+        if ref is None:
             ref = self.ref
 
-        if interpolation == None:
+        if interpolation is None:
             interpolation = 'nearest'
 
         title = self.title + ", mask"
@@ -281,7 +272,7 @@ class Volume:
         if centroid == "no":
             centroid = self.centroid
 
-        if self.radius == False:
+        if self.radius is False:
             radii = np.linspace(1.5, 4, num = 11)*self.xSpace 
             dcs = np.zeros(len(radii))
             for index, r in enumerate(radii, start=0):
@@ -300,10 +291,11 @@ class Volume:
         self.raduis = radii[dcs.argmax()]
         return dsc.max()
 
+
 def sitk_read(directory, denoise=False):
     '''
     returns DICOM files as "SimpleITK.Image" data type (3D)
-    if denoise == True: uses SimpleITK to denoise data
+    if denoise is True: uses SimpleITK to denoise data
     '''
     reader = sitk.ImageSeriesReader()
     filenames = reader.GetGDCMSeriesFileNames(directory)
@@ -339,39 +331,46 @@ def sitk_show(img, ref=1, title=None, interpolation='nearest'):
     plt.show()
 
 
-def sitk_centroid(img, show=False, percentLimit=0.9, threshold=False,
-                  interpolation='nearest', title=None, method=None):
+def sitk_centroid(img, show=False, ref=False, percentLimit=False,
+                  threshold=False, interpolation='nearest', title=None):
     '''
     returns array with y&x coordinate of centroid for every slice of img
     centroid[slice, y&x-coordinate]
-
-    if threshold == False: compute centroid using only brightest 10% of pixels
     '''
+    if (threshold is False and percentLimit is False) or (threshold is True and percentLimit is True):
+        print("Please set either percentLimit or threshold!")
+        return None
+
     arr = sitk.GetArrayFromImage(img)
     z, y, x = np.shape(arr)
     # create array with centroid coordinates of rod in each slice
     com = np.zeros((z, 2))
 
-    for slice in range(z):
-        if threshold == False:
-            hist, bins = np.histogram(arr[slice, :, :].ravel(),
-                                      density=True, bins=100)
-            threshold = bins[np.concatenate((np.array([0]), np.cumsum(hist))) *
-            (bins[1] - bins[0]) > percentLimit][0]
+    if ref is False:
+        ref = int(z/2)
 
+    if threshold is False:
+        hist, bins = np.histogram(arr[ref, :, :].ravel(),
+                                  density=True, bins=100)
+        threshold = bins[np.concatenate((np.array([0]), np.cumsum(hist))) *
+                         (bins[1] - bins[0]) > percentLimit][0]
+
+    for slice in range(z):
         # structuring_element=[[1,1,1],[1,1,1],[1,1,1]]
-        segmentation,segments=ndimage.label(arr[slice]>threshold)
+        segmentation, segments = ndimage.label(arr[slice] > threshold)
         # print("segments: {}".format(segments))
         # add ', structuring_element' to label() for recognising
         # diagonal pixels as part of object
-        com[slice, ::-1] = ndimage.center_of_mass(arr[slice, :, :],
-                                              segmentation)
+        com[slice, ::-1] = ndimage.center_of_mass(arr[slice, :, :]-threshold,
+                                                  segmentation)
         # add ', range(1,segments)' to center_of_mass for list of centroids
         # in each slice (multiple rods!)
-        
+
     if show:
-        centroid_show(img, com=com, title=title,
-                      interpolation=interpolation, ref=show)
+        if type(show) == bool:
+            show == ref
+            centroid_show(img, com=com, title=title,
+                          interpolation=interpolation, ref=show)
 
     return com
 
