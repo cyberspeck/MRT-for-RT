@@ -11,17 +11,30 @@ could be done similar to this:https://blancosilva.wordpress.com/2010/12/15/image
 import FunITK as fun
 from FunITK import Volume
 
-pathCT = "../data/cropped_CT-a/"
-pathMR = "../data/cropped_MR-d-a/"
+pathCT = "../data/cropped_CT/"
+pathMR = "../data/cropped_MR/"
+pathCT_04 = "../data/cropped_CT_resample_04/"
+pathMR_04 = "../data/cropped_MR_resample_04/"
+pathCT_012 = "../data/cropped_CT_resample_012/"
+pathMR_012 = "../data/cropped_MR_resample_012/"
 idxSlice = 10
 
 CT = Volume(path=pathCT, method="CT", ref=idxSlice, seeds=[(6, 8, idxSlice)])
-CT.getCentroid()
+CT.getCentroid(threshold='auto')
 CT.showCentroid()
 
-MR = Volume(path=pathMR, method="MR", ref=idxSlice, seeds=[(6, 8, idxSlice)])
-MR.getCentroid()
+CT_04 = Volume(path=pathCT_04, method="CT", ref=idxSlice, seeds=[(6, 8, idxSlice)])
+CT_04.getCentroid(threshold='auto')
+CT_04.showCentroid()
+
+CT_012 = Volume(path=pathCT_012, method="CT", ref=idxSlice, seeds=[(6, 8, idxSlice)])
+CT_012.getCentroid(threshold='auto')
+CT_012.showCentroid()
+'''
+MR = Volume(path=pathMR_012, method="MR", ref=idxSlice, seeds=[(6, 8, idxSlice)])
+MR.getCentroid(threshold='auto')
 MR.showCentroid()
+
 
 # this calculates the coordinate difference of MR.centroid relative to CT.centroid
 distortion = fun.coordShift(CT.centroid, MR.centroid)
@@ -42,7 +55,7 @@ CT.applyMask(replaceArray=distortionNorm, spacing=CT.img.GetSpacing()[0])
 
 # exports 3D image as .mha file
 fun.sitk_write(CT.masked, "../data/", "CT_distortionNorm.mha")
-
+'''
 # instead of opening the created file manually, you can use this lines in
 # the IPython console to start 3D Slicer and open it automatically:
 # %env SITK_SHOW_COMMAND /home/david/Downloads/Slicer-4.5.0-1-linux-amd64/Slicer

@@ -78,14 +78,24 @@ class Volume:
             self.xSpace, self.ySpace, self.zSpace = self.img.GetSpacing()
             self.xSize, self.ySize, self.zSize = self.img.GetSize()
 
-    def show(self, interpolation=None, ref=None):
+    def show(self, unit=False, interpolation=None, ref=None):
+        '''
+        plots ref slice of Volume
+        unit==True: changes axis from pixels to mm
+        '''
+    
         if ref is None:
             ref = self.ref
 
         if interpolation is None:
             a = 'nearest'
 
-        sitk_show(img=self.img, ref=ref, title=self.title, interpolation=a)
+        if unit is True:
+            extent = (0, self.xSize*self.xSpace, self.ySize*self.ySpace, 0)
+        else:
+            extent = None
+
+        sitk_show(img=self.img, ref=ref, extent=extent, title=self.title, interpolation=a)
 
     def showSeed(self, title=None, interpolation='nearest'):
         if self.seeds is False:
@@ -167,7 +177,7 @@ class Volume:
             return self.centroid
 
         if threshold == 'auto':
-            self.getThresholds(scale=scale)
+            self.getThresholds(pixelNumber=pixelNumber, scale=scale)
             self.centroid = sitk_centroid(self.img, ref=self.ref, show=show,
                                           threshold=self.lower,
                                           title=self.title)
@@ -317,7 +327,7 @@ def sitk_write(image, output_dir='', filename='3DImage.mha'):
     sitk.WriteImage(image, output_file_name_3D)
 
 
-def sitk_show(img, ref=1, title=None, interpolation='nearest'):
+def sitk_show(img, ref=0, extent=None, title=None, interpolation='nearest'):
     """
     shows plot of img at z=ref
     """
@@ -327,7 +337,7 @@ def sitk_show(img, ref=1, title=None, interpolation='nearest'):
     if title:
         plt.title(title)
 
-    plt.imshow(arr, interpolation=interpolation)
+    plt.imshow(arr, extent=extent, interpolation=interpolation)
     plt.show()
 
 
