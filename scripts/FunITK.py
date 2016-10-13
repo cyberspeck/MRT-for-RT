@@ -39,13 +39,36 @@ from skimage.draw import circle
 
 class Volume:
     '''
-    SimpleITK.Image with convenient properties and functions
+    Create a Volume (SimpleITK.Image with convenient properties and functions)
     recommended use:
     create new Volume (optional use denoise=True)
     Volume.getThresholds()
+
+    Parameters
+    ----------
+    path : string_like
+        directory containing DICOM data
+    method : string_like, recommended
+        either "CT or "MR", used to make correct calculations
+    radius: double, optional
+        overrides radius value (default CT:4mm, MR:2mm)
+    denoise : bool, optional
+        If true, the imported data will be denoised using
+        SimpleITK.CurvatureFlow(image1=self.img,
+                                timeStep=0.125,
+                                numberOfIterations=5)
+    ref : int, optional
+        slice used to make calculations (idealy isocenter) and plotted
+    info : string, optional
+        additional information about imported data, becomes part of title
+    seeds : array_like (int,int,int), optional
+        array that describes point inside rod, used for segmentation
+    spacing: double, optional
+        by default SitpleITK.img.GetSpacing is used to find relation of pixels
+        to real length (in mm)
     '''
-    def __init__(self, path=None, method=None, denoise=False, ref=1,
-                 info=False, seeds=None, radius=False):
+    def __init__(self, path=None, method=None, denoise=False, ref=0,
+                 info=False, seeds=None, radius=0, spacing=0):
         if(path is None):
             print("Error: no path given!")
         else:
@@ -67,7 +90,6 @@ class Volume:
             self.img = sitk_read(path, self.denoise)
 
             if (self.img and self.denoise):
-                print("\n...denoising...")
                 a = self.title
                 self.title = a + " denoised"
 
@@ -75,32 +97,56 @@ class Volume:
                 a = self.title
                 self.title = a + ", " + info
 
-            self.xSpace, self.ySpace, self.zSpace = self.img.GetSpacing()
             self.xSize, self.ySize, self.zSize = self.img.GetSize()
 
-    def show(self, unit=False, interpolation=None, ref=None):
+            if spacing == 0:
+                self.xSpace, self.ySpace, self.zSpace = self.img.GetSpacing()
+
+    def show(self, pixel=False, interpolation=None, ref=None):
         '''
         plots ref slice of Volume
-        unit==True: changes axis from pixels to mm
+
+        Parameters
+        ----------
+        pixel: bool, optional
+            if True, changes axis from mm to pixels
+        interpolation: "string", optional, default: 'nearest'
+            using build-in interpolation of matplotlib.pyplot.imshow
+            Acceptable values are 'none', 'nearest', 'bilinear', 'bicubic',
+            'spline16', 'spline36', 'hanning', 'hamming', 'hermite', 'kaiser',
+            'quadric', 'catrom', 'gaussian', 'bessel', 'mitchell', 'sinc',
+            'lanczos'
+        ref: int, optional
+            slice to be plotted instead of self.ref (default: 0)
         '''
-    
+
         if ref is None:
             ref = self.ref
 
         if interpolation is None:
             a = 'nearest'
 
-        if unit is True:
-            extent = (0, self.xSize*self.xSpace, self.ySize*self.ySpace, 0)
+        if pixel is False:
+            extent = (-self.xSpace/2, self.xSize*self.xSpace + self.xSpace/2, self.ySize*self.ySpace + self.ySpace/2, -self.ySpace/2)
+# The location, in data-coordinates, of the lower-left and upper-right corners
+# (left, right, bottom, top)
         else:
             extent = None
 
         sitk_show(img=self.img, ref=ref, extent=extent, title=self.title, interpolation=a)
 
-    def showSeed(self, title=None, interpolation='nearest'):
+    def showSeed(self, title=None, pixel=False, interpolation='nearest'):
+        '''
+        plots slice conataining seed
+        '''
         if self.seeds is False:
             print("Volume has no seeds yet.")
             return None
+
+        extent = None
+
+        if pixel is False:
+            extent = (-self.xSpace/2, self.xSize*self.xSpace + self.xSpace/2, self.ySize*self.ySpace + self.ySpace/2, -self.ySpace/2)
 
         x, y, z = self.seeds[0]
         arr = sitk.GetArrayFromImage(self.img)
@@ -108,26 +154,46 @@ class Volume:
         if title is None:
             plt.title(self.title + ", seed")
 
-        plt.imshow(arr[z, :, :], interpolation=interpolation)
+        plt.imshow(arr[z, :, :], extent=extent, interpolation=interpolation)
         plt.scatter(x, y)
         plt.show()
-
+        
     def getThresholds(self, pixelNumber=0, scale=1):
-        # approx. number of pixels being part of rod pixel Number = pn
-        # pn = real raduis^2 * pi / pixelSpacing^2
+        '''
+        calculates threshold based on number of pixels representing rod
+        if no pixelNumber is given, self.radius is used to get estimated
+        pixelNumber
+
+        approx. number of pixels being part of rod:
+        pn = realRadius^2 * pi / pixelSpacing^2
+
+        Parameters
+        ----------
+        pixelNumber: int, optional
+            if 0, uses self.radis to calculate pixelnumber
+            if self.radius also 0, uses self.method instead (CT: 4mm, MR: 2mm)
+        scale: double, optional
+            factor altering pixelNumber
+
+        Returns
+        -------
+        Lower and upper threshold value: (double, double)
+        '''
+
+        if pixelNumber == 0:
+            if self.radius != 0:
+                realRadius = self.radius
+            else:
+                if self.method == "CT":
+                    realRadius = 4
+                if self.method == "MR":
+                    realRadius = 2
+                if self.method != "MR" and self.method != "CT":
+                    print("method is unknown, please set pixelNumber!")
+                    return None
+            pixelNumber = np.power(realRadius, 2)*np.pi/np.power(self.xSpace, 2)*scale
 
         pn = pixelNumber
-        if self.method == "CT" and pn == 0:
-            realRadius = 4
-            pn = np.power(realRadius, 2)*np.pi/np.power(self.xSpace, 2)*scale
-        if self.method == "MR" and pn == 0:
-            realRadius = 2
-            pn = np.power(realRadius, 2)*np.pi/np.power(self.xSpace, 2)*scale
-
-        if pn == 0:
-            print("method is unknown, so please also set pixelNumber!")
-            return None
-
         arr = sitk.GetArrayFromImage(self.img)
         self.upper = np.double(arr.max())
 
@@ -167,29 +233,31 @@ class Volume:
 
             print("max dice-coefficient obtained using {} % of all pixels".format(
             limits[centroidScore.argmax()]*100))
-            self.centroid = centroids[centroidScore.argmax()]
+            self.centroid = self.xSpace * centroids[centroidScore.argmax()]
             return self.centroid
 
         if percentLimit != "auto" and percentLimit is True:
-            self.centroid = sitk_centroid(self.img, ref=self.ref, show=show,
-                                          percentLimit=percentLimit,
-                                          title=self.title)
+            self.centroid = self.xSpace * sitk_centroid(self.img, ref=self.ref, show=show,
+                                                        percentLimit=percentLimit,
+                                                        title=self.title)
             return self.centroid
 
         if threshold == 'auto':
             self.getThresholds(pixelNumber=pixelNumber, scale=scale)
-            self.centroid = sitk_centroid(self.img, ref=self.ref, show=show,
-                                          threshold=self.lower,
-                                          title=self.title)
+            self.centroid = self.xSpace * sitk_centroid(self.img, ref=self.ref,
+                                                        show=show, 
+                                                        threshold=self.lower,
+                                                        title=self.title)
             return self.centroid
 
         if threshold != "auto" and threshold is True:
-            self.centroid = sitk_centroid(self.img, ref=self.ref, show=show,
-                                          threshold=threshold,
-                                          title=self.title)
+            self.centroid = self.xSpace * sitk_centroid(self.img, ref=self.ref, show=show,
+                                                        threshold=threshold,
+                                                        title=self.title)
             return self.centroid
 
-    def showCentroid(self, title=None, interpolation='nearest', ref=None):
+    def showCentroid(self, title=None, pixel=False, interpolation='nearest',
+                     ref=None):
         if self.centroid is False:
             print("Volume has no centroid yet. use Volume.getCentroid() first!")
             return None
@@ -198,8 +266,14 @@ class Volume:
             title = self.title
         if ref is None:
             ref = self.ref
-        centroid_show(img=self.img, com=self.centroid, title=title,
-                      interpolation=interpolation, ref=ref)
+            
+        if pixel is False:
+            extent = (-self.xSpace/2, self.xSize*self.xSpace + self.xSpace/2, self.ySize*self.ySpace + self.ySpace/2, -self.ySpace/2)
+            centroid_show(img=self.img, com=self.centroid, extent=extent,
+                          title=title, interpolation=interpolation, ref=ref)
+        else:
+            centroid_show(img=self.img, com=self.centroid/self.xSpace, title=title,
+                          interpolation=interpolation, ref=ref)
 
     def getMask(self, lower=False, upper=False):
 
@@ -311,6 +385,7 @@ def sitk_read(directory, denoise=False):
     filenames = reader.GetGDCMSeriesFileNames(directory)
     reader.SetFileNames(filenames)
     if denoise:
+        print("\n...denoising...")
         imgOriginal = reader.Execute()
         return sitk.CurvatureFlow(image1=imgOriginal,
                                   timeStep=0.125,
@@ -385,13 +460,13 @@ def sitk_centroid(img, show=False, ref=False, percentLimit=False,
     return com
 
 
-def centroid_show(img, com, title=None, interpolation='nearest', ref=1):
+def centroid_show(img, com, extent=None, title=None, interpolation='nearest', ref=1):
         arr = sitk.GetArrayFromImage(img)
         plt.set_cmap("gray")
         if title:
             plt.title(title + ", centroid")
 
-        plt.imshow(arr[ref, :, :], interpolation=interpolation)
+        plt.imshow(arr[ref, :, :], extent=extent, interpolation=interpolation)
         plt.scatter(*com[ref, :])
         plt.show()
 
