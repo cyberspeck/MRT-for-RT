@@ -127,7 +127,7 @@ class Volume:
             a = 'nearest'
 
         if pixel is False:
-            extent = (-self.xSpace/2, self.xSize*self.xSpace + self.xSpace/2, self.ySize*self.ySpace + self.ySpace/2, -self.ySpace/2)
+            extent = (-self.xSpace/2, self.xSize*self.xSpace - self.xSpace/2, self.ySize*self.ySpace - self.ySpace/2, -self.ySpace/2)
 # The location, in data-coordinates, of the lower-left and upper-right corners
 # (left, right, bottom, top)
         else:
@@ -146,7 +146,7 @@ class Volume:
         extent = None
 
         if pixel is False:
-            extent = (-self.xSpace/2, self.xSize*self.xSpace + self.xSpace/2, self.ySize*self.ySpace + self.ySpace/2, -self.ySpace/2)
+            extent = (-self.xSpace/2, self.xSize*self.xSpace - self.xSpace/2, self.ySize*self.ySpace - self.ySpace/2, -self.ySpace/2)
 
         x, y, z = self.seeds[0]
         arr = sitk.GetArrayFromImage(self.img)
@@ -268,7 +268,7 @@ class Volume:
             ref = self.ref
             
         if pixel is False:
-            extent = (-self.xSpace/2, self.xSize*self.xSpace + self.xSpace/2, self.ySize*self.ySpace + self.ySpace/2, -self.ySpace/2)
+            extent = (-self.xSpace/2, self.xSize*self.xSpace - self.xSpace/2, self.ySize*self.ySpace - self.ySpace/2, -self.ySpace/2)
             centroid_show(img=self.img, com=self.centroid, extent=extent,
                           title=title, interpolation=interpolation, ref=ref)
         else:

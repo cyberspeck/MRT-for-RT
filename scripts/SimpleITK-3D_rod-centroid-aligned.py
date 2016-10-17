@@ -30,6 +30,7 @@ CT.centroid[10] / CT.xSpace
 CT.showCentroid()
 CT.centroid[10]
 CT.img[8,6,10] = -100
+CT.showSeed(pixel=True)
 #CT.showSeed()
 
 '''
