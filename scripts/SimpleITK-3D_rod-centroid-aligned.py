@@ -36,9 +36,11 @@ idxSlice = 10
 
 
 CT_012 = Volume(path=pathCT_012, method="CT", ref=idxSlice, seeds=[(65, 80, idxSlice)])
-#CT_012.showSeed()
 a = CT_012.getCentroid(percentLimit='auto', iterations=5, halfShift=0.2)
-CT_012.showCentroid()
+b = CT_012.getCentroid(threshold='auto')
+CT_012.getMask()
+CT_012.getDice(a, CT_012.mask)
+#CT_012.showCentroid()
 '''
 MR = Volume(path=pathMR_012, method="MR", ref=idxSlice, seeds=[(6, 8, idxSlice)])
 MR.getCentroid(threshold='auto')
