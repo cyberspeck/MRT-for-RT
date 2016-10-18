@@ -20,24 +20,26 @@ pathMR_012 = "../data/cropped_MR_resample_012/"
 idxSlice = 10
 
 #CT = Volume(path=pathCT, method="CT", ref=idxSlice, seeds=[(6, 8, idxSlice)])
-#CT.getCentroid(threshold='auto')
+#CT.getCentroid(percentLimit='auto')
 #CT.showCentroid()
 
-CT = Volume(path=pathCT, method="CT", ref=idxSlice, seeds=[(0, 10, idxSlice)])
-CT.getCentroid(threshold='auto')
-CT.showCentroid(pixel=True)
-CT.centroid[10] / CT.xSpace
-CT.showCentroid()
-CT.centroid[10]
-CT.img[8,6,10] = -100
-CT.showSeed(pixel=True)
-#CT.showSeed()
+#CT_04 = Volume(path=pathCT_04, method="CT", ref=idxSlice, seeds=[(20, 24, idxSlice)])
+#CT_04.showSeed(pixel=True)
+#CT_04.show(pixel=True)
+#a = CT_04.getCentroid(threshold='auto')
+#print("\n\n")
+#CT_012.showCentroid()
+#CT_012.getMask()
+#CT_012.showMask()
+#CT_012.getDice()
+#a = CT_04.getCentroid(percentLimit='auto')
 
-'''
-CT_012 = Volume(path=pathCT_012, method="CT", ref=idxSlice, seeds=[(6, 8, idxSlice)])
-CT_012.getCentroid(threshold='auto')
+
+CT_012 = Volume(path=pathCT_012, method="CT", ref=idxSlice, seeds=[(65, 80, idxSlice)])
+#CT_012.showSeed()
+a = CT_012.getCentroid(percentLimit='auto', iterations=5, halfShift=0.2)
 CT_012.showCentroid()
-
+'''
 MR = Volume(path=pathMR_012, method="MR", ref=idxSlice, seeds=[(6, 8, idxSlice)])
 MR.getCentroid(threshold='auto')
 MR.showCentroid()

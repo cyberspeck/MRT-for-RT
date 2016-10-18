@@ -62,7 +62,7 @@ class Volume:
     info : string, optional
         additional information about imported data, becomes part of title
     seeds : array_like (int,int,int), optional
-        array that describes point inside rod, used for segmentation
+        coordinates (pixel) of point inside rod, used for segmentation
     spacing: double, optional
         by default SitpleITK.img.GetSpacing is used to find relation of pixels
         to real length (in mm)
@@ -137,7 +137,7 @@ class Volume:
 
     def showSeed(self, title=None, pixel=False, interpolation='nearest'):
         '''
-        plots slice conataining seed
+        plots slice containing seed
         '''
         if self.seeds is False:
             print("Volume has no seeds yet.")
@@ -147,8 +147,12 @@ class Volume:
 
         if pixel is False:
             extent = (-self.xSpace/2, self.xSize*self.xSpace - self.xSpace/2, self.ySize*self.ySpace - self.ySpace/2, -self.ySpace/2)
+            x = (self.seeds[0][0] * self.xSpace)
+            y = (self.seeds[0][1] * self.xSpace)
+            z = (self.seeds[0][2] * self.xSpace)
+        else:
+            x, y, z = self.seeds[0]
 
-        x, y, z = self.seeds[0]
         arr = sitk.GetArrayFromImage(self.img)
         plt.set_cmap("gray")
         if title is None:
@@ -157,7 +161,7 @@ class Volume:
         plt.imshow(arr[z, :, :], extent=extent, interpolation=interpolation)
         plt.scatter(x, y)
         plt.show()
-        
+
     def getThresholds(self, pixelNumber=0, scale=1):
         '''
         calculates threshold based on number of pixels representing rod
@@ -204,7 +208,7 @@ class Volume:
         return (self.lower, self.upper)
 
     def getCentroid(self, show=False, percentLimit=False, threshold=False,
-                    pixelNumber=0, scale=1):
+                    pixelNumber=0, scale=1, iterations=5, halfShift=0.2):
         '''
         Either used with percentLimit = within (0,1) or "auto"
         or with threshold = number or "auto"
@@ -215,25 +219,103 @@ class Volume:
             return None
 
         if percentLimit == "auto" and threshold is False:
-#            if self.mask is False:
-#                print("For this method a mask is required! Use Volume.applyMask() first!")
-#                return None
-            # calculates 13 centroids with different percentLimits
+            # value A @ 0.5*(1-halfShift) and B @ 0.5*(1+halfShift) times pn
+            # if A > B: next value around 0.25
+            # else: around 0.75
+            # and so forth
+            # calculates 10 centroids with different percentLimits
             # gets dice coefficient for each centroid percentLimit combination
             # returns best result
-            limits = np.linspace(0.65, 0.95, num=13)
-            centroidScore = np.zeros(len(limits))
-            centroids = np.zeros((len(limits), self.zSize, 2))
-            for index, p in enumerate(limits, start=0):
-                centroids[index] = sitk_centroid(self.img, ref=self.ref, show=show,
-                                                 percentLimit=limits[index],
-                                                 title=self.title)
-                                                 
-                centroidScore[index] = self.getDice(centroid=centroids[index])
 
-            print("max dice-coefficient obtained using {} % of all pixels".format(
-            limits[centroidScore.argmax()]*100))
-            self.centroid = self.xSpace * centroids[centroidScore.argmax()]
+            guess = np.zeros(iterations+1)
+            guess[0] = 0.5
+            left = 0
+            right = 1
+            a=0
+            centroidScoreA = np.zeros(iterations+1)
+            centroidScoreB = np.zeros(iterations+1)
+            centroidsA = np.zeros((iterations+1, self.zSize, 2))
+            centroidsB = np.zeros((iterations+1, self.zSize, 2))
+            for index in range(iterations):
+                print(" Iteration #{}, A @ {}% = {} pixels".format(index, guess[index]*(1-halfShift)*100, self.xSize*self.ySize*guess[index]*(1-halfShift)))
+                self.getThresholds(pixelNumber=self.xSize*self.ySize*guess[index]*(1-halfShift))
+                maskA = sitk.ConnectedThreshold(image1=self.img,
+                                                seedList=self.seeds,
+                                                lower=self.lower,
+                                                upper=self.upper,
+                                                replaceValue=1)
+                maskedA2 = sitk_applyMask(self.img+1000, maskA)
+                maskedA = maskedA2 - 1000
+                centroidsA[index] = sitk_centroid(maskedA, ref=self.ref,
+                                                  threshold=-999,
+                                                  title=self.title)
+                centroidScoreA[index] = self.getDice(centroidsA[index], maskA)
+                self.radius = 0
+
+                print("\n Iteration #{}, B @ {}% = {} pixels".format(index, guess[index]*(1+halfShift)*100, self.xSize*self.ySize*guess[index]*(1+halfShift)))
+                self.getThresholds(pixelNumber=self.xSize*self.ySize*guess[index]*(1+halfShift))
+                maskB = sitk.ConnectedThreshold(image1=self.img,
+                                                seedList=self.seeds,
+                                                lower=self.lower,
+                                                upper=self.upper,
+                                                replaceValue=1)
+                maskedB2 = sitk_applyMask(self.img+1000, maskB)
+                maskedB = maskedB2 - 1000
+                centroidsB[index] = sitk_centroid(maskedB, ref=self.ref,
+                                                  threshold=-999,
+                                                  title=self.title)
+                centroidScoreB[index] = self.getDice(centroidsB[index], maskB)
+                self.radius = 0
+                print("--------------------------")
+
+                if centroidScoreA[index] < centroidScoreB[index]:
+                    guess[index+1] = (right + guess[index]) / 2
+                    left = guess[index]
+                    print("current guess = {}".format((guess[index])))
+                elif centroidScoreA[index] > centroidScoreB[index]:
+                    right = guess[index]
+                    guess[index+1] = (left + guess[index]) / 2
+                    print("current guess = {}".format((guess[index])))
+                else:
+                    break
+
+                if np.array([centroidScoreA, centroidScoreB]).max() > np.array([centroidScoreA[index], centroidScoreB[index]]).max() and a==0:
+                    a = 1
+                elif np.array([centroidScoreA, centroidScoreB]).max() > np.array([centroidScoreA[index], centroidScoreB[index]]).max() and a==1:
+                    a = 2
+                elif np.array([centroidScoreA, centroidScoreB]).max() > np.array([centroidScoreA[index], centroidScoreB[index]]).max() and a==2:
+                    break
+                else:
+                    a = 0
+
+                print("next guess (#{}) = {} \n \n".format(index+1, guess[index+1]))
+
+            print(" Final iteration (#{}) @ {}% = {} pixels".format(iterations, guess[index]*100, self.xSize*self.ySize*guess[iterations]))
+            self.getThresholds(pixelNumber=self.xSize*self.ySize*guess[iterations])
+            maskA = sitk.ConnectedThreshold(image1=self.img,
+                                            seedList=self.seeds,
+                                            lower=self.lower,
+                                            upper=self.upper,
+                                            replaceValue=1)
+            maskedA = sitk_applyMask(self.img, maskA)
+            centroidsA[iterations] = sitk_centroid(maskedA, ref=self.ref,
+                                                   threshold=0,
+                                                   title=self.title)
+            centroidScoreA[iterations] = self.getDice(centroidsA[index], maskA)
+
+            for i, c in enumerate(centroidScoreA):
+                print(c)
+            print("\n")
+            for i, c in enumerate(centroidScoreB):
+                print(c)
+
+            print("max dice-coefficient obtained using {} % of all pixels: ".format(np.array([centroidScoreA, centroidScoreB]).max()))
+            print("\n\n\n")
+            print(guess)
+            if centroidScoreA.max() > centroidScoreB.max():
+                self.centroid = self.xSpace * centroidsA[centroidScoreA.argmax()]
+            else:
+                self.centroid = self.xSpace * centroidsB[centroidScoreB.argmax()]
             return self.centroid
 
         if percentLimit != "auto" and percentLimit is True:
@@ -245,7 +327,7 @@ class Volume:
         if threshold == 'auto':
             self.getThresholds(pixelNumber=pixelNumber, scale=scale)
             self.centroid = self.xSpace * sitk_centroid(self.img, ref=self.ref,
-                                                        show=show, 
+                                                        show=show,
                                                         threshold=self.lower,
                                                         title=self.title)
             return self.centroid
@@ -266,7 +348,7 @@ class Volume:
             title = self.title
         if ref is None:
             ref = self.ref
-            
+
         if pixel is False:
             extent = (-self.xSpace/2, self.xSize*self.xSpace - self.xSpace/2, self.ySize*self.ySpace - self.ySpace/2, -self.ySpace/2)
             centroid_show(img=self.img, com=self.centroid, extent=extent,
@@ -276,10 +358,6 @@ class Volume:
                           interpolation=interpolation, ref=ref)
 
     def getMask(self, lower=False, upper=False):
-
-        if self.seeds is False:
-            print("no seeds given!")
-            return None
 
         if lower is False and self.lower is not False:
             lower = self.lower
@@ -293,9 +371,7 @@ class Volume:
             print("Upper threshold missing!")
             return None
 
-        self.mask = sitk.ConnectedThreshold(image1=self.img, seedList=self.seeds,                                   
-                                   lower=lower, upper=upper,
-                                   replaceValue=1)
+        self.mask = sitk_getMask(self.img, self.seeds, upper, lower)
         return self.mask
 
     def applyMask(self, mask=None, replaceArray=False, spacing=1):
@@ -342,7 +418,7 @@ class Volume:
         sitk_show(img=self.masked, ref=ref, title=title,
                   interpolation=interpolation)
 
-    def getDice(self, centroid="no", show=False, showAll=False):
+    def getDice(self, centroid, mask, show=False, showAll=False):
         '''
         calculates average dice coefficient ('dc') of the rod by trying
         different radii, and sets self.radius to the value yielding best result
@@ -351,29 +427,33 @@ class Volume:
         uses xSpace (should be same as ySpace) to be used with any resolution
         calculating dc for rods with 1.5mm < r < 4mm
         '''
-#        radii = np.array([2, 2.1, 2.3, 2.9, 3.1, 3.2, 3.7, 4.1, 4.2])
+        if self.radius == 0:
+            if self.method == "CT":
+                radii = np.linspace(2.5, 5.5, num=25)/self.xSpace
+            if self.method == "MR":
+                radii = np.linspace(0.5, 3.5, num=25)/self.xSpace
+            if self.method != "CT" and self.method != "MR":
+                # radii = np.linspace(1.5, 4.5, num = 11)*self.xSpace
+                print("Unknown method!")
+                return None
 
-        if centroid == "no":
-            centroid = self.centroid
-
-        if self.radius is False:
-            radii = np.linspace(1.5, 4, num = 11)*self.xSpace 
             dcs = np.zeros(len(radii))
             for index, r in enumerate(radii, start=0):
-                dcs[index] = np.average(dice_circle(self.mask, centroid,
+                dcs[index] = np.average(dice_circle(img=mask, centroid=centroid,
                                         radius=r, show=showAll))
-                                        
-            self.dice = dice_circle(self.mask, self.centroid,
-                                radius=radii[dcs.argmax()], show=show)
-            print("max dice-coefficient obtained for {} when compared to circle with radius = {}".format(
-            self.method, radii[dcs.argmax()]))
 
-        else:    
-            self.dice = dice_circle(self.mask, self.centroid,
-                                radius=self.raduis, show=show)
-        print("max dice-coefficient average for the whole volume is: {}".format(dcs.max()))
-        self.raduis = radii[dcs.argmax()]
-        return dsc.max()
+            self.dice = dice_circle(img=mask, centroid=centroid,
+                                    radius=radii[dcs.argmax()], show=show)
+            print("max dice-coefficient obtained for {} when compared to circle with radius = {}".format(self.method, radii[dcs.argmax()]))
+            print("max dice-coefficient average for the whole volume is: {}".format(dcs.max()))
+            self.radius = radii[dcs.argmax()]
+            return np.average(dcs.max())
+
+        else:
+            self.dice = dice_circle(img=mask, centroid=centroid,
+                                    radius=self.radius, show=show)
+            print("dice-coefficient average for the whole volume is: {}".format(np.average(self.dice)))
+            return np.average(self.dice)
 
 
 def sitk_read(directory, denoise=False):
@@ -506,6 +586,10 @@ def coordDist(shift):
 
 def sitk_getMask(img, seedList, upper, lower):
 
+    if seedList is False:
+        print("no seeds given!")
+        return None
+        
     return sitk.ConnectedThreshold(image1=img, seedList=seedList,
                                    lower=lower, upper=upper,
                                    replaceValue=1)
@@ -541,7 +625,7 @@ def sitk_applyMask(img, mask, replaceArray=False, spacing=1):
     return sitk.GetImageFromArray(imgMaskedA)
 
 
-def dice_circle(input_img, centroid, radius=2.1, show=False,
+def dice_circle(img, centroid, radius=2.1, show=False,
                 interpolation='nearest'):
     """
     Dice coefficient, inspired by
@@ -573,14 +657,14 @@ def dice_circle(input_img, centroid, radius=2.1, show=False,
         created cirles. It ranges from 0 (no overlap) to 1 (perfect overlap).
     """
 
-    xSize, ySize, zSize = input_img.GetSize()
+    xSize, ySize, zSize = img.GetSize()
     profile = np.zeros((zSize, ySize, xSize), dtype=np.uint8)
     centres = centroid.astype(int)
     for slice in range(zSize):
-        rr, cc = circle(centres[slice, 0], centres[slice, 1], radius)
+        rr, cc = circle(centres[slice, 0], centres[slice, 1], radius, (ySize,xSize))
         profile[slice, cc, rr] = 1
 
-    input = sitk.GetArrayFromImage(input_img)
+    input = sitk.GetArrayFromImage(img)
 
     input = np.atleast_1d(input.astype(np.bool))
     reference = np.atleast_1d(profile.astype(np.bool))
