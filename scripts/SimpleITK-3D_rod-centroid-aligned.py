@@ -25,8 +25,8 @@ CT = Volume(path=pathCT, method="CT", info="x1", ref=idxSlice, seeds=[(4, 20, id
 #CT.showCentroid()
 b = CT.getCentroid(threshold='auto')
 CT.showCentroid()
-#CT.getMask()
-#CT.getDice(b, CT.mask)
+CT.getMask()
+CT.getDice(b, CT.mask)
 
 CT_x4 = Volume(path=pathCT_x4, method="CT", info="x4", ref=idxSlice, seeds=[(8, 40, idxSlice)])
 #c = CT_x4.getCentroid(percentLimit='auto', iterations=10)
@@ -41,8 +41,9 @@ CT_x9 = Volume(path=pathCT_x9, method="CT", info="x9", ref=idxSlice, seeds=[(12,
 #CT_x9.showCentroid()
 f = CT_x9.getCentroid(threshold='auto')
 CT_x9.showCentroid()
-#CT_x9.getMask()
-#CT_x9.getDice(f, CT_x9.mask)
+CT_x9.getMask()
+CT_x9.getDice(f, CT_x9.mask)
+#fun.dice_circle(CT_x9.mask[:,:,170:195], CT_x9.centroid[170:195]/CT_x9.xSpace, radius=4 / CT_x9.xSpace)
 
 
 MR = Volume(path=pathMR, method="MR", info="x1", ref=idxSlice, seeds=[(7, 21, idxSlice)])

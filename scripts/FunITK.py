@@ -110,6 +110,7 @@ class Volume:
                     if np.absolute(np.average(arr[index]) - average) > 50:
                         arr[index,:,:] = -1024
                         arr[index,0,0] = 1
+                        print(index)
                 self.img = sitk.GetImageFromArray(arr)
 
     def show(self, pixel=False, interpolation=None, ref=None):
@@ -174,9 +175,9 @@ class Volume:
 
     def getThresholds(self, pixelNumber=0, scale=1):
         '''
-        calculates threshold based on number of pixels representing rod
+        Calculates threshold based on number of pixels representing rod.
         if no pixelNumber is given, self.radius is used to get estimated
-        pixelNumber
+        pixelNumber. All calculations based on ref-slice.
 
         approx. number of pixels being part of rod:
         pn = realRadius^2 * pi / pixelSpacing^2
@@ -452,7 +453,7 @@ class Volume:
         sitk_show(img=self.masked, ref=ref, title=title,
                   interpolation=interpolation)
 
-    def getDice(self, centroid, mask, show=False, showAll=False):
+    def getDice(self, centroid=None, mask=None, show=False, showAll=False):
         '''
         calculates average dice coefficient ('dc') of the rod by trying
         different radii
@@ -461,9 +462,15 @@ class Volume:
         uses xSpace (should be same as ySpace) to be used with any resolution
         calculating dc for rods with 1.5mm < r < 4mm
         '''
+        if centroid is None:
+            centroid = self.centroid
+        if mask is None:
+            mask = self.mask
+        
         com = centroid / self.xSpace        
 
         if self.radius == 0:
+            print("self.radius == ", self.radius)
             if self.method == "CT":
                 radii = np.linspace(2.5, 5.5, num=25)/self.xSpace
             if self.method == "MR":
@@ -476,6 +483,9 @@ class Volume:
             dcs = np.zeros(len(radii))
             for index, r in enumerate(radii, start=0):
                 dcs[index] = np.average(dice_circle(img=mask, centroid=com,
+                                        radius=r, show=showAll))
+                print("dcs[{}]: {}".format(index, dcs[index]))
+                print(dice_circle(img=mask, centroid=com,
                                         radius=r, show=showAll))
 
             self.dice = dice_circle(img=mask, centroid=com,
@@ -696,11 +706,25 @@ def dice_circle(img, centroid, radius=2.1, show=False,
 
     xSize, ySize, zSize = img.GetSize()
     profile = np.zeros((zSize, ySize, xSize), dtype=np.uint8)
-    centres = centroid.astype(int)
+    centres = centroid.astype(int)    
+    dc = np.zeros((zSize, 1))
     for slice in range(zSize):
-        if centres[slice,0]+radius < ySize and centres[slice, 1]+radius < xSize and centres[slice,0]-radius > 0 and centres[slice, 1]-radius > 0:
-            rr, cc = circle(centres[slice, 0], centres[slice, 1], radius, (ySize,xSize))
+        if centres[slice,0]+radius < xSize and centres[slice, 1]+radius < ySize and centres[slice,0]-radius > 0 and centres[slice, 1]-radius > 0:
+            print("centres[{},0]+radius = {} + {} < {} =xSize".format(slice, centres[slice,0], radius, xSize))
+            print("centres[{},1]+radius = {} + {} < {} =ySize".format(slice, centres[slice,1], radius, ySize))
+            print("centres[{},0]-radius = {} - {} > 0".format(slice, centres[slice,0], radius))
+            print("centres[{},1]-radius = {} - {} > 0".format(slice, centres[slice,1], radius))
+            print("yep\n")
+            rr, cc = circle(centres[slice, 0], centres[slice, 1], radius, (xSize,ySize))
             profile[slice, cc, rr] = 1
+        else:
+            print("centres[{},0]+radius = {} + {} < {} =xSize".format(slice, centres[slice,0], radius, xSize))
+            print("centres[{},1]+radius = {} + {} < {} =ySize".format(slice, centres[slice,1], radius, ySize))
+            print("centres[{},0]-radius = {} - {} > 0".format(slice, centres[slice,0], radius))
+            print("centres[{},1]-radius = {} - {} > 0".format(slice, centres[slice,1], radius))
+            print("nope\n")
+            dc[slice]= -1
+
     input = sitk.GetArrayFromImage(img)
 
     input = np.atleast_1d(input.astype(np.bool))
@@ -709,7 +733,6 @@ def dice_circle(img, centroid, radius=2.1, show=False,
     intersection = np.zeros((zSize, 1))
     size_input = np.zeros((zSize, 1))
     size_reference = np.zeros((zSize, 1))
-    dc = np.zeros((zSize, 1))
     for slice in range(zSize):
         intersection[slice] = np.count_nonzero(input[slice, :, :] & reference[slice, :, :])
         size_input[slice] = np.count_nonzero(input[slice, :, :])
@@ -718,9 +741,15 @@ def dice_circle(img, centroid, radius=2.1, show=False,
 #        print("size_input[slice]: {}".format(size_input[slice]))
 #        print("size_reference[slice]: {}".format(size_reference[slice]))
         try:
-            dc[slice] = 2. * intersection[slice] / float(size_input[slice] + size_reference[slice])
+            if dc[slice] == 0 and float(size_input[slice] + size_reference[slice]) != 0:
+                dc[slice] = 2. * intersection[slice] / float(size_input[slice] + size_reference[slice])
+                #print("it works?! dc[{}]: {}\n intersection[{}]: {}".format(slice, dc[slice], slice, intersection[slice]))
+                #intersection[slice] is 0???
+            #else:
+                #print("dc[{}]: {}".format(slice, dc[slice]))
         except ZeroDivisionError:
-            dc[slice] = 0.0
+            dc[slice] = -1
+            #print("it doesn't work!")
 
     if show:
         plt.set_cmap("gray")
