@@ -93,7 +93,7 @@ class Volume:
                 a = self.title
                 self.title = a + " denoised"
 
-            if info is True:
+            if info:
                 a = self.title
                 self.title = a + ", " + info
 
@@ -101,6 +101,16 @@ class Volume:
 
             if spacing == 0:
                 self.xSpace, self.ySpace, self.zSpace = self.img.GetSpacing()
+                
+            if method == 'CT':
+                arr = sitk.GetArrayFromImage(self.img)
+                average = np.average(arr[ref])
+#                print("\nAverage @ ref: ", average)
+                for index in range(self.zSize):
+                    if np.absolute(np.average(arr[index]) - average) > 50:
+                        arr[index,:,:] = -1024
+                        arr[index,0,0] = 1
+                self.img = sitk.GetImageFromArray(arr)
 
     def show(self, pixel=False, interpolation=None, ref=None):
         '''

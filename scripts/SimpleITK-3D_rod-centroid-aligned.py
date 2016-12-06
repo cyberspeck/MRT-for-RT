@@ -11,63 +11,66 @@ could be done similar to this:https://blancosilva.wordpress.com/2010/12/15/image
 import FunITK as fun
 from FunITK import Volume
 
-pathCT = "../data/cropped_CT/"
-pathMR = "../data/cropped_MR/"
-pathCT_04 = "../data/cropped_CT_resample_04/"
-pathMR_04 = "../data/cropped_MR_resample_04/"
-pathCT_012 = "../data/cropped_CT_resample_012/"
-pathMR_012 = "../data/cropped_MR_resample_012/"
+#CT images not usable 176-192
+pathCT = "../data_final/CT_x1/"
+pathMR = "../data_final/MR_x1/"
+pathCT_x4 = "../data_final/CT_x4/"
+pathMR_x4 = "../data_final/MR_x4/"
+pathCT_x9 = "../data_final/CT_x9/"
+pathMR_x9 = "../data_final/MR_x9/"
 idxSlice = 10
-'''
-CT = Volume(path=pathCT, method="CT", ref=idxSlice, seeds=[(7, 8, idxSlice)])
-a = CT.getCentroid(percentLimit='auto', iterations=10)
-CT.showCentroid()
+
+CT = Volume(path=pathCT, method="CT", info="x1", ref=idxSlice, seeds=[(4, 20, idxSlice)])
+#a = CT.getCentroid(percentLimit='auto', iterations=10)
+#CT.showCentroid()
 b = CT.getCentroid(threshold='auto')
-CT.getMask()
-CT.getDice(b, CT.mask)
 CT.showCentroid()
+#CT.getMask()
+#CT.getDice(b, CT.mask)
 
-CT_04 = Volume(path=pathCT_04, method="CT", ref=idxSlice, seeds=[(20, 24, idxSlice)])
-c = CT_04.getCentroid(percentLimit='auto', iterations=10)
-CT_04.showCentroid()
-d = CT_04.getCentroid(threshold='auto')
-CT_04.getMask()
-CT_04.getDice(d, CT_04.mask)
-CT_04.showCentroid()
+CT_x4 = Volume(path=pathCT_x4, method="CT", info="x4", ref=idxSlice, seeds=[(8, 40, idxSlice)])
+#c = CT_x4.getCentroid(percentLimit='auto', iterations=10)
+#CT_x4.showCentroid()
+d = CT_x4.getCentroid(threshold='auto')
+CT_x4.showCentroid()
+#CT_x4.getMask()
+#CT_x4.getDice(d, CT_x4.mask)
 
-CT_012 = Volume(path=pathCT_012, method="CT", ref=idxSlice, seeds=[(65, 80, idxSlice)])
-e = CT_012.getCentroid(percentLimit='auto', iterations=5)
-CT_012.showCentroid()
-f = CT_012.getCentroid(threshold='auto')
-CT_012.showCentroid()
-CT_012.getMask()
-CT_012.getDice(f, CT_012.mask)
+CT_x9 = Volume(path=pathCT_x9, method="CT", info="x9", ref=idxSlice, seeds=[(12, 60, idxSlice)])
+#e = CT_x9.getCentroid(percentLimit='auto', iterations=5)
+#CT_x9.showCentroid()
+f = CT_x9.getCentroid(threshold='auto')
+CT_x9.showCentroid()
+#CT_x9.getMask()
+#CT_x9.getDice(f, CT_x9.mask)
 
-'''
-MR = Volume(path=pathMR, method="MR", ref=idxSlice, seeds=[(8, 6, idxSlice)])
-MR.showSeed(pixel=True)
-g = MR.getCentroid(percentLimit='auto')
-MR.showCentroid()
+
+MR = Volume(path=pathMR, method="MR", info="x1", ref=idxSlice, seeds=[(7, 21, idxSlice)])
+#MR.showSeed(pixel=True)
+#g = MR.getCentroid(percentLimit='auto')
+#MR.showCentroid()
 h = MR.getCentroid(threshold='auto')
-MR.getMask()
-MR.getDice(h, MR.mask)
+MR.showCentroid()
+#MR.getMask()
+#MR.getDice(h, MR.mask)
+
+MR_x4 = Volume(path=pathMR_x4, method="MR", info="x4", ref=idxSlice, seeds=[(14, 42, idxSlice)])
+#MR_x4.showSeed(pixel=True)
+#i = MR_x4.getCentroid(percentLimit='auto', iterations=5)
+#MR_x4.showCentroid()
+j = MR_x4.getCentroid(threshold='auto')
+MR_x4.showCentroid()
+#MR_x4.getMask()
+#MR_x4.getDice(i, MR_x4.mask)
+
+MR_x9 = Volume(path=pathMR_x9, method="MR", info="x9", ref=idxSlice, seeds=[(21, 63, idxSlice)])
+#k = MR_x9.getCentroid(percentLimit='auto', iterations=10, halfShift=0.1)
+#MR_x9.showCentroid()
+l = MR_x9.getCentroid(threshold='auto')
+MR_x9.showCentroid()
+#MR_x9.getMask()
+#MR_x9.getDice(l, MR_x9.mask)
 '''
-MR_04 = Volume(path=pathMR_04, method="MR", ref=idxSlice, seeds=[(25, 18, idxSlice)])
-MR_04.showSeed(pixel=True)
-i = MR_04.getCentroid(percentLimit='auto', iterations=5)
-MR_04.showCentroid()
-#j = MR_04.getCentroid(threshold='auto')
-#MR_04.getMask()
-#MR_04.getDice(i, MR_04.mask)
-
-MR_012 = Volume(path=pathMR_012, method="MR", ref=idxSlice, seeds=[(83, 60, idxSlice)])
-k = MR_012.getCentroid(percentLimit='auto', iterations=10, halfShift=0.1)
-MR_012.showCentroid()
-l = MR_012.getCentroid(threshold='auto')
-MR_012.getMask()
-MR_012.showMask()
-MR_012.getDice(l, MR_012.mask)
-
 # this calculates the coordinate difference of MR.centroid relative to CT.centroid
 distortion = fun.coordShift(CT.centroid, MR.centroid)
 print("\n")
