@@ -98,6 +98,8 @@ class Volume:
                 self.title = a + ", " + info
 
             self.xSize, self.ySize, self.zSize = self.img.GetSize()
+            self.niceSlice = np.zeros((self.zSize, 1), dtype=bool)
+            self.niceSlice[:] = True
 
             if spacing == 0:
                 self.xSpace, self.ySpace, self.zSpace = self.img.GetSpacing()
@@ -108,10 +110,8 @@ class Volume:
 #                print("\nAverage @ ref: ", average)
                 for index in range(self.zSize):
                     if np.absolute(np.average(arr[index]) - average) > 50:
-                        arr[index,:,:] = -1024
-                        arr[index,0,0] = 1
-                        print(index)
-                self.img = sitk.GetImageFromArray(arr)
+                        print("Irregularities detected in slice ",index)
+                        self.niceSlice[index] = False
 
     def show(self, pixel=False, interpolation=None, ref=None):
         '''
@@ -264,7 +264,7 @@ class Volume:
                                                               ref=self.ref,
                                                               threshold=arr.min()+1)
                 diceA[index] = self.getDice(centroidsA[index], maskA)
-                centroidScoreA[index] = np.average(diceA[index])
+                centroidScoreA[index] = np.average(diceA[index,diceA[index]>-1])
                 # sitk_show(maskA, ref= self.ref)
                 # self.centroid = centroidsA[index]
                 # print("threshold: {} \ncentroid[{}]: {}".format(arr.min()+1, self.ref, self.centroid[self.ref]))
@@ -283,7 +283,7 @@ class Volume:
                                                               ref=self.ref,
                                                               threshold=arr.min()+1)
                 diceB[index] = self.getDice(centroidsB[index], maskB)
-                centroidScoreB[index] = np.average(diceB[index])
+                centroidScoreB[index] = np.average(diceB[index,diceB[index]>-1])
                 # sitk_show(maskB, ref= self.ref)
                 # self.centroid = centroidsB[index]
                 # print("threshold: {} \ncentroid[{}]: {}".format(arr.min()+1, self.ref, self.centroid[self.ref]))
@@ -351,13 +351,11 @@ class Volume:
                 self.diceAverage = centroidScoreB.max()
             else:
                 return None
-            return self.centroid
 
         if percentLimit != "auto" and percentLimit is True:
             self.centroid = self.xSpace * sitk_centroid(self.img, ref=self.ref, show=show,
                                                         percentLimit=percentLimit,
                                                         title=self.title)
-            return self.centroid
 
         if threshold == 'auto':
             self.getThresholds(pixelNumber=pixelNumber, scale=scale)
@@ -365,13 +363,16 @@ class Volume:
                                                         show=show,
                                                         threshold=self.lower,
                                                         title=self.title)
-            return self.centroid
 
         if threshold != "auto" and threshold is True:
             self.centroid = self.xSpace * sitk_centroid(self.img, ref=self.ref, show=show,
                                                         threshold=threshold,
                                                         title=self.title)
-            return self.centroid
+
+        for index in range(self.zSize):
+            if not self.niceSlice[index]:
+                self.centroid[index] = -1, -1
+        return self.centroid
 
     def showCentroid(self, title=None, pixel=False, interpolation='nearest',
                      ref=None):
@@ -470,7 +471,6 @@ class Volume:
         com = centroid / self.xSpace        
 
         if self.radius == 0:
-            print("self.radius == ", self.radius)
             if self.method == "CT":
                 radii = np.linspace(2.5, 5.5, num=25)/self.xSpace
             if self.method == "MR":
@@ -482,11 +482,8 @@ class Volume:
 
             dcs = np.zeros(len(radii))
             for index, r in enumerate(radii, start=0):
-                dcs[index] = np.average(dice_circle(img=mask, centroid=com,
-                                        radius=r, show=showAll))
-                print("dcs[{}]: {}".format(index, dcs[index]))
-                print(dice_circle(img=mask, centroid=com,
-                                        radius=r, show=showAll))
+                dice = dice_circle(img=mask, centroid=com, radius=r, show=showAll)
+                dcs[index] = np.average(dice[dice>-1])
 
             self.dice = dice_circle(img=mask, centroid=com,
                                     radius=radii[dcs.argmax()], show=show)
@@ -701,7 +698,7 @@ def dice_circle(img, centroid, radius=2.1, show=False,
     -------
     dc : array_like
         The Dice coefficient between the object(s) in ```input``` and the
-        created cirles. It ranges from 0 (no overlap) to 1 (perfect overlap).
+        created circles. It ranges from 0 (no overlap) to 1 (perfect overlap).
     """
 
     xSize, ySize, zSize = img.GetSize()
@@ -710,19 +707,11 @@ def dice_circle(img, centroid, radius=2.1, show=False,
     dc = np.zeros((zSize, 1))
     for slice in range(zSize):
         if centres[slice,0]+radius < xSize and centres[slice, 1]+radius < ySize and centres[slice,0]-radius > 0 and centres[slice, 1]-radius > 0:
-            print("centres[{},0]+radius = {} + {} < {} =xSize".format(slice, centres[slice,0], radius, xSize))
-            print("centres[{},1]+radius = {} + {} < {} =ySize".format(slice, centres[slice,1], radius, ySize))
-            print("centres[{},0]-radius = {} - {} > 0".format(slice, centres[slice,0], radius))
-            print("centres[{},1]-radius = {} - {} > 0".format(slice, centres[slice,1], radius))
-            print("yep\n")
+
             rr, cc = circle(centres[slice, 0], centres[slice, 1], radius, (xSize,ySize))
             profile[slice, cc, rr] = 1
         else:
-            print("centres[{},0]+radius = {} + {} < {} =xSize".format(slice, centres[slice,0], radius, xSize))
-            print("centres[{},1]+radius = {} + {} < {} =ySize".format(slice, centres[slice,1], radius, ySize))
-            print("centres[{},0]-radius = {} - {} > 0".format(slice, centres[slice,0], radius))
-            print("centres[{},1]-radius = {} - {} > 0".format(slice, centres[slice,1], radius))
-            print("nope\n")
+
             dc[slice]= -1
 
     input = sitk.GetArrayFromImage(img)
@@ -737,19 +726,13 @@ def dice_circle(img, centroid, radius=2.1, show=False,
         intersection[slice] = np.count_nonzero(input[slice, :, :] & reference[slice, :, :])
         size_input[slice] = np.count_nonzero(input[slice, :, :])
         size_reference[slice] = np.count_nonzero(reference[slice, :, :])
-#        print("\n intersection[slice, :]: {}".format(intersection[slice, :]))
-#        print("size_input[slice]: {}".format(size_input[slice]))
-#        print("size_reference[slice]: {}".format(size_reference[slice]))
+
         try:
-            if dc[slice] == 0 and float(size_input[slice] + size_reference[slice]) != 0:
+            if (dc[slice] == 0) and (float(size_input[slice] + size_reference[slice]) != 0):
                 dc[slice] = 2. * intersection[slice] / float(size_input[slice] + size_reference[slice])
-                #print("it works?! dc[{}]: {}\n intersection[{}]: {}".format(slice, dc[slice], slice, intersection[slice]))
-                #intersection[slice] is 0???
-            #else:
-                #print("dc[{}]: {}".format(slice, dc[slice]))
+
         except ZeroDivisionError:
             dc[slice] = -1
-            #print("it doesn't work!")
 
     if show:
         plt.set_cmap("gray")
