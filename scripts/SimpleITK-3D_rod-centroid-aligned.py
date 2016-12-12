@@ -10,8 +10,9 @@ could be done similar to this:https://blancosilva.wordpress.com/2010/12/15/image
 
 import FunITK as fun
 from FunITK import Volume
+import datetime
 
-#CT images not usable 176-192
+#CT images not usable 173-192
 pathCT = "../data_final/CT_x1/"
 pathMR = "../data_final/MR_x1/"
 pathCT_x4 = "../data_final/CT_x4/"
@@ -125,7 +126,18 @@ MR_x100.getCentroid(threshold='auto')
 MR_x100.showCentroid()
 MR_x100.getMask()
 MR_x100.getDice()
+'''
+with open('workfile', 'r+') as f:
+    read_data = f.read()
+'''   
 
+now = datetime.datetime.now()
+NAMES  = ['distortionX', 'distortionY', 'distortionNorm', 'dice_MR']
+# http://stackoverflow.com/questions/16621351/how-to-use-python-numpy-savetxt-to-write-strings-and-float-number-to-an-ascii-fi
+FLOATS = np.column_stack((distortion, distortionNorm, MR.dice))
+
+#DAT =  np.row_stack((NAMES, FLOATS))
+np.savetxt('test.txt', FLOATS, delimiter=" ", header="#{}\n\n{}\n".format(now, ' '.join(NAMES)), comments="", fmt='%1.8f') 
 '''
 # this calculates the coordinate difference of MR.centroid relative to CT.centroid
 distortion = fun.coordShift(CT.centroid, MR.centroid)

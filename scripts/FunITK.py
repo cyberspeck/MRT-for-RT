@@ -605,8 +605,11 @@ def coordShift(first, second):
         z, xy = np.shape(first)
         diff = np.zeros((z, 2))
         for slice in range(z):
-            diff[slice, 0] = first[slice, 0] - second[slice, 0]
-            diff[slice, 1] = first[slice, 1] - second[slice, 1]
+            if first[slice,0]==-1 or first[slice,1]==-1 or second[slice,0]==-1 or second[slice,0]==-1:
+                diff[slice, 0] = diff[slice, 1] = -1
+            else:
+                diff[slice, 0] = first[slice, 0] - second[slice, 0]
+                diff[slice, 1] = first[slice, 1] - second[slice, 1]
         return diff
     else:
         print("Wrong shape! coordShift returned 'False'")
@@ -624,7 +627,10 @@ def coordDist(shift):
 
     dist = np.zeros((len(shift), 1))
     for slice in range(len(shift)):
-        dist[slice, :] = np.linalg.norm(shift[slice, :])
+        if shift[slice,0] == -1 or shift[slice,1] == -1:
+            dist[slice,:] =-1
+        else:
+            dist[slice, :] = np.linalg.norm(shift[slice, :])
     return dist
 
 
