@@ -7,8 +7,8 @@ custom FUNcitons using SimpleITK
 
 @author: david
 
-works best with cropped CT and MRI images (showing only one rod),
-both Volumes should have the same PixelSpacing
+works only with cropped CT and MRI images (showing only one rod) so far,
+both Volumes should have the same PixelSpacing,
  and x and y PixelSpacing shoult be equal
 All diagrams are in pixels, not in real length units,
  only sitk_write() creates .mha file with pixel values corresponding
@@ -98,17 +98,22 @@ class Volume:
                 self.title = a + ", " + info
 
             self.xSize, self.ySize, self.zSize = self.img.GetSize()
+            if spacing == 0:
+                self.xSpace, self.ySpace, self.zSpace = self.img.GetSpacing()
+
+            # niceSlice used to remember which slices show irregularities such
+            # as parts of plastic pane (CT)
+            # and should therefore not be used to calculate centroid, dice, etc
             self.niceSlice = np.zeros((self.zSize, 1), dtype=bool)
             self.niceSlice[:] = True
 
-            if spacing == 0:
-                self.xSpace, self.ySpace, self.zSpace = self.img.GetSpacing()
-                
             if method == 'CT':
                 arr = sitk.GetArrayFromImage(self.img)
                 average = np.average(arr[ref])
 #                print("\nAverage @ ref: ", average)
                 for index in range(self.zSize):
+                    # if average value of slice differs too much -> badSlice
+                    # difference between ref-Slice and current chosen arbitratry
                     if np.absolute(np.average(arr[index]) - average) > 50:
                         print("Irregularities detected in slice ",index)
                         self.niceSlice[index] = False
@@ -139,8 +144,8 @@ class Volume:
 
         if pixel is False:
             extent = (-self.xSpace/2, self.xSize*self.xSpace - self.xSpace/2, self.ySize*self.ySpace - self.ySpace/2, -self.ySpace/2)
-# The location, in data-coordinates, of the lower-left and upper-right corners
-# (left, right, bottom, top)
+            # The location, in data-coordinates, of the lower-left and upper-right corners
+        # (left, right, bottom, top)
         else:
             extent = None
 
@@ -218,7 +223,7 @@ class Volume:
 
         return (self.lower, self.upper)
 
-    def getCentroid(self, show=False, percentLimit=False, threshold=False,
+    def getCentroid(self, show=False, percentLimit=False, threshold='auto',
                     pixelNumber=0, scale=1, iterations=5, halfShift=0.2):
         '''
         Either used with percentLimit = within (0,1) or "auto"
@@ -717,7 +722,7 @@ def dice_circle(img, centroid, radius=2.1, show=False,
             rr, cc = circle(centres[slice, 0], centres[slice, 1], radius, (xSize,ySize))
             profile[slice, cc, rr] = 1
         else:
-
+            # print("something's fishy!")
             dc[slice]= -1
 
     input = sitk.GetArrayFromImage(img)

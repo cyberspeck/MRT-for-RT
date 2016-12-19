@@ -11,8 +11,11 @@ could be done similar to this:https://blancosilva.wordpress.com/2010/12/15/image
 import FunITK as fun
 from FunITK import Volume
 import datetime
+import numpy as np
 
-#CT images not usable 173-192
+# CT images not usable @173-192
+# MR images has airbubble @306
+#if idxSlice it choosen close to air bubble
 pathCT = "../data_final/CT_x1/"
 pathMR = "../data_final/MR_x1/"
 pathCT_x4 = "../data_final/CT_x4/"
@@ -27,127 +30,64 @@ pathCT_x100 = "../data_final/CT_x100/"
 pathMR_x100 = "../data_final/MR_x100/"
 idxSlice = 10
 
-CT = Volume(path=pathCT, method="CT", info="x1", ref=idxSlice, seeds=[(4, 20, idxSlice)])
-#a = CT.getCentroid(percentLimit='auto', iterations=10)
-#CT.showCentroid()
-b = CT.getCentroid(threshold='auto')
-CT.showCentroid()
-CT.getMask()
-CT.getDice(b, CT.mask)
+CT = Volume(path=pathCT, method="CT", info="x1", ref=idxSlice, seeds=[(4, 20, 10)])
+CT_x4 = Volume(path=pathCT_x4, method="CT", info="x4", ref=idxSlice, seeds=[(8, 40, 10)])
+CT_x9 = Volume(path=pathCT_x9, method="CT", info="x9", ref=idxSlice, seeds=[(12, 60, 10)])
+CT_x16 = Volume(path=pathCT_x16, method="CT", info="x16", ref=idxSlice, seeds=[(16, 80, 10)])
+CT_x25 = Volume(path=pathCT_x25, method="CT", info="x25", ref=idxSlice, seeds=[(20, 100, 10)])
+CT_x100 = Volume(path=pathCT_x100, method="CT", info="x100", ref=idxSlice, seeds=[(40, 200, 10)])
 
-CT_x4 = Volume(path=pathCT_x4, method="CT", info="x4", ref=idxSlice, seeds=[(8, 40, idxSlice)])
-#c = CT_x4.getCentroid(percentLimit='auto', iterations=10)
-#CT_x4.showCentroid()
-d = CT_x4.getCentroid(threshold='auto')
-CT_x4.showCentroid()
-CT_x4.getMask()
-CT_x4.getDice(d, CT_x4.mask)
+MR = Volume(path=pathMR, method="MR", info="x1", ref=idxSlice, seeds=[(7, 21, 10)])
+MR_x4 = Volume(path=pathMR_x4, method="MR", info="x4", ref=idxSlice, seeds=[(14, 42, 10)])
+MR_x9 = Volume(path=pathMR_x9, method="MR", info="x9", ref=idxSlice, seeds=[(21, 63, 10)])
+MR_x16 = Volume(path=pathMR_x16, method="MR", info="x16", ref=idxSlice, seeds=[(28, 84, 10)])
+MR_x25 = Volume(path=pathMR_x25, method="MR", info="x25", ref=idxSlice, seeds=[(35, 105, 10)])
+MR_x100 = Volume(path=pathMR_x100, method="MR", info="x100", ref=idxSlice, seeds=[(70, 210, 10)])
 
-CT_x9 = Volume(path=pathCT_x9, method="CT", info="x9", ref=idxSlice, seeds=[(12, 60, idxSlice)])
-#e = CT_x9.getCentroid(percentLimit='auto', iterations=5)
-#CT_x9.showCentroid()
-f = CT_x9.getCentroid(threshold='auto')
-CT_x9.showCentroid()
-CT_x9.getMask()
-CT_x9.getDice(f, CT_x9.mask)
+vol_list = [[CT, CT_x4, CT_x9, CT_x16, CT_x25, CT_x100],[MR, MR_x4, MR_x9, MR_x16, MR_x25, MR_x100]]
 
-CT_x16 = Volume(path=pathCT_x16, method="CT", info="x16", ref=idxSlice, seeds=[(16, 80, idxSlice)])
-#e = CT_x16.getCentroid(percentLimit='auto', iterations=5)
-#CT_x16.showCentroid()
-f = CT_x16.getCentroid(threshold='auto')
-CT_x16.showCentroid()
-CT_x16.getMask()
-CT_x16.getDice(f, CT_x16.mask)
+for volumes in vol_list:
+    for vol in volumes:
+        #vol.getCentroid(percentLimit='auto', iterations=10)
+        vol.getCentroid(threshold='auto')
+        vol.showCentroid()
+        vol.getMask()
+        vol.getDice()
 
-CT_x25 = Volume(path=pathCT_x25, method="CT", info="x25", ref=idxSlice, seeds=[(20, 100, idxSlice)])
-#CT_x25.getCentroid(percentLimit='auto', iterations=5)
-#CT_x25.showCentroid()
-CT_x25.getCentroid(threshold='auto')
-CT_x25.showCentroid()
-CT_x25.getMask()
-CT_x25.getDice()
+sliceNumbers = np.arange(CT.zSize, dtype=int)
+(methods, sets) = np.shape(vol_list)
+distortion = np.zeros((sets, CT.zSize, 2))
+distortionNorm = np.zeros((sets, CT.zSize, 1))
+dice_CT_MR = np.zeros((sets, CT.zSize, 2))
+for index in range(sets):
+    # this calculates the coordinate difference of MR.centroid relative to CT.centroid
+    distortion[index] = fun.coordShift(vol_list[0][index].centroid, vol_list[1][index].centroid)
+    # this calculates the norm (=absolute distance) between the centroids in each slice
+    distortionNorm[index] = fun.coordDist(distortion[index])
+    # collects dice-score of CT and MRI data
+    dice_CT_MR[index] = np.column_stack((vol_list[0][index].dice, vol_list[1][index].dice))
 
-CT_x100 = Volume(path=pathCT_x100, method="CT", info="x100", ref=idxSlice, seeds=[(40, 200, idxSlice)])
-#CT_x100.getCentroid(percentLimit='auto', iterations=5)
-#CT_x100.showCentroid()
-CT_x100.getCentroid(threshold='auto')
-CT_x100.showCentroid()
-CT_x100.getMask()
-CT_x100.getDice()
+#relevant slices: ref (=idxSlcie) & outer edge
+#quickDATA = np.array([distortionNorm[idxSlice], distortionNorm])
 
 
-
-MR = Volume(path=pathMR, method="MR", info="x1", ref=idxSlice, seeds=[(7, 21, idxSlice)])
-#MR.showSeed(pixel=True)
-#g = MR.getCentroid(percentLimit='auto')
-#MR.showCentroid()
-h = MR.getCentroid(threshold='auto')
-MR.showCentroid()
-MR.getMask()
-MR.getDice(h, MR.mask)
-
-MR_x4 = Volume(path=pathMR_x4, method="MR", info="x4", ref=idxSlice, seeds=[(14, 42, idxSlice)])
-#MR_x4.showSeed(pixel=True)
-#i = MR_x4.getCentroid(percentLimit='auto', iterations=5)
-#MR_x4.showCentroid()
-j = MR_x4.getCentroid(threshold='auto')
-MR_x4.showCentroid()
-MR_x4.getMask()
-MR_x4.getDice(j, MR_x4.mask)
-
-MR_x9 = Volume(path=pathMR_x9, method="MR", info="x9", ref=idxSlice, seeds=[(21, 63, idxSlice)])
-#k = MR_x9.getCentroid(percentLimit='auto', iterations=10, halfShift=0.1)
-#MR_x9.showCentroid()
-l = MR_x9.getCentroid(threshold='auto')
-MR_x9.showCentroid()
-MR_x9.getMask()
-MR_x9.getDice(l, MR_x9.mask)
-
-MR_x16 = Volume(path=pathMR_x16, method="MR", info="x16", ref=idxSlice, seeds=[(28, 84, idxSlice)])
-#k = MR_x16.getCentroid(percentLimit='auto', iterations=10, halfShift=0.1)
-#MR_x16.showCentroid()
-l = MR_x16.getCentroid(threshold='auto')
-MR_x16.showCentroid()
-MR_x16.getMask()
-MR_x16.getDice(l, MR_x16.mask)
-
-MR_x25 = Volume(path=pathMR_x25, method="MR", info="x25", ref=idxSlice, seeds=[(35, 105, idxSlice)])
-#MR_x25.getCentroid(percentLimit='auto', iterations=10, halfShift=0.1)
-#MR_x25.showCentroid()
-MR_x25.getCentroid(threshold='auto')
-MR_x25.showCentroid()
-MR_x25.getMask()
-MR_x25.getDice()
-
-MR_x100 = Volume(path=pathMR_x100, method="MR", info="x100", ref=idxSlice, seeds=[(70, 210, idxSlice)])
-#MR_x100.getCentroid(percentLimit='auto', iterations=10, halfShift=0.1)
-#MR_x100.showCentroid()
-MR_x100.getCentroid(threshold='auto')
-MR_x100.showCentroid()
-MR_x100.getMask()
-MR_x100.getDice()
-'''
-with open('workfile', 'r+') as f:
-    read_data = f.read()
-'''   
-
-now = datetime.datetime.now()
-NAMES  = ['distortionX', 'distortionY', 'distortionNorm', 'dice_MR']
 # http://stackoverflow.com/questions/16621351/how-to-use-python-numpy-savetxt-to-write-strings-and-float-number-to-an-ascii-fi
-FLOATS = np.column_stack((distortion, distortionNorm, MR.dice))
+now = datetime.datetime.now()
+NAMES  = ['sliceNumber', 'distortionX', 'distortionY', 'distortionNorm', 'dice_CT', 'dice_MR']
+for index in range(sets):
+    DATA = np.column_stack((sliceNumbers.astype(str), distortion[index].astype(str), distortionNorm[index].astype(str), dice_CT_MR[index,:,0].astype(str), dice_CT_MR[index,:,1].astype(str)))
+    text = np.row_stack((NAMES, DATA))
+    # np.savetxt('CT-MR_x1_{}_{}.txt'.format(now.date(), now.time()), FLOATS, delimiter="   ", header="#{}\n\n {}\n".format(now, '   '.join(NAMES)), comments="", fmt='%3s')
+    np.savetxt('CT-MR_{}_{}_{}.txt'.format(index, now.date(), now.time()), text, delimiter="   ", header="#{}\n\n".format(now), comments="", fmt='%3s')
 
-#DAT =  np.row_stack((NAMES, FLOATS))
-np.savetxt('test.txt', FLOATS, delimiter=" ", header="#{}\n\n{}\n".format(now, ' '.join(NAMES)), comments="", fmt='%1.8f') 
+
 '''
-# this calculates the coordinate difference of MR.centroid relative to CT.centroid
-distortion = fun.coordShift(CT.centroid, MR.centroid)
 print("\n")
 print("CT, centroid[:,:,{}]: {}".format(idxSlice, CT.centroid[idxSlice]))
 print("MR, centroid[:,:,{}]: {}".format(idxSlice, MR.centroid[idxSlice]))
 print("distrotion[:,:,{}]: {}".format(idxSlice, distortion[idxSlice]))
 
-# this calculates the norm (=absolute distance) between the centroids in each slice
-distortionNorm = fun.coordDist(distortion)
+
 print("distrotionNorm[:,:,{}]: {}".format(idxSlice, distortionNorm[idxSlice]))
 
 # creates mask (pixel values either 0 or 1)
