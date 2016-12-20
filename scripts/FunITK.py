@@ -101,22 +101,29 @@ class Volume:
             if spacing == 0:
                 self.xSpace, self.ySpace, self.zSpace = self.img.GetSpacing()
 
+
             # niceSlice used to remember which slices show irregularities such
             # as parts of plastic pane (CT)
             # and should therefore not be used to calculate centroid, dice, etc
             self.niceSlice = np.zeros((self.zSize, 1), dtype=bool)
             self.niceSlice[:] = True
 
-            if method == 'CT':
-                arr = sitk.GetArrayFromImage(self.img)
-                average = np.average(arr[ref])
+            arr = sitk.GetArrayFromImage(self.img)
+            average = np.average(arr[ref])
 #                print("\nAverage @ ref: ", average)
-                for index in range(self.zSize):
-                    # if average value of slice differs too much -> badSlice
-                    # difference between ref-Slice and current chosen arbitratry
-                    if np.absolute(np.average(arr[index]) - average) > 50:
-                        print("Irregularities detected in slice ",index)
-                        self.niceSlice[index] = False
+            for index in range(self.zSize):
+                # if average value of slice differs too much -> badSlice
+                # difference between ref-Slice and current chosen arbitratry
+                if np.absolute(np.average(arr[index]) - average) > 20:
+                    print("Irregularities detected in slice ",index)
+                    self.niceSlice[index] = False
+
+            maxSeed = np.zeros((self.zSize, 2))
+            for index in range(self.zSize):
+                yMax = int(arr[index].argmax() / self.xSize)
+                xMax = arr[index].argmax() - yMax*self.xSize
+                maxSeed[index] = (yMax,xMax)                
+                print("{}: found max at ({},{})".format(index, xMax, yMax))
 
     def show(self, pixel=False, interpolation=None, ref=None):
         '''
@@ -223,8 +230,8 @@ class Volume:
 
         return (self.lower, self.upper)
 
-    def getCentroid(self, show=False, percentLimit=False, threshold='auto',
-                    pixelNumber=0, scale=1, iterations=5, halfShift=0.2):
+    def getCentroid(self, show=False, percentLimit=False, threshold=False,
+                    pixelNumber=0, scale=1, iterations=5, halfShift=0.2, plot=False):
         '''
         Either used with percentLimit = within (0,1) or "auto"
         or with threshold = number or "auto"
@@ -299,7 +306,7 @@ class Volume:
                     guess[index+1] = (right + guess[index]) / 2
                     left = guess[index]
                     print("current guess = {}".format((guess[index])))
-                elif centroidScoreA[index] > centroidScoreB[index]:
+                elif centroidScoreA[index] >= centroidScoreB[index]:
                     right = guess[index]
                     guess[index+1] = (left + guess[index]) / 2
                     print("current guess = {}".format((guess[index])))
@@ -356,6 +363,20 @@ class Volume:
                 self.diceAverage = centroidScoreB.max()
             else:
                 return None
+
+            if plot == True:
+                percent = np.linspace(0,100, 101, endpoint=True)
+                c = np.sin(percent)
+                
+                plt.xlim(0, 15)
+                plt.ylim(0, 1)
+                for index in range(iterations):
+                    if guess[index] > 0:
+                        plt.plot(guess[index]*(1-halfShift)*100, centroidScoreA[index], 'bo')
+                        plt.plot(guess[index]*(1+halfShift)*100, centroidScoreB[index], 'go')                
+                plt.show()
+                input("ready? enter a secret message and hit ENTER!")
+                
 
         if percentLimit != "auto" and percentLimit is True:
             self.centroid = self.xSpace * sitk_centroid(self.img, ref=self.ref, show=show,

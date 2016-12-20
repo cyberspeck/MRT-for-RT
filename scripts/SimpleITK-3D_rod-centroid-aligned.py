@@ -15,7 +15,7 @@ import numpy as np
 
 # CT images not usable @173-192
 # MR images has airbubble @306
-#if idxSlice it choosen close to air bubble
+#if idxSlice is chosen close to air bubble
 pathCT = "../data_final/CT_x1/"
 pathMR = "../data_final/MR_x1/"
 pathCT_x4 = "../data_final/CT_x4/"
@@ -29,6 +29,8 @@ pathMR_x25 = "../data_final/MR_x25/"
 pathCT_x100 = "../data_final/CT_x100/"
 pathMR_x100 = "../data_final/MR_x100/"
 idxSlice = 10
+
+# COM =MR_x100.getCentroid(percentLimit='auto', plot=True, iterations=3)
 
 CT = Volume(path=pathCT, method="CT", info="x1", ref=idxSlice, seeds=[(4, 20, 10)])
 CT_x4 = Volume(path=pathCT_x4, method="CT", info="x4", ref=idxSlice, seeds=[(8, 40, 10)])
@@ -71,7 +73,7 @@ for index in range(sets):
 #quickDATA = np.array([distortionNorm[idxSlice], distortionNorm])
 
 
-# http://stackoverflow.com/questions/16621351/how-to-use-python-numpy-savetxt-to-write-strings-and-float-number-to-an-ascii-fi
+'''# http://stackoverflow.com/questions/16621351/how-to-use-python-numpy-savetxt-to-write-strings-and-float-number-to-an-ascii-fi
 now = datetime.datetime.now()
 NAMES  = ['sliceNumber', 'distortionX', 'distortionY', 'distortionNorm', 'dice_CT', 'dice_MR']
 for index in range(sets):
@@ -79,7 +81,7 @@ for index in range(sets):
     text = np.row_stack((NAMES, DATA))
     # np.savetxt('CT-MR_x1_{}_{}.txt'.format(now.date(), now.time()), FLOATS, delimiter="   ", header="#{}\n\n {}\n".format(now, '   '.join(NAMES)), comments="", fmt='%3s')
     np.savetxt('CT-MR_{}_{}_{}.txt'.format(index, now.date(), now.time()), text, delimiter="   ", header="#{}\n\n".format(now), comments="", fmt='%3s')
-
+'''
 
 '''
 print("\n")

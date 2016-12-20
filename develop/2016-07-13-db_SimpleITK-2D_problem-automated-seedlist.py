@@ -138,7 +138,7 @@ imgPlastic = SimpleITK.ConnectedThreshold(image1=imgSmooth,
                                               replaceValue=labelPlastic)
 
 
-# In[12]:
+# In[ ]:
 
 # since this does not work, I try something similar to this proposed solution (for c++):
 # http://public.kitware.com/pipermail/insight-users/2012-October/046193.html
@@ -160,7 +160,7 @@ for pixel in seedPlastic:
     seedPlastic1.push_back(seed)
 
 
-# In[13]:
+# In[ ]:
 
 # didn't work, but that's weird, because this works:
 
