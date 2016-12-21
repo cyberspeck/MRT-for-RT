@@ -32,19 +32,19 @@ idxSlice = 10
 
 # COM =MR_x100.getCentroid(percentLimit='auto', plot=True, iterations=3)
 
-CT = Volume(path=pathCT, method="CT", info="x1", ref=idxSlice, seeds=[(4, 20, 10)])
-CT_x4 = Volume(path=pathCT_x4, method="CT", info="x4", ref=idxSlice, seeds=[(8, 40, 10)])
-CT_x9 = Volume(path=pathCT_x9, method="CT", info="x9", ref=idxSlice, seeds=[(12, 60, 10)])
-CT_x16 = Volume(path=pathCT_x16, method="CT", info="x16", ref=idxSlice, seeds=[(16, 80, 10)])
-CT_x25 = Volume(path=pathCT_x25, method="CT", info="x25", ref=idxSlice, seeds=[(20, 100, 10)])
-CT_x100 = Volume(path=pathCT_x100, method="CT", info="x100", ref=idxSlice, seeds=[(40, 200, 10)])
+CT = Volume(path=pathCT, method="CT", info="x1", ref=idxSlice)
+CT_x4 = Volume(path=pathCT_x4, method="CT", info="x4", ref=idxSlice)
+CT_x9 = Volume(path=pathCT_x9, method="CT", info="x9", ref=idxSlice)
+CT_x16 = Volume(path=pathCT_x16, method="CT", info="x16", ref=idxSlice)
+CT_x25 = Volume(path=pathCT_x25, method="CT", info="x25", ref=idxSlice)
+CT_x100 = Volume(path=pathCT_x100, method="CT", info="x100", ref=idxSlice)
 
-MR = Volume(path=pathMR, method="MR", info="x1", ref=idxSlice, seeds=[(7, 21, 10)])
-MR_x4 = Volume(path=pathMR_x4, method="MR", info="x4", ref=idxSlice, seeds=[(14, 42, 10)])
-MR_x9 = Volume(path=pathMR_x9, method="MR", info="x9", ref=idxSlice, seeds=[(21, 63, 10)])
-MR_x16 = Volume(path=pathMR_x16, method="MR", info="x16", ref=idxSlice, seeds=[(28, 84, 10)])
-MR_x25 = Volume(path=pathMR_x25, method="MR", info="x25", ref=idxSlice, seeds=[(35, 105, 10)])
-MR_x100 = Volume(path=pathMR_x100, method="MR", info="x100", ref=idxSlice, seeds=[(70, 210, 10)])
+MR = Volume(path=pathMR, method="MR", info="x1", ref=idxSlice)
+MR_x4 = Volume(path=pathMR_x4, method="MR", info="x4", ref=idxSlice)
+MR_x9 = Volume(path=pathMR_x9, method="MR", info="x9", ref=idxSlice)
+MR_x16 = Volume(path=pathMR_x16, method="MR", info="x16", ref=idxSlice)
+MR_x25 = Volume(path=pathMR_x25, method="MR", info="x25", ref=idxSlice)
+MR_x100 = Volume(path=pathMR_x100, method="MR", info="x100", ref=idxSlice)
 
 vol_list = [[CT, CT_x4, CT_x9, CT_x16, CT_x25, CT_x100],[MR, MR_x4, MR_x9, MR_x16, MR_x25, MR_x100]]
 
@@ -73,7 +73,7 @@ for index in range(sets):
 #quickDATA = np.array([distortionNorm[idxSlice], distortionNorm])
 
 
-'''# http://stackoverflow.com/questions/16621351/how-to-use-python-numpy-savetxt-to-write-strings-and-float-number-to-an-ascii-fi
+# http://stackoverflow.com/questions/16621351/how-to-use-python-numpy-savetxt-to-write-strings-and-float-number-to-an-ascii-fi
 now = datetime.datetime.now()
 NAMES  = ['sliceNumber', 'distortionX', 'distortionY', 'distortionNorm', 'dice_CT', 'dice_MR']
 for index in range(sets):
@@ -81,7 +81,7 @@ for index in range(sets):
     text = np.row_stack((NAMES, DATA))
     # np.savetxt('CT-MR_x1_{}_{}.txt'.format(now.date(), now.time()), FLOATS, delimiter="   ", header="#{}\n\n {}\n".format(now, '   '.join(NAMES)), comments="", fmt='%3s')
     np.savetxt('CT-MR_{}_{}_{}.txt'.format(index, now.date(), now.time()), text, delimiter="   ", header="#{}\n\n".format(now), comments="", fmt='%3s')
-'''
+
 
 '''
 print("\n")

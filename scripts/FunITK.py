@@ -68,7 +68,7 @@ class Volume:
         to real length (in mm)
     '''
     def __init__(self, path=None, method=None, denoise=False, ref=0,
-                 info=False, seeds=None, radius=0, spacing=0):
+                 info=False, seeds='auto', radius=0, spacing=0):
         if(path is None):
             print("Error: no path given!")
         else:
@@ -77,7 +77,6 @@ class Volume:
             self.denoise = denoise
             self.ref = ref
             self.info = info
-            self.seeds = seeds
             self.centroid = False
             self.mask = False
             self.masked = False
@@ -115,15 +114,19 @@ class Volume:
                 # if average value of slice differs too much -> badSlice
                 # difference between ref-Slice and current chosen arbitratry
                 if np.absolute(np.average(arr[index]) - average) > 20:
-                    print("Irregularities detected in slice ",index)
+                    print("Irregularities detected in slice {}".format(index))
                     self.niceSlice[index] = False
 
-            maxSeed = np.zeros((self.zSize, 2))
-            for index in range(self.zSize):
-                yMax = int(arr[index].argmax() / self.xSize)
-                xMax = arr[index].argmax() - yMax*self.xSize
-                maxSeed[index] = (yMax,xMax)                
-                print("{}: found max at ({},{})".format(index, xMax, yMax))
+            if type(seeds) == list:
+                self.seeds = seeds
+            elif seeds == 'auto':
+                self.seeds = []
+                for index in range(self.zSize):
+                    yMax = int(arr[index].argmax() / self.xSize)
+                    xMax = arr[index].argmax() - yMax*self.xSize
+                    if self.niceSlice[index] == True:
+                        self.seeds.append((xMax, yMax, index))
+#                    print("{}: found max at ({},{})".format(index, xMax, yMax))
 
     def show(self, pixel=False, interpolation=None, ref=None):
         '''
