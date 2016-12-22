@@ -7,12 +7,12 @@ custom FUNcitons using SimpleITK
 
 @author: david
 
-works only with cropped CT and MRI images (showing only one rod) so far,
+works only with cropped CT and MRI images (showing only one rod),
 both Volumes should have the same PixelSpacing,
  and x and y PixelSpacing shoult be equal
 All diagrams are in pixels, not in real length units,
  only sitk_write() creates .mha file with pixel values corresponding
- to distortion in pixel distance * PixelSpacing
+ to distortion in pixel distance * PixelSpacing (mm)
 
 based on:
 https://pyscience.wordpress.com/2014/10/19/image-segmentation-with-python-and-SimpleITK/
@@ -49,25 +49,28 @@ class Volume:
     path : string_like
         directory containing DICOM data
     method : string_like, recommended
-        either "CT or "MR", used to make correct calculations
-    radius: double, optional
-        overrides radius value (default CT:4mm, MR:2mm)
+        either "CT or "MR", used for automatic calculations
     denoise : bool, optional
         If true, the imported data will be denoised using
         SimpleITK.CurvatureFlow(image1=self.img,
                                 timeStep=0.125,
                                 numberOfIterations=5)
     ref : int, optional
-        slice used to make calculations (idealy isocenter) and plotted
+        slice used to make calculations (idealy isocenter) e.g. thresholds
+        all plots show this slice
+        by default it is set to be in the middle of the image (z-axis)
     info : string, optional
         additional information about imported data, becomes part of title
     seeds : array_like (int,int,int), optional
-        coordinates (pixel) of point inside rod, used for segmentation
+        coordinates (pixel) of points inside rod, used for segmentation
+        by default list of brightest pixel in each slice
+    radius: double, optional
+        overrides radius value (default CT:4mm, MR:2mm)
     spacing: double, optional
         by default SitpleITK.img.GetSpacing is used to find relation of pixels
         to real length (in mm)
     '''
-    def __init__(self, path=None, method=None, denoise=False, ref=0,
+    def __init__(self, path=None, method=None, denoise=False, ref=None,
                  info=False, seeds='auto', radius=0, spacing=0):
         if(path is None):
             print("Error: no path given!")
@@ -75,7 +78,6 @@ class Volume:
             self.path = path
             self.method = method
             self.denoise = denoise
-            self.ref = ref
             self.info = info
             self.centroid = False
             self.mask = False
@@ -100,20 +102,22 @@ class Volume:
             if spacing == 0:
                 self.xSpace, self.ySpace, self.zSpace = self.img.GetSpacing()
 
+            if type(ref) == int:
+                self.ref = ref
+            else:
+                self.ref = int(self.zSize / 2)
 
             # niceSlice used to remember which slices show irregularities such
             # as parts of plastic pane (CT)
-            # and should therefore not be used to calculate centroid, dice, etc
-            self.niceSlice = np.zeros((self.zSize, 1), dtype=bool)
-            self.niceSlice[:] = True
-
+            # and should therefore not be used to calculate COM, dice, etc.
+            self.niceSlice = np.ones((self.zSize, 1), dtype=bool)
             arr = sitk.GetArrayFromImage(self.img)
             average = np.average(arr[ref])
 #                print("\nAverage @ ref: ", average)
             for index in range(self.zSize):
                 # if average value of slice differs too much -> badSlice
                 # difference between ref-Slice and current chosen arbitratry
-                if np.absolute(np.average(arr[index]) - average) > 20:
+                if np.absolute(np.average(arr[index]) - average) > 40:
                     print("Irregularities detected in slice {}".format(index))
                     self.niceSlice[index] = False
 
@@ -161,30 +165,43 @@ class Volume:
 
         sitk_show(img=self.img, ref=ref, extent=extent, title=self.title, interpolation=a)
 
-    def showSeed(self, title=None, pixel=False, interpolation='nearest'):
+    def showSeed(self, pixel=False, interpolation='nearest', ref=None):
         '''
         plots slice containing seed
+
+        Parameters
+        ----------
+        pixel: bool, optional
+            if True, changes axis from mm to pixels
+        interpolation: "string", optional, default: 'nearest'
+            using build-in interpolation of matplotlib.pyplot.imshow
+            Acceptable values are 'none', 'nearest', 'bilinear', 'bicubic',
+            'spline16', 'spline36', 'hanning', 'hamming', 'hermite', 'kaiser',
+            'quadric', 'catrom', 'gaussian', 'bessel', 'mitchell', 'sinc',
+            'lanczos'
+        ref: int, optional
+            slice of seed to be plotted instead of self.ref (default: zSize/2)
         '''
-        if self.seeds is False:
-            print("Volume has no seeds yet.")
+        if ref is None:
+            ref = self.ref
+        
+        if type(self.seeds[ref]) != tuple:
+            print("No seed found @ slice {}".format(ref))
             return None
 
         extent = None
-
         if pixel is False:
             extent = (-self.xSpace/2, self.xSize*self.xSpace - self.xSpace/2, self.ySize*self.ySpace - self.ySpace/2, -self.ySpace/2)
-            x = (self.seeds[0][0] * self.xSpace)
-            y = (self.seeds[0][1] * self.xSpace)
-            z = (self.seeds[0][2] * self.xSpace)
+            x = (self.seeds[ref][0] * self.xSpace)
+            y = (self.seeds[ref][1] * self.xSpace)
         else:
-            x, y, z = self.seeds[0]
+            x, y, z = self.seeds[ref]
 
         arr = sitk.GetArrayFromImage(self.img)
         plt.set_cmap("gray")
-        if title is None:
-            plt.title(self.title + ", seed")
+        plt.title(self.title + ", seed @ {}".format(self.seeds[ref]))
 
-        plt.imshow(arr[z, :, :], extent=extent, interpolation=interpolation)
+        plt.imshow(arr[ref, :, :], extent=extent, interpolation=interpolation)
         plt.scatter(x, y)
         plt.show()
 
@@ -401,6 +418,8 @@ class Volume:
         for index in range(self.zSize):
             if not self.niceSlice[index]:
                 self.centroid[index] = -1, -1
+            if self.centroid[index,0] < 0 or self.centroid[index,1] < 0 :
+                self.centroid[index] = -1
         return self.centroid
 
     def showCentroid(self, title=None, pixel=False, interpolation='nearest',
@@ -486,7 +505,7 @@ class Volume:
     def getDice(self, centroid=None, mask=None, show=False, showAll=False):
         '''
         calculates average dice coefficient ('dc') of the rod by trying
-        different radii
+        different radii (neglecting dc of -1)
         returns max obtained average dc after trying different radii
 
         uses xSpace (should be same as ySpace) to be used with any resolution
@@ -574,6 +593,8 @@ def sitk_centroid(img, show=False, ref=False, percentLimit=False,
     '''
     returns array with y&x coordinate of centroid for every slice of img
     centroid[slice, y&x-coordinate]
+    if no pixel has value > threshold:
+        centroid x&y-coordinate of that slice = -1,-1
     '''
     if (threshold is False and percentLimit is False) or (threshold is True and percentLimit is True):
         print("Please set either percentLimit or threshold!")
@@ -593,16 +614,19 @@ def sitk_centroid(img, show=False, ref=False, percentLimit=False,
         threshold = bins[np.concatenate((np.array([0]), np.cumsum(hist))) *
                          (bins[1] - bins[0]) > percentLimit][0]
 
-    for slice in range(z):
-        # structuring_element=[[1,1,1],[1,1,1],[1,1,1]]
-        segmentation, segments = ndimage.label(arr[slice] > threshold)
-        # print("segments: {}".format(segments))
-        # add ', structuring_element' to label() for recognising
-        # diagonal pixels as part of object
-        com[slice, ::-1] = ndimage.center_of_mass(arr[slice, :, :]-threshold,
-                                                  segmentation)
-        # add ', range(1,segments)' to center_of_mass for list of centroids
-        # in each slice (multiple rods!)
+    for index in range(z):
+        if arr[index].max() > threshold:
+            # structuring_element=[[1,1,1],[1,1,1],[1,1,1]]
+            segmentation, segments = ndimage.label(arr[index] > threshold)
+            # print("segments: {}".format(segments))
+            # add ', structuring_element' to label() for recognising
+            # diagonal pixels as part of object
+            com[index, ::-1] = ndimage.center_of_mass(arr[index, :, :]-threshold,
+                                                      segmentation)
+            # add ', range(1,segments)' to center_of_mass for list of centroids
+            # in each slice (multiple rods!)
+        else:
+            com[index] = (-1,-1)
 
     if show:
         if type(show) == bool:
@@ -734,6 +758,9 @@ def dice_circle(img, centroid, radius=2.1, show=False,
     dc : array_like
         The Dice coefficient between the object(s) in ```input``` and the
         created circles. It ranges from 0 (no overlap) to 1 (perfect overlap).
+        if centroid coordinates + radius would create circle exceeding image
+        size: dc of this slice = -1
+        Other errors occuring during the calculation should also result in -1
     """
 
     xSize, ySize, zSize = img.GetSize()
