@@ -103,5 +103,6 @@ fun.sitk_write(CT.masked, "../data/", "CT_distortionNorm.mha")
 '''
 # instead of opening the created file manually, you can use this lines in
 # the IPython console to start 3D Slicer and open it automatically:
+# %env SITK_SHOW_COMMAND /home/davidblacher/Downloads/Slicer-4.5.0-1-linux-amd64/Slicer
 # %env SITK_SHOW_COMMAND /home/david/Downloads/Slicer-4.5.0-1-linux-amd64/Slicer
 # sitk.Show(CT.masked)

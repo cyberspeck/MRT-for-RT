@@ -132,7 +132,7 @@ class Volume:
                         self.seeds.append((xMax, yMax, index))
 #                    print("{}: found max at ({},{})".format(index, xMax, yMax))
 
-    def show(self, pixel=False, interpolation=None, ref=None):
+    def show(self, pixel=False, interpolation=None, ref=None, save=False):
         '''
         plots ref slice of Volume
 
@@ -163,9 +163,9 @@ class Volume:
         else:
             extent = None
 
-        sitk_show(img=self.img, ref=ref, extent=extent, title=self.title, interpolation=a)
+        sitk_show(img=self.img, ref=ref, extent=extent, title=self.title, interpolation=a, save=save)
 
-    def showSeed(self, pixel=False, interpolation='nearest', ref=None):
+    def showSeed(self, pixel=False, interpolation='nearest', ref=None, save=False):
         '''
         plots slice containing seed
 
@@ -198,12 +198,15 @@ class Volume:
             x, y, z = self.seeds[ref]
 
         arr = sitk.GetArrayFromImage(self.img)
+        fig = plt.figure()
         plt.set_cmap("gray")
         plt.title(self.title + ", seed @ {}".format(self.seeds[ref]))
 
         plt.imshow(arr[ref, :, :], extent=extent, interpolation=interpolation)
         plt.scatter(x, y)
         plt.show()
+        if save != False:
+            fig.savefig(str(save) + ".png")
 
     def getThresholds(self, pixelNumber=0, scale=1):
         '''
@@ -423,7 +426,7 @@ class Volume:
         return self.centroid
 
     def showCentroid(self, title=None, pixel=False, interpolation='nearest',
-                     ref=None):
+                     ref=None, save=False):
         if self.centroid is False:
             print("Volume has no centroid yet. use Volume.getCentroid() first!")
             return None
@@ -435,11 +438,11 @@ class Volume:
 
         if pixel is False:
             extent = (-self.xSpace/2, self.xSize*self.xSpace - self.xSpace/2, self.ySize*self.ySpace - self.ySpace/2, -self.ySpace/2)
-            centroid_show(img=self.img, com=self.centroid, extent=extent,
+            centroid_show(img=self.img, com=self.centroid, extent=extent, save=save,
                           title=title, interpolation=interpolation, ref=ref)
         else:
             centroid_show(img=self.img, com=self.centroid/self.xSpace, title=title,
-                          interpolation=interpolation, ref=ref)
+                          interpolation=interpolation, ref=ref, save=save)
 
     def getMask(self, lower=False, upper=False):
 
@@ -471,7 +474,7 @@ class Volume:
 
         return self.masked
 
-    def showMask(self, interpolation=None, ref=None):
+    def showMask(self, interpolation=None, ref=None, save=False):
         if self.mask is False:
             print("Volume has no mask yet. use Volume.getMask() first!")
             return None
@@ -485,7 +488,7 @@ class Volume:
         title = self.title + ", mask"
 
         sitk_show(img=self.mask, ref=ref, title=title,
-                  interpolation=interpolation)
+                  interpolation=interpolation, save=save)
 
     def showMasked(self, interpolation=None, ref=None):
         if self.masked is False:
@@ -574,11 +577,12 @@ def sitk_write(image, output_dir='', filename='3DImage.mha'):
     sitk.WriteImage(image, output_file_name_3D)
 
 
-def sitk_show(img, ref=0, extent=None, title=None, interpolation='nearest'):
+def sitk_show(img, ref=0, extent=None, title=None, interpolation='nearest', save=False):
     """
     shows plot of img at z=ref
     """
     arr = sitk.GetArrayFromImage(img[:, :, ref])
+    fig = plt.figure()
     plt.set_cmap("gray")
 
     if title:
@@ -586,9 +590,10 @@ def sitk_show(img, ref=0, extent=None, title=None, interpolation='nearest'):
 
     plt.imshow(arr, extent=extent, interpolation=interpolation)
     plt.show()
+    if save != False:
+        fig.savefig(str(save) + ".png")
 
-
-def sitk_centroid(img, show=False, ref=False, percentLimit=False,
+def sitk_centroid(img, show=False, ref=False, percentLimit=False, save=False,
                   threshold=False, interpolation='nearest', title=None):
     '''
     returns array with y&x coordinate of centroid for every slice of img
@@ -631,21 +636,24 @@ def sitk_centroid(img, show=False, ref=False, percentLimit=False,
     if show:
         if type(show) == bool:
             show == ref
-            centroid_show(img, com=com, title=title,
+            centroid_show(img, com=com, title=title, save=save,
                           interpolation=interpolation, ref=show)
 
     return com
 
 
-def centroid_show(img, com, extent=None, title=None, interpolation='nearest', ref=1):
-        arr = sitk.GetArrayFromImage(img)
-        plt.set_cmap("gray")
-        if title:
-            plt.title(title + ", centroid")
+def centroid_show(img, com, extent=None, title=None, interpolation='nearest', save=False, ref=1):
+    arr = sitk.GetArrayFromImage(img)
+    fig = plt.figure()
+    plt.set_cmap("gray")
+    if title:
+        plt.title(title + ", centroid")
 
-        plt.imshow(arr[ref, :, :], extent=extent, interpolation=interpolation)
-        plt.scatter(*com[ref, :])
-        plt.show()
+    plt.imshow(arr[ref, :, :], extent=extent, interpolation=interpolation)
+    plt.scatter(*com[ref, :])
+    plt.show()
+    if save != False:
+        fig.savefig(str(save) + ".png")
 
 
 def coordShift(first, second):
