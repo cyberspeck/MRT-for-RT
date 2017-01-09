@@ -422,7 +422,7 @@ class Volume:
                 self.centroid[index] = -1
         return self.centroid
 
-    def showCentroid(self, title=None, pixel=False, interpolation='nearest',
+    def showCentroid(self, com2=None, title=None, pixel=False, interpolation='nearest',
                      ref=None):
         if self.centroid is False:
             print("Volume has no centroid yet. use Volume.getCentroid() first!")
@@ -435,10 +435,10 @@ class Volume:
 
         if pixel is False:
             extent = (-self.xSpace/2, self.xSize*self.xSpace - self.xSpace/2, self.ySize*self.ySpace - self.ySpace/2, -self.ySpace/2)
-            centroid_show(img=self.img, com=self.centroid, extent=extent,
+            centroid_show(img=self.img, com=self.centroid, com2=com2, extent=extent,
                           title=title, interpolation=interpolation, ref=ref)
         else:
-            centroid_show(img=self.img, com=self.centroid/self.xSpace, title=title,
+            centroid_show(img=self.img, com=self.centroid/self.xSpace, com2=com2/self.xSpace, title=title,
                           interpolation=interpolation, ref=ref)
 
     def getMask(self, lower=False, upper=False):
@@ -637,14 +637,19 @@ def sitk_centroid(img, show=False, ref=False, percentLimit=False,
     return com
 
 
-def centroid_show(img, com, extent=None, title=None, interpolation='nearest', ref=1):
+def centroid_show(img, com, com2=None, extent=None, title=None, interpolation='nearest', ref=1):
         arr = sitk.GetArrayFromImage(img)
         plt.set_cmap("gray")
         if title:
             plt.title(title + ", centroid")
-
+        x = y = 0
         plt.imshow(arr[ref, :, :], extent=extent, interpolation=interpolation)
-        plt.scatter(*com[ref, :])
+        if com2 == None:
+            x, y = com[ref]
+        else:
+            x = [com[ref,0],com2[ref,0]]
+            y = [com[ref,1],com2[ref,1]]
+        plt.scatter(x, y, c=['b','g'])
         plt.show()
 
 
