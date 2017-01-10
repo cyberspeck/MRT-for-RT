@@ -3,19 +3,33 @@
 Created on Sun Jul 17 15:17:57 2016
 
 For future developer: Segmentation and automatic registration of separate rods
-could be done similar to this:https://blancosilva.wordpress.com/2010/12/15/image-processing-with-numpy-scipy-and-matplotlibs-in-sage/
-
+could be done similar to this: https://blancosilva.wordpress.com/2010/12/15/image-processing-with-numpy-scipy-and-matplotlibs-in-sage/
 @author: david
+
+Separate Matplotlib figure windows pop up for Spyder 2.3/3.0:
+Tools > Preferences > Ipython Console > Graphics > Graphics Backend > Backend: “automatic”
+
+
+plt.clf()
+
+plt.xlim((0,1)
+plt.yscale('log')
+plt.legend(loc='center right')
+plt.xlabel(u"guess [%]")  
+plt.ylabel(u"dc")
+plt.tight_layout()
 """
 
 import FunITK as fun
 from FunITK import Volume
 import datetime
 import numpy as np
+# https://docs.scipy.org/doc/numpy/reference/generated/numpy.set_printoptions.html
+# np.set_printoptions(threshold=np.nan)
 
 # CT images not usable @173-192
 # MR images has airbubble @306
-#if idxSlice is chosen close to air bubble
+
 pathCT = "../data_final/CT_x1/"
 pathMR = "../data_final/MR_x1/"
 pathCT_x4 = "../data_final/CT_x4/"
@@ -29,8 +43,6 @@ pathMR_x25 = "../data_final/MR_x25/"
 pathCT_x100 = "../data_final/CT_x100/"
 pathMR_x100 = "../data_final/MR_x100/"
 idxSlice = 10
-
-# COM =MR_x100.getCentroid(percentLimit='auto', plot=True, iterations=3)
 
 CT = Volume(path=pathCT, method="CT", info="x1", ref=idxSlice)
 CT_x4 = Volume(path=pathCT_x4, method="CT", info="x4", ref=idxSlice)
@@ -69,9 +81,6 @@ for index in range(sets):
     # collects dice-score of CT and MRI data
     dice_CT_MR[index] = np.column_stack((vol_list[0][index].dice, vol_list[1][index].dice))
 
-#relevant slices: ref (=idxSlcie) & outer edge
-#quickDATA = np.array([distortionNorm[idxSlice], distortionNorm])
-
 
 # http://stackoverflow.com/questions/16621351/how-to-use-python-numpy-savetxt-to-write-strings-and-float-number-to-an-ascii-fi
 now = datetime.datetime.now()
@@ -79,8 +88,10 @@ NAMES  = ['sliceNumber', 'distortionX', 'distortionY', 'distortionNorm', 'dice_C
 for index in range(sets):
     DATA = np.column_stack((sliceNumbers.astype(str), distortion[index].astype(str), distortionNorm[index].astype(str), dice_CT_MR[index,:,0].astype(str), dice_CT_MR[index,:,1].astype(str)))
     text = np.row_stack((NAMES, DATA))
-    # np.savetxt('CT-MR_x1_{}_{}.txt'.format(now.date(), now.time()), FLOATS, delimiter="   ", header="#{}\n\n {}\n".format(now, '   '.join(NAMES)), comments="", fmt='%3s')
-    np.savetxt('CT-MR_{}_{}_{}.txt'.format(index, now.date(), now.time()), text, delimiter="   ", header="#{}\n\n".format(now), comments="", fmt='%3s')
+    head0 = "{}_{}\n path: {}\n thresholds: {}, {}\n".format(vol_list[0][index].method, vol_list[0][index].info, vol_list[0][index].path, vol_list[0][index].lower, vol_list[0][index].upper)
+    head1 = "{}_{}\n path: {}\n thresholds: {}, {}\n".format(vol_list[1][index].method, vol_list[1][index].info, vol_list[1][index].path, vol_list[1][index].lower, vol_list[1][index].upper)
+    head = str(now) + '\n'+ head0 + head1
+    np.savetxt('CT-MR_{}_{}_{}.txt'.format(vol_list[0][index].info, now.date(), now.time()), text, delimiter="   ", header=head, comments="# ", fmt='%3s')
 
 
 '''
