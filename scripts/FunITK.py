@@ -20,19 +20,7 @@ important to remember:
 
 based on:
 https://pyscience.wordpress.com/2014/10/19/image-segmentation-with-python-and-SimpleITK/
-http://insightsoftwareconsortium.github.io/SimpleITK-Notebooks/03_Image_Details.html
-http://stackoverflow.com/questions/18435003/ndimages-center-of-mass-to-calculate-the-position-of-a-gaussian-peak
-http://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.ndimage.measurements.center_of_mass.html
 
-install anaconda
-create virtual environment
-    conda create -n ENV2 python=2.7 spyder
-    source activate ENV2
-    pip install SimpleITK
-    pip install numpy
-    pip install scipy
-    pip install matplotlib
-    pip install scikit-image
 """
 
 import numpy as np
