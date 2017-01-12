@@ -217,8 +217,9 @@ class Volume:
     def getThresholds(self, pixelNumber=0, scale=1):
         '''
         Calculates threshold based on number of pixels representing rod.
-        if no pixelNumber is given, self.radius is used to get estimated
-        pixelNumber. All calculations based on ref-slice.
+        If no pixelNumber is given, self.radius is used to get estimated
+        pixelNumber. If self.raduis == 0: use method to get raduis
+         All calculations based on ref-slice.
 
         approx. number of pixels being part of rod:
         pn = realRadius^2 * pi / pixelSpacing^2
@@ -233,7 +234,7 @@ class Volume:
 
         Returns
         -------
-        Lower and upper threshold value: (double, double)
+        lower and upper threshold value: (double, double)
         '''
 
         if pixelNumber == 0:
@@ -259,19 +260,38 @@ class Volume:
 
         return (self.lower, self.upper)
 
-    def getCentroid(self, show=False, percentLimit=False, threshold=False,
-                    pixelNumber=0, scale=1, iterations=5, halfShift=0.2,
+    def getCentroid(self, threshold='auto', pixelNumber=0, scale=1,
+                    percentLimit=False, iterations=5, halfShift=0.2,
                     plot=False, save=False):
         '''
-        Either used with percentLimit = within (0,1) or "auto"
-        or with threshold = number or "auto"
+        Calculates centroid, either by setting threshold or percentLimit
+        
+        Parameters
+        ----------
+        threshold: float or 'auto', default='auto'
+            if 'auto': uses getThreshold(pixelnumber, scale) and then
+                sitk_centroid(threshold=self.lower)
+                sets self.lower and self.upper
+        percentLimit: float from 0 to 1 (or "auto" =experimental)
+            if percentLimit is True: used instead of threshold method
+            if 'auto': makes 5 iterations by default, uses getThreshold()
+                and getDice(), but does NOT set self.mask
+                sets self.lower and self.upper
+        plot, save: bool, optional
+            plot and save iteration (percentLimit='auto')
+            
+        Returns
+        -------
+        self.centroid: numpy.ndarray
         '''
 
-        if (threshold is False and percentLimit is False) or (threshold is True and percentLimit is True):
-            print("Please use either percentLimit or threshold!")
+        if (threshold is False and percentLimit is False):
+            print("Please use percentLimit or threshold! (default threshold = 'auto')")
+            print("If percentLimit is True: will be used instead of threshold method!")
             return None
 
-        if percentLimit == "auto" and threshold is False:
+        if percentLimit == "auto":
+            # EXPERIMENTAL!!!
             # value A @ 0.5*(1-halfShift) and B @ 0.5*(1+halfShift) times pn
             # if A > B: next value around 0.25
             # else: around 0.75
@@ -408,7 +428,6 @@ class Volume:
 
 
             if plot == True:
-                percent = np.linspace(0,100, 101, endpoint=True)
                 fig = plt.figure()
                 for index in range(iterations):
                     if guess[index] > 0 and centroidScoreA[index] > 0:
@@ -419,20 +438,19 @@ class Volume:
                 if save != False:
                     fig.savefig(str(save) + ".png")
                 
-        if percentLimit != "auto" and percentLimit is True:
-            self.centroid = self.xSpace * sitk_centroid(self.img, ref=self.ref, show=show,
+        if percentLimit != "auto" and percentLimit is not False:
+            self.centroid = self.xSpace * sitk_centroid(self.img, ref=self.ref,
                                                         percentLimit=percentLimit,
                                                         title=self.title)
 
-        if threshold == 'auto':
+        if threshold == 'auto' and percentLimit is False:
             self.getThresholds(pixelNumber=pixelNumber, scale=scale)
             self.centroid = self.xSpace * sitk_centroid(self.img, ref=self.ref,
-                                                        show=show,
                                                         threshold=self.lower,
                                                         title=self.title)
 
-        if threshold != "auto" and threshold is True:
-            self.centroid = self.xSpace * sitk_centroid(self.img, ref=self.ref, show=show,
+        if threshold != "auto" and threshold is not False and percentLimit is False:
+            self.centroid = self.xSpace * sitk_centroid(self.img, ref=self.ref,
                                                         threshold=threshold,
                                                         title=self.title)
 
@@ -527,29 +545,69 @@ class Volume:
         sitk_show(img=self.masked, ref=ref, title=title,
                   interpolation=interpolation)
 
-    def getDice(self, centroid=None, mask=None, show=False, showAll=False):
+    def getDice(self, centroid=None, mask=None, iterations=0,
+                CT_guess=(3.5,4.5), MR_guess=(1.7,2.7),
+                show=False, showAll=False, plot=False, save=False):
         '''
-        calculates average dice coefficient ('dc') of the rod by trying
-        different radii (neglecting dc of -1)
-        returns max obtained average dc after trying different radii
+        Calculates dice coefficient ('dc') and average dc of the volume
+        if iterations > 0: varies radius and finds dc with best average dc 
+        else: if self.raduis == 0: use method to get raduis for dc calculation
+        average dc is mean value of all slices, except those with dc of -1
+        
+        slice dc is set to -1 if centroid lies outside image or reference
+        circle exceeds image
 
-        uses xSpace (should be same as ySpace) to be used with any resolution
-        calculating dc for rods with 1.5mm < r < 4mm
+        Parameters
+        ----------
+        centroid: numpy.ndarray, optional
+            centroid to place circles in instead of self.centroid
+        mask: SimpleITK image, optional
+            binary image to calculate dc of instead of self.mask
+        iterations: int, optional
+        show: bool, optional
+            shows circle used to compare mask to
+        showAll: bool, optional
+            shows all circles tried during iteration
+        plot, save: bool, optional
+            plot and save iteration
+            
+        Returns
+        -------
+        self.dice: numpy.ndarray
         '''
         if centroid is None:
             centroid = self.centroid
+        # to get from mm to pixel coordinates:
+        com = centroid / self.xSpace
         if mask is None:
+            if self.mask is False:
+                self.getMask()
             mask = self.mask
-        
-        com = centroid / self.xSpace        
 
-        if self.radius == 0:
+        if self.radius != 0:
+            self.dice = dice_circle(img=mask, centroid=com,
+                                    radius=self.radius, show=show)
+            
+        if self.radius == 0 and iterations == 0:
             if self.method == "CT":
-                radii = np.linspace(2.5, 5.5, num=25)/self.xSpace
+                self.dice = dice_circle(img=mask, centroid=com,
+                                        radius=4/self.xSpace, show=show)
             if self.method == "MR":
-                radii = np.linspace(0.5, 3.5, num=25)/self.xSpace
+                self.dice = dice_circle(img=mask, centroid=com,
+                                        radius=2/self.xSpace, show=show)
             if self.method != "CT" and self.method != "MR":
-                # radii = np.linspace(1.5, 4.5, num = 11)*self.xSpace
+                print("Unknown method!")
+                return None
+
+        if self.radius == 0 and iterations > 0:
+            if self.method == "CT":
+                low, up = CT_guess
+                radii = np.linspace(low, up, num=iterations)/self.xSpace
+            if self.method == "MR":
+                low, up = MR_guess
+                radii = np.linspace(low, up, num=iterations)/self.xSpace
+            if self.method != "CT" and self.method != "MR":
+                # radii = np.linspace(1.5, 4.5, num = 11)
                 print("Unknown method!")
                 return None
 
@@ -557,20 +615,26 @@ class Volume:
             for index, r in enumerate(radii, start=0):
                 dice = dice_circle(img=mask, centroid=com, radius=r, show=showAll)
                 dcs[index] = np.average(dice[dice>-1])
+                
 
-            self.dice = dice_circle(img=mask, centroid=com,
-                                    radius=radii[dcs.argmax()], show=show)
+            fig = plt.figure()
+            plt.ylim(ymin=0.6, ymax=1)
+            for index in range(iterations):
+                plt.plot(radii[index]*self.xSpace, dcs[index], 'bo')
+            if plot == True: 
+                plt.show()
+                # plots anyway??
+            if save is not False:
+                fig.savefig(str(save) + ".png")
+
+            self.dice = dice_circle(img=mask, centroid=com, show=show,
+                                    radius=radii[dcs.argmax()])
             print("max dice-coefficient obtained for {} when compared to circle with radius = {}".format(self.method, radii[dcs.argmax()]*self.xSpace))
-            print("max dice-coefficient average for the whole volume is: {}".format(dcs.max()))
-#            self.radius = radii[dcs.argmax()]
-            return np.average(dcs.max())
 
-        else:
-            self.dice = dice_circle(img=mask, centroid=com,
-                                    radius=self.radius, show=show)
-            self.diceAverage = np.average(self.dice)
-            print("dice-coefficient average for the whole volume is: {}".format(self.diceAverage))
-            return self.dice
+        self.diceAverage = np.average(self.dice[self.dice>-1])
+        print("dice-coefficient average for the whole volume is: {}".format(self.diceAverage))
+        return self.dice
+
 
 
 def sitk_read(directory, denoise=False):
