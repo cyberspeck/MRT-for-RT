@@ -38,34 +38,39 @@ pathCT_x100 = "../data_final/CT_x100/"
 pathMR_x100 = "../data_final/MR_x100/"
 idxSlice = 10
 
-CT = Volume(path=pathCT, method="CT", info="x1", ref=idxSlice)
-CT_x4 = Volume(path=pathCT_x4, method="CT", info="x4", ref=idxSlice)
-CT_x9 = Volume(path=pathCT_x9, method="CT", info="x9", ref=idxSlice)
-CT_x16 = Volume(path=pathCT_x16, method="CT", info="x16", ref=idxSlice)
-CT_x25 = Volume(path=pathCT_x25, method="CT", info="x25", ref=idxSlice)
-CT_x100 = Volume(path=pathCT_x100, method="CT", info="x100", ref=idxSlice)
+CT = Volume(path=pathCT, method="CT", resample=1, ref=idxSlice)
+CT_x4 = Volume(path=pathCT_x4, method="CT", resample=4, ref=idxSlice)
+CT_x9 = Volume(path=pathCT_x9, method="CT", resample=9, ref=idxSlice)
+CT_x16 = Volume(path=pathCT_x16, method="CT", resample=16, ref=idxSlice)
+CT_x25 = Volume(path=pathCT_x25, method="CT", resample=25, ref=idxSlice)
+CT_x100 = Volume(path=pathCT_x100, method="CT", resample=100, ref=idxSlice)
 
-MR = Volume(path=pathMR, method="MR", info="x1", ref=idxSlice)
-MR_x4 = Volume(path=pathMR_x4, method="MR", info="x4", ref=idxSlice)
-MR_x9 = Volume(path=pathMR_x9, method="MR", info="x9", ref=idxSlice)
-MR_x16 = Volume(path=pathMR_x16, method="MR", info="x16", ref=idxSlice)
-MR_x25 = Volume(path=pathMR_x25, method="MR", info="x25", ref=idxSlice)
-MR_x100 = Volume(path=pathMR_x100, method="MR", info="x100", ref=idxSlice)
+MR = Volume(path=pathMR, method="MR", resample=1, ref=idxSlice)
+MR_x4 = Volume(path=pathMR_x4, method="MR", resample=4, ref=idxSlice)
+MR_x9 = Volume(path=pathMR_x9, method="MR", resample=9, ref=idxSlice)
+MR_x16 = Volume(path=pathMR_x16, method="MR", resample=16, ref=idxSlice)
+MR_x25 = Volume(path=pathMR_x25, method="MR", resample=25, ref=idxSlice)
+MR_x100 = Volume(path=pathMR_x100, method="MR", resample=100, ref=idxSlice)
 
 vol_list = [[CT, CT_x4, CT_x9, CT_x16, CT_x25, CT_x100],[MR, MR_x4, MR_x9, MR_x16, MR_x25, MR_x100]]
 
-for volumes in vol_list:
-    for vol in volumes:
-        #vol.getCentroid(percentLimit='auto', iterations=10)
-        print("\n{}_{}:".format(vol.method, vol.info))
+for methods in vol_list:
+    fig = plt.figure()
+    plt.ylim(ymin=0.65, ymax=1)
+    plt.xlim(xmin=0, xmax=101)
+    for vol in methods:
         vol.getCentroid()
+        #vol.getCentroid(percentLimit='auto', iterations=10)
         vol.getDice()
+        plt.plot(vol.resample, vol.diceAverage, 'bo')
         iterate = 51
-        img_title = "{}_{}-{}iter".format(vol.method, vol.info, iterate)
-        vol.getDice(iterations=iterate, save=img_title)
+#        img_title = "{}_x{}-{}iter".format(vol.method, vol.resample, iterate)
+#        vol.getDice(iterations=iterate, save=img_title)
+        vol.getDice(iterations=iterate)
+        plt.plot(vol.resample, vol.diceAverage, 'ro')
+    img_title = "{}_dice-comparison_fast-51iter".format(str(datetime.datetime.now()))
+    fig.savefig(img_title + ".png")
 
-# dice coefficient for MR using the original radius
-# dice_circle(MR.img, MR.centroid, radius=2, show=True)
         
 sliceNumbers = np.arange(CT.zSize, dtype=int)
 (methods, sets) = np.shape(vol_list)
@@ -87,10 +92,11 @@ NAMES  = ['sliceNumber', 'distortionX', 'distortionY', 'distortionNorm', 'dice_C
 for index in range(sets):
     DATA = np.column_stack((sliceNumbers.astype(str), distortion[index].astype(str), distortionNorm[index].astype(str), dice_CT_MR[index,:,0].astype(str), dice_CT_MR[index,:,1].astype(str)))
     text = np.row_stack((NAMES, DATA))
-    head0 = "{}_{}\n path: {}\n thresholds: {}, {}\n dc-average: {}\n".format(vol_list[0][index].method, vol_list[0][index].info, vol_list[0][index].path, vol_list[0][index].lower, vol_list[0][index].upper, vol_list[0][index].diceAverage)
-    head1 = "{}_{}\n path: {}\n thresholds: {}, {}\n dc-average: {}\n".format(vol_list[1][index].method, vol_list[1][index].info, vol_list[1][index].path, vol_list[1][index].lower, vol_list[1][index].upper, vol_list[1][index].diceAverage)
+    head0 = "{}_x{}\n path: {}\n thresholds: {}, {}\n dc-average: {}\n".format(vol_list[0][index].method, vol_list[0][index].resample, vol_list[0][index].path, vol_list[0][index].lower, vol_list[0][index].upper, vol_list[0][index].diceAverage)
+    head1 = "{}_x{}\n path: {}\n thresholds: {}, {}\n dc-average: {}\n".format(vol_list[1][index].method, vol_list[1][index].resample, vol_list[1][index].path, vol_list[1][index].lower, vol_list[1][index].upper, vol_list[1][index].diceAverage)
     head = str(now) + '\n'+ head0 + head1
-    np.savetxt('CT-MR_{}_{}_{}.txt'.format(vol_list[0][index].info, now.date(), now.time()), text, delimiter="   ", header=head, comments="# ", fmt='%3s')
+    np.savetxt('CT-MR_x{}_{}_{}.txt'.format(vol_list[0][index].resample, now.date(), now.time()), text, delimiter="   ", header=head, comments="# ", fmt='%3s')
+
 
 
 '''

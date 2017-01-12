@@ -53,8 +53,8 @@ class Volume:
         slice used to make calculations (idealy isocenter) e.g. thresholds
         all plots show this slice
         by default it is set to be in the middle of the image (z-axis)
-    info : string, optional
-        additional information about imported data, becomes part of title
+    resample : int, optional
+        resample rate, becomes part of title
     seeds : array_like (int,int,int), optional
         coordinates (pixel) of points inside rod, used for segmentation
         by default list of brightest pixel in each slice
@@ -65,14 +65,14 @@ class Volume:
         to real length (in mm)
     '''
     def __init__(self, path=None, method=None, denoise=False, ref=None,
-                 info=False, seeds='auto', radius=0, spacing=0):
+                 resample=False, seeds='auto', radius=0, spacing=0):
         if(path is None):
             print("Error: no path given!")
         else:
             self.path = path
             self.method = method
             self.denoise = denoise
-            self.info = info
+            self.resample = resample
             self.centroid = False
             self.mask = False
             self.masked = False
@@ -88,9 +88,9 @@ class Volume:
                 a = self.title
                 self.title = a + " denoised"
 
-            if info:
+            if resample:
                 a = self.title
-                self.title = a + ", " + info
+                self.title = a + ", x" + str(resample)
 
             self.xSize, self.ySize, self.zSize = self.img.GetSize()
             if spacing == 0:
@@ -573,9 +573,12 @@ class Volume:
             mask = self.mask
 
         if self.radius != 0:
+            print("{}_x{}.radius is {} and will therefore be used to calculate dc.".format(self.method, self.resample, self.radius))
             self.dice = dice_circle(img=mask, centroid=com,
-                                    radius=self.radius, show=show)
-            
+                                    radius=self.radius/self.xSpace, show=show)
+
+        print("\n{}_x{}:".format(self.method, self.resample))
+
         if self.radius == 0 and iterations == 0:
             if self.method == "CT":
                 self.dice = dice_circle(img=mask, centroid=com,
@@ -605,15 +608,15 @@ class Volume:
                 dcs[index] = np.average(dice[dice>-1])
                 
 
-            fig = plt.figure()
-            plt.ylim(ymin=0.6, ymax=1)
-            for index in range(iterations):
-                plt.plot(radii[index]*self.xSpace, dcs[index], 'bo')
             if plot == True: 
-                plt.show()
-                # plots anyway??
-            if save is not False:
-                fig.savefig(str(save) + ".png")
+                fig = plt.figure()
+                plt.ylim(ymin=0.6, ymax=1)
+                for index in range(iterations):
+                    plt.plot(radii[index]*self.xSpace, dcs[index], 'bo')
+#                plt.show()
+#                plots anyway??
+                if save is not False:
+                    fig.savefig(str(save) + ".png")
 
             self.dice = dice_circle(img=mask, centroid=com, show=show,
                                     radius=radii[dcs.argmax()])
