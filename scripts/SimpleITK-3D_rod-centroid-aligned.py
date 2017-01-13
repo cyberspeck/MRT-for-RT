@@ -53,49 +53,79 @@ MR_x25 = Volume(path=pathMR_x25, method="MR", resample=25, ref=idxSlice)
 MR_x100 = Volume(path=pathMR_x100, method="MR", resample=100, ref=idxSlice)
 
 vol_list = [[CT, CT_x4, CT_x9, CT_x16, CT_x25, CT_x100],[MR, MR_x4, MR_x9, MR_x16, MR_x25, MR_x100]]
+modality, sets = np.shape(vol_list)
 
-for methods in vol_list:
-    fig = plt.figure()
-    plt.ylim(ymin=0.65, ymax=1)
-    plt.xlim(xmin=0, xmax=101)
-    for vol in methods:
-        vol.getCentroid()
-        #vol.getCentroid(percentLimit='auto', iterations=10)
-        vol.getDice()
-        plt.plot(vol.resample, vol.diceAverage, 'bo')
-        iterate = 51
-#        img_title = "{}_x{}-{}iter".format(vol.method, vol.resample, iterate)
-#        vol.getDice(iterations=iterate, save=img_title)
-        vol.getDice(iterations=iterate)
-        plt.plot(vol.resample, vol.diceAverage, 'ro')
-    img_title = "{}_dice-comparison_fast-51iter".format(str(datetime.datetime.now()))
-    fig.savefig(img_title + ".png")
-
-        
 sliceNumbers = np.arange(CT.zSize, dtype=int)
-(methods, sets) = np.shape(vol_list)
-distortion = np.zeros((sets, CT.zSize, 2))
-distortionNorm = np.zeros((sets, CT.zSize, 1))
-dice_CT_MR = np.zeros((sets, CT.zSize, 2))
-for index in range(sets):
+warp = np.zeros((sets, CT.zSize, 2))
+warpMagnitude = np.zeros((sets, CT.zSize, 1))
+
+# 2 dc for CT, 4 dc for MR (2 using MR.centroid, 2 using CT.centroid!)
+dc_CT = np.zeros((sets, CT.zSize, 2))
+dc_CT_average = np.zeros((sets, 2))
+dc_MR = np.zeros((sets, CT.zSize, 4))
+dc_MR_average = np.zeros((sets, 4))
+
+#calculates dc for CT
+for i in range(sets):
+    vol_list[0][i].getCentroid()
+    a = vol_list[0][i].getDice()
+    aa = vol_list[0][i].diceAverage
+    iterate = 51
+    b = vol_list[0][i].getDice(iterations=iterate)
+    bb = vol_list[0][i].diceAverage
+    dc_CT[i] = np.column_stack((a,b))
+    dc_CT_average[i] = aa,bb
+    
+#calculates dc for MR, using first its own COM, then CT COM
+for i in range(sets):
+    vol_list[1][i].getCentroid()
+    a = vol_list[1][i].getDice()
+    aa = vol_list[1][i].diceAverage
+    iterate = 51
+    b = vol_list[1][i].getDice(iterations=iterate)
+    bb = vol_list[1][i].diceAverage
+    c = vol_list[1][i].getDice(centroid=vol_list[0][i].centroid)
+    cc = vol_list[1][i].diceAverage
+    iterate = 4
+    d = vol_list[1][i].getDice(centroid=vol_list[0][i].centroid, iterations=iterate)
+    dd = vol_list[1][i].diceAverage
+    dc_MR[i] = np.column_stack((a,b,c,d))
+    dc_MR_average[i] = aa,bb,cc,dd
+
+#for mode in range(modality):
+#    fig = plt.figure()
+#    plt.ylim(ymin=0.65, ymax=1)
+#    plt.xlim(xmin=0, xmax=101)
+#    for vol in range(sets):
+#        vol_list[mode][vol].getCentroid()
+#        vol_list[mode][vol].getDice()
+#        plt.plot(vol_list[mode][vol].resample, vol_list[mode][vol].diceAverage, 'bo')
+#        iterate = 51
+#        img_title = "{}_x{}-{}iter".format(vol_list[mode][vol].method, vol_list[mode][vol].resample, iterate)
+#        vol_list[mode][vol].getDice(iterations=iterate, save=img_title)
+#        vol_list[mode][vol].getDice(iterations=iterate)
+#        plt.plot(vol_list[mode][vol].resample, vol_list[mode][vol].diceAverage, 'ro')
+#    img_title = "{}_dice-comparison_fast-51iter".format(str(datetime.datetime.now()))
+#    fig.savefig(img_title + ".png")
+
+
+for i in range(sets):
     # this calculates the coordinate difference of MR.centroid relative to CT.centroid
-    distortion[index] = fun.coordShift(vol_list[0][index].centroid, vol_list[1][index].centroid)
+    warp[i] = fun.sitk_coordShift(vol_list[0][i].centroid, vol_list[1][i].centroid)
     # this calculates the norm (=absolute distance) between the centroids in each slice
-    distortionNorm[index] = fun.coordDist(distortion[index])
-    # collects dice-score of CT and MRI data
-    dice_CT_MR[index] = np.column_stack((vol_list[0][index].dice, vol_list[1][index].dice))
+    warpMagnitude[i] = fun.sitk_coordDist(warp[i])
 
 
 # http://stackoverflow.com/questions/16621351/how-to-use-python-numpy-savetxt-to-write-strings-and-float-number-to-an-ascii-fi
 now = datetime.datetime.now()
-NAMES  = ['sliceNumber', 'distortionX', 'distortionY', 'distortionNorm', 'dice_CT', 'dice_MR']
-for index in range(sets):
-    DATA = np.column_stack((sliceNumbers.astype(str), distortion[index].astype(str), distortionNorm[index].astype(str), dice_CT_MR[index,:,0].astype(str), dice_CT_MR[index,:,1].astype(str)))
+NAMES  = ['sliceNumber', 'warp_X', 'warp_Y', 'warpMagnitude', 'dc_CT', 'dc_CT_opti', 'dc_MR', 'dc_MR_opti', 'dc_MR_CT-COM', 'dc_MR_opti_CT-COM']
+for i in range(sets):
+    DATA = np.column_stack((sliceNumbers.round(4).astype(str), warp[i].round(4).astype(str), warpMagnitude[i].round(4).astype(str), dc_CT[i,:,0].round(4).astype(str), dc_CT[i,:,1].round(4).astype(str), dc_MR[i,:,0].round(4).astype(str), dc_MR[i,:,1].round(4).astype(str), dc_MR[i,:,2].round(4).astype(str), dc_MR[i,:,3].round(4).astype(str)))
     text = np.row_stack((NAMES, DATA))
-    head0 = "{}_x{}\n path: {}\n thresholds: {}, {}\n dc-average: {}\n".format(vol_list[0][index].method, vol_list[0][index].resample, vol_list[0][index].path, vol_list[0][index].lower, vol_list[0][index].upper, vol_list[0][index].diceAverage)
-    head1 = "{}_x{}\n path: {}\n thresholds: {}, {}\n dc-average: {}\n".format(vol_list[1][index].method, vol_list[1][index].resample, vol_list[1][index].path, vol_list[1][index].lower, vol_list[1][index].upper, vol_list[1][index].diceAverage)
+    head0 = "{}_x{}\n path: {}\n thresholds: {}, {}\n dc-average: {}\n dc-average (opti): {}\n".format(vol_list[0][i].method, vol_list[0][i].resample, vol_list[0][i].path, vol_list[0][i].lower, vol_list[0][i].upper, dc_CT_average[i][0], dc_CT_average[i][1])
+    head1 = "{}_x{}\n path: {}\n thresholds: {}, {}\n dc-average: {}\n dc-average (opti): {}\n dc-average (CT-COM): {}\n dc-average (CT-COM, opti): {}\n".format(vol_list[1][i].method, vol_list[1][i].resample, vol_list[1][i].path, vol_list[1][i].lower, vol_list[1][i].upper, dc_MR_average[i][0], dc_MR_average[i][1], dc_MR_average[i][2], dc_MR_average[i][3])
     head = str(now) + '\n'+ head0 + head1
-    np.savetxt('CT-MR_x{}_{}_{}.txt'.format(vol_list[0][index].resample, now.date(), now.time()), text, delimiter="   ", header=head, comments="# ", fmt='%3s')
+    np.savetxt('CT-MR_x{}_{}_{}.txt'.format(vol_list[0][i].resample, now.date(), now.time()), text, delimiter="   ", header=head, comments="# ", fmt='%3s')
 
 
 
@@ -103,19 +133,19 @@ for index in range(sets):
 print("\n")
 print("CT, centroid[:,:,{}]: {}".format(idxSlice, CT.centroid[idxSlice]))
 print("MR, centroid[:,:,{}]: {}".format(idxSlice, MR.centroid[idxSlice]))
-print("distrotion[:,:,{}]: {}".format(idxSlice, distortion[idxSlice]))
+print("distrotion[:,:,{}]: {}".format(idxSlice, warp[idxSlice]))
 
 
-print("distrotionNorm[:,:,{}]: {}".format(idxSlice, distortionNorm[idxSlice]))
+print("distrotionNorm[:,:,{}]: {}".format(idxSlice, warpMagnitude[idxSlice]))
 
 # creates mask (pixel values either 0 or 1)
 CT.getMask()
 # creates CT.masked using CT.mask,
 # but assigns each slice the centroid distance*1000*spacing as pixel value
-CT.applyMask(replaceArray=distortionNorm, spacing=CT.img.GetSpacing()[0])
+CT.applyMask(replaceArray=warpMagnitude, spacing=CT.img.GetSpacing()[0])
 
 # exports 3D image as .mha file
-fun.sitk_write(CT.masked, "../data/", "CT_distortionNorm.mha")
+fun.sitk_write(CT.masked, "../data/", "CT_warpMagnitude.mha")
 '''
 # instead of opening the created file manually, you can use this lines in
 # the IPython console to start 3D Slicer and open it automatically:

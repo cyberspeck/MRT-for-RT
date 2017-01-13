@@ -78,6 +78,7 @@ class Volume:
             self.masked = False
             self.title = method
             self.radius = radius
+            self.bestRadius = 0
             self.lower = False
             self.upper = False
 
@@ -464,11 +465,11 @@ class Volume:
 
         if pixel is False:
             extent = (-self.xSpace/2, self.xSize*self.xSpace - self.xSpace/2, self.ySize*self.ySpace - self.ySpace/2, -self.ySpace/2)
-            centroid_show(img=self.img, com=self.centroid, com2=com2,
+            sitk_centroid_show(img=self.img, com=self.centroid, com2=com2,
                           extent=extent, save=save, title=title,
                           interpolation=interpolation, ref=ref)
         else:
-            centroid_show(img=self.img, com=self.centroid/self.xSpace,
+            sitk_centroid_show(img=self.img, com=self.centroid/self.xSpace,
                           com2=com2/self.xSpace, save=save, title=title,
                           interpolation=interpolation, ref=ref)
 
@@ -574,17 +575,17 @@ class Volume:
 
         if self.radius != 0:
             print("{}_x{}.radius is {} and will therefore be used to calculate dc.".format(self.method, self.resample, self.radius))
-            self.dice = dice_circle(img=mask, centroid=com,
+            self.dice = sitk_dice_circle(img=mask, centroid=com,
                                     radius=self.radius/self.xSpace, show=show)
 
         print("\n{}_x{}:".format(self.method, self.resample))
 
         if self.radius == 0 and iterations == 0:
             if self.method == "CT":
-                self.dice = dice_circle(img=mask, centroid=com,
+                self.dice = sitk_dice_circle(img=mask, centroid=com,
                                         radius=4/self.xSpace, show=show)
             if self.method == "MR":
-                self.dice = dice_circle(img=mask, centroid=com,
+                self.dice = sitk_dice_circle(img=mask, centroid=com,
                                         radius=2/self.xSpace, show=show)
             if self.method != "CT" and self.method != "MR":
                 print("Unknown method!")
@@ -604,7 +605,7 @@ class Volume:
 
             dcs = np.zeros(len(radii))
             for index, r in enumerate(radii, start=0):
-                dice = dice_circle(img=mask, centroid=com, radius=r, show=showAll)
+                dice = sitk_dice_circle(img=mask, centroid=com, radius=r, show=showAll)
                 dcs[index] = np.average(dice[dice>-1])
                 
 
@@ -618,9 +619,10 @@ class Volume:
                 if save is not False:
                     fig.savefig(str(save) + ".png")
 
-            self.dice = dice_circle(img=mask, centroid=com, show=show,
+            self.dice = sitk_dice_circle(img=mask, centroid=com, show=show,
                                     radius=radii[dcs.argmax()])
-            print("max dice-coefficient obtained for {} when compared to circle with radius = {}".format(self.method, radii[dcs.argmax()]*self.xSpace))
+            self.bestRadius = radii[dcs.argmax()]*self.xSpace
+            print("max dice-coefficient obtained for {} when compared to circle with radius = {}".format(self.method, self.bestRadius))
 
         self.diceAverage = np.average(self.dice[self.dice>-1])
         print("dice-coefficient average for the whole volume is: {}".format(self.diceAverage))
@@ -713,12 +715,12 @@ def sitk_centroid(img, show=False, ref=False, percentLimit=False, save=False,
     if show:
         if type(show) == bool:
             show == ref
-            centroid_show(img, com=com, title=title, save=save,
+            sitk_centroid_show(img, com=com, title=title, save=save,
                           interpolation=interpolation, ref=show)
 
     return com
 
-def centroid_show(img, com, com2=None, extent=None, title=None, save=False,
+def sitk_centroid_show(img, com, com2=None, extent=None, title=None, save=False,
                   interpolation='nearest', ref=1):
         arr = sitk.GetArrayFromImage(img)
         fig = plt.figure()
@@ -737,7 +739,7 @@ def centroid_show(img, com, com2=None, extent=None, title=None, save=False,
         if save != False:
             fig.savefig(str(save) + ".png")
 
-def coordShift(first, second):
+def sitk_coordShift(first, second):
     '''
     returns array with difference of y&x coordinates for every
     centroid[slice, y&x-coordinate]
@@ -754,11 +756,11 @@ def coordShift(first, second):
                 diff[slice, 1] = first[slice, 1] - second[slice, 1]
         return diff
     else:
-        print("Wrong shape! coordShift returned 'False'")
+        print("Wrong shape! sitk_coordShift returned 'False'")
         return False
 
 
-def coordDist(shift):
+def sitk_coordDist(shift):
     '''
     calculates norm for each entry of array
     returns array with list of calculated values
@@ -817,7 +819,7 @@ def sitk_applyMask(img, mask, replaceArray=False, spacing=1):
     return sitk.GetImageFromArray(imgMaskedA)
 
 
-def dice_circle(img, centroid, radius=2.1, show=False,
+def sitk_dice_circle(img, centroid, radius=2.1, show=False,
                 interpolation='nearest'):
     """
     Dice coefficient, inspired by
