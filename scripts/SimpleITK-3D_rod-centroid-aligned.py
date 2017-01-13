@@ -64,31 +64,32 @@ dc_CT = np.zeros((sets, CT.zSize, 2))
 dc_CT_average = np.zeros((sets, 2))
 dc_MR = np.zeros((sets, CT.zSize, 4))
 dc_MR_average = np.zeros((sets, 4))
+iterate = 51
 
 #calculates dc for CT
 for i in range(sets):
     vol_list[0][i].getCentroid()
     a = vol_list[0][i].getDice()
     aa = vol_list[0][i].diceAverage
-    iterate = 51
     b = vol_list[0][i].getDice(iterations=iterate)
     bb = vol_list[0][i].diceAverage
     dc_CT[i] = np.column_stack((a,b))
     dc_CT_average[i] = aa,bb
     
-#calculates dc for MR, using first its own COM, then CT COM
+#calculates dc for MR, using first CT COM, then its own COM
+#this way self.bestRadius is still set to the radius yielding the best dc
+#independently of the CT COM
 for i in range(sets):
     vol_list[1][i].getCentroid()
-    a = vol_list[1][i].getDice()
-    aa = vol_list[1][i].diceAverage
-    iterate = 51
-    b = vol_list[1][i].getDice(iterations=iterate)
-    bb = vol_list[1][i].diceAverage
     c = vol_list[1][i].getDice(centroid=vol_list[0][i].centroid)
     cc = vol_list[1][i].diceAverage
-    iterate = 4
     d = vol_list[1][i].getDice(centroid=vol_list[0][i].centroid, iterations=iterate)
     dd = vol_list[1][i].diceAverage
+    a = vol_list[1][i].getDice()
+    aa = vol_list[1][i].diceAverage
+    b = vol_list[1][i].getDice(iterations=iterate)
+    bb = vol_list[1][i].diceAverage
+
     dc_MR[i] = np.column_stack((a,b,c,d))
     dc_MR_average[i] = aa,bb,cc,dd
 
@@ -118,14 +119,33 @@ for i in range(sets):
 
 # http://stackoverflow.com/questions/16621351/how-to-use-python-numpy-savetxt-to-write-strings-and-float-number-to-an-ascii-fi
 now = datetime.datetime.now()
-NAMES  = ['sliceNumber', 'warp_X', 'warp_Y', 'warpMagnitude', 'dc_CT', 'dc_CT_opti', 'dc_MR', 'dc_MR_opti', 'dc_MR_CT-COM', 'dc_MR_opti_CT-COM']
+COLUMNS  = 'sliceNr  warp_X  warp_Y  warpMagnitude  dc_CT  dc_CT_opti  dc_MR  dc_MR_opti  dc_MR_CT-COM  dc_MR_opti_CT-COM'
 for i in range(sets):
-    DATA = np.column_stack((sliceNumbers.round(4).astype(str), warp[i].round(4).astype(str), warpMagnitude[i].round(4).astype(str), dc_CT[i,:,0].round(4).astype(str), dc_CT[i,:,1].round(4).astype(str), dc_MR[i,:,0].round(4).astype(str), dc_MR[i,:,1].round(4).astype(str), dc_MR[i,:,2].round(4).astype(str), dc_MR[i,:,3].round(4).astype(str)))
-    text = np.row_stack((NAMES, DATA))
-    head0 = "{}_x{}\n path: {}\n thresholds: {}, {}\n dc-average: {}\n dc-average (opti): {}\n".format(vol_list[0][i].method, vol_list[0][i].resample, vol_list[0][i].path, vol_list[0][i].lower, vol_list[0][i].upper, dc_CT_average[i][0], dc_CT_average[i][1])
-    head1 = "{}_x{}\n path: {}\n thresholds: {}, {}\n dc-average: {}\n dc-average (opti): {}\n dc-average (CT-COM): {}\n dc-average (CT-COM, opti): {}\n".format(vol_list[1][i].method, vol_list[1][i].resample, vol_list[1][i].path, vol_list[1][i].lower, vol_list[1][i].upper, dc_MR_average[i][0], dc_MR_average[i][1], dc_MR_average[i][2], dc_MR_average[i][3])
-    head = str(now) + '\n'+ head0 + head1
-    np.savetxt('CT-MR_x{}_{}_{}.txt'.format(vol_list[0][i].resample, now.date(), now.time()), text, delimiter="   ", header=head, comments="# ", fmt='%3s')
+    DATA = np.column_stack((sliceNumbers.astype(str),
+                            warp[i].round(4).astype(str),
+                            warpMagnitude[i].round(4).astype(str),
+                            dc_CT[i,:,0].round(4).astype(str),
+                            dc_CT[i,:,1].round(4).astype(str),
+                            dc_MR[i,:,0].round(4).astype(str),
+                            dc_MR[i,:,1].round(4).astype(str),
+                            dc_MR[i,:,2].round(4).astype(str),
+                            dc_MR[i,:,3].round(4).astype(str)))
+ #   text = np.row_stack((NAMES, DATA))
+    head0 = "{}_x{}\n path: {}\n thresholds: {}, {}\n dc-average: {} (radius = 4)\n dc-average (opti): {} (bestRadius: {})\n".format(vol_list[0][i].method,
+    vol_list[0][i].resample, vol_list[0][i].path, vol_list[0][i].lower,
+    vol_list[0][i].upper, dc_CT_average[i][0].round(4),
+    dc_CT_average[i][1].round(4), vol_list[0][i].bestRadius)
+    
+    head1 = "{}_x{}\n path: {}\n thresholds: {}, {}\n dc-average: {} (radius = 2)\n dc-average (opti): {} (bestRadius: {})\n dc-average (CT-COM): {}\n dc-average (CT-COM, opti): {}\n".format(vol_list[1][i].method,
+    vol_list[1][i].resample, vol_list[1][i].path, vol_list[1][i].lower,
+    vol_list[1][i].upper, dc_MR_average[i][0].round(4),
+    dc_MR_average[i][1].round(4), vol_list[1][i].bestRadius,
+    dc_MR_average[i][2].round(4), dc_MR_average[i][3].round(4))
+    
+    head = str(now) + '\n'+ head0 + head1 + '\n' + COLUMNS
+    np.savetxt('CT-MR_x{}_{}_{}.txt'.format(vol_list[0][i].resample, 
+               now.date(), now.time()), DATA, delimiter="     ", header=head,
+               comments="# ", fmt='%3s')
 
 
 
