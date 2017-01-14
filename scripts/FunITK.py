@@ -535,7 +535,7 @@ class Volume:
                   interpolation=interpolation)
 
     def getDice(self, centroid=None, mask=None, iterations=0,
-                CT_guess=(3.5,4.5), MR_guess=(1.7,2.7),
+                CT_guess=(3.5,4.5), MR_guess=(1.8,2.8),
                 show=False, showAll=False, plot=False, save=False):
         '''
         Calculates dice coefficient ('dc') and average dc of the volume
@@ -592,6 +592,7 @@ class Volume:
                 return None
 
         if self.radius == 0 and iterations > 0:
+            low, up = 0, 0
             if self.method == "CT":
                 low, up = CT_guess
                 radii = np.linspace(low, up, num=iterations)/self.xSpace
@@ -610,14 +611,12 @@ class Volume:
                 
 
             if plot == True: 
-                fig = plt.figure()
-                plt.ylim(ymin=0.6, ymax=1)
-                for index in range(iterations):
-                    plt.plot(radii[index]*self.xSpace, dcs[index], 'bo')
-#                plt.show()
-#                plots anyway??
-                if save is not False:
-                    fig.savefig(str(save) + ".png")
+#                fig = plt.figure()
+#                plt.ylim(ymin=0.6, ymax=1)
+#                plt.xlim(xmin=(low-.1), xmax=(up+.1))
+                plt.plot(radii*self.xSpace, dcs, '+-')
+#                if save is not False:
+#                    fig.savefig(str(save) + ".png")
 
             self.dice = sitk_dice_circle(img=mask, centroid=com, show=show,
                                     radius=radii[dcs.argmax()])
