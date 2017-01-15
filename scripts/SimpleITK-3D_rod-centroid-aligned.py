@@ -8,10 +8,20 @@ plt.clf()
 
 plt.xlim((0,1)
 plt.yscale('log')
+
 plt.legend(loc='center right')
+plt.legend(loc='lower right')
+plt.legend(loc='upper right')
+plt.legend(loc='lower left')
+
 plt.xlabel(u"guess [%]")  
 plt.ylabel(u"dc")
+
+plt.ylabel(u"warp [mm]")
+plt.xlabel(u"slice")
+
 plt.tight_layout()
+
 """
 
 import FunITK as fun
@@ -66,71 +76,72 @@ dc_MR = np.zeros((sets, CT.zSize, 4))
 dc_MR_average = np.zeros((sets, 4))
 iterate = 51
 
+for i in range(sets):
+    vol_list[0][i].getCentroid()
+    vol_list[1][i].getCentroid()
+    # this calculates the coordinate difference of MR.centroid relative to CT.centroid
+    warp[i] = fun.sitk_coordShift(vol_list[0][i].centroid, vol_list[1][i].centroid)
+    # this calculates the norm (=absolute distance) between the centroids in each slice
+    warpMagnitude[i] = fun.sitk_coordDist(warp[i])
+    
+    
 
-fig = plt.figure()
-plt.ylim(ymin=0.8, ymax=1)
-plt.xlim(xmin=(3.5-.1), xmax=(4.5+.1))
+#fig = plt.figure()
+#plt.ylim(ymin=0.8, ymax=1)
+#plt.xlim(xmin=(3.5-.1), xmax=(4.5+.1))
 #calculates dc for CT
 for i in range(sets):
     vol_list[0][i].getCentroid()
-#    a = vol_list[0][i].getDice()
-#    aa = vol_list[0][i].diceAverage
+    a = vol_list[0][i].getDice()
+    aa = vol_list[0][i].diceAverage
     b = vol_list[0][i].getDice(centroid=vol_list[0][i].centroid, iterations=iterate, plot=True,
                                # save='{}_x{}-{}iter'.format(vol_list[1][i].method, vol_list[1][i].resample, iterate)
                                )
-#    bb = vol_list[0][i].diceAverage
-#    dc_CT[i] = np.column_stack((a,b))
-#    dc_CT_average[i] = aa,bb
-#    
+    bb = vol_list[0][i].diceAverage
+    dc_CT[i] = np.column_stack((a,b))
+    dc_CT_average[i] = aa,bb
     
-    
-#plt.legend(loc='upper right')
-plt.legend(loc='lower right')
-fig = plt.figure()
-plt.ylim(ymin=0.5, ymax=.95)
-plt.xlim(xmin=(1.8-.1), xmax=(2.8+.1))
+
+#fig = plt.figure()
+#plt.ylim(ymin=0.5, ymax=.95)
+#plt.xlim(xmin=(1.8-.1), xmax=(2.8+.1))
 #calculates dc for MR, using first CT COM, then its own COM
 #this way self.bestRadius is still set to the radius yielding the best dc
 #independently of the CT COM
 for i in range(sets):
     vol_list[1][i].getCentroid()
-#    c = vol_list[1][i].getDice(centroid=vol_list[0][i].centroid)
-#    cc = vol_list[1][i].diceAverage
-#    d = vol_list[1][i].getDice(centroid=vol_list[0][i].centroid, iterations=iterate)
-#    dd = vol_list[1][i].diceAverage
-#    a = vol_list[1][i].getDice()
-#    aa = vol_list[1][i].diceAverage
-    b = vol_list[1][i].getDice(centroid=vol_list[0][i].centroid, iterations=iterate, plot=True,
+    c = vol_list[1][i].getDice(centroid=vol_list[0][i].centroid)
+    cc = vol_list[1][i].diceAverage
+    d = vol_list[1][i].getDice(centroid=vol_list[0][i].centroid, iterations=iterate)
+    dd = vol_list[1][i].diceAverage
+    a = vol_list[1][i].getDice()
+    aa = vol_list[1][i].diceAverage
+    b = vol_list[1][i].getDice(centroid=vol_list[1][i].centroid, iterations=iterate, plot=True,
                                # save='{}_x{}-{}iter'.format(vol_list[1][i].method, vol_list[1][i].resample, iterate)
                                )
-#    bb = vol_list[1][i].diceAverage
-#
-#    dc_MR[i] = np.column_stack((a,b,c,d))
-#    dc_MR_average[i] = aa,bb,cc,dd
+    bb = vol_list[1][i].diceAverage
 
-for mode in range(modality):
-    fig = plt.figure()
-    plt.ylim(ymin=0.65, ymax=1)
-    plt.xlim(xmin=0, xmax=101)
-    for vol in range(sets):
-        vol_list[mode][vol].getCentroid()
-        vol_list[mode][vol].getDice()
-        plt.plot(vol_list[mode][vol].resample, vol_list[mode][vol].diceAverage, 'bx')
-        iterate = 51
-        img_title = "{}_x{}-{}iter".format(vol_list[mode][vol].method, vol_list[mode][vol].resample, iterate)
-        vol_list[mode][vol].getDice(iterations=iterate, save=img_title)
-        vol_list[mode][vol].getDice(iterations=iterate)
-        plt.plot(vol_list[mode][vol].resample, vol_list[mode][vol].diceAverage, 'r+')
-    img_title = "{}_dice-comparison_fast-51iter".format(str(datetime.datetime.now()))
-#    fig.savefig(img_title + ".png")
+    dc_MR[i] = np.column_stack((a,b,c,d))
+    dc_MR_average[i] = aa,bb,cc,dd
 
 
 
-for i in range(sets):
-    # this calculates the coordinate difference of MR.centroid relative to CT.centroid
-    warp[i] = fun.sitk_coordShift(vol_list[0][i].centroid, vol_list[1][i].centroid)
-    # this calculates the norm (=absolute distance) between the centroids in each slice
-    warpMagnitude[i] = fun.sitk_coordDist(warp[i])
+fig = plt.figure()
+plt.ylim(ymin=-2.1, ymax=.5)
+plt.xlim(xmin=0, xmax=CT.zSize)
+plt.plot(warp[i])
+plt.ylabel(u"warp [mm]")
+plt.xlabel(u"slice")
+
+i=0
+fig = plt.figure()
+plt.ylim(ymin=.3, ymax=1)
+plt.xlim(xmin=0, xmax=CT.zSize)
+plt.plot(dc_CT[i,:,1])
+plt.plot(dc_MR[i,:,1])
+plt.plot(dc_MR[i,:,3])
+plt.ylabel(u"DC")
+
 
 
 # http://stackoverflow.com/questions/16621351/how-to-use-python-numpy-savetxt-to-write-strings-and-float-number-to-an-ascii-fi
@@ -166,13 +177,6 @@ for i in range(sets):
 
 
 '''
-print("\n")
-print("CT, centroid[:,:,{}]: {}".format(idxSlice, CT.centroid[idxSlice]))
-print("MR, centroid[:,:,{}]: {}".format(idxSlice, MR.centroid[idxSlice]))
-print("distrotion[:,:,{}]: {}".format(idxSlice, warp[idxSlice]))
-
-
-print("distrotionNorm[:,:,{}]: {}".format(idxSlice, warpMagnitude[idxSlice]))
 
 # creates mask (pixel values either 0 or 1)
 CT.getMask()
