@@ -40,8 +40,8 @@ pathCT_x4 = "../data_final/CT_x4/"
 pathMR_x4 = "../data_final/MR_x4/"
 pathCT_x9 = "../data_final/CT_x9/"
 pathMR_x9 = "../data_final/MR_x9/"
-pathCT_x16 = "../data_final/CT_x16/"
-pathMR_x16 = "../data_final/MR_x16/"
+#pathCT_x16 = "../data_final/CT_x16/"
+#pathMR_x16 = "../data_final/MR_x16/"
 pathCT_x25 = "../data_final/CT_x25/"
 pathMR_x25 = "../data_final/MR_x25/"
 pathCT_x100 = "../data_final/CT_x100/"
@@ -51,14 +51,14 @@ idxSlice = 10
 CT = Volume(path=pathCT, method="CT", resample=1, ref=idxSlice)
 CT_x4 = Volume(path=pathCT_x4, method="CT", resample=4, ref=idxSlice)
 CT_x9 = Volume(path=pathCT_x9, method="CT", resample=9, ref=idxSlice)
-CT_x16 = Volume(path=pathCT_x16, method="CT", resample=16, ref=idxSlice)
+#CT_x16 = Volume(path=pathCT_x16, method="CT", resample=16, ref=idxSlice)
 CT_x25 = Volume(path=pathCT_x25, method="CT", resample=25, ref=idxSlice)
 CT_x100 = Volume(path=pathCT_x100, method="CT", resample=100, ref=idxSlice)
 
 MR = Volume(path=pathMR, method="MR", resample=1, ref=idxSlice)
 MR_x4 = Volume(path=pathMR_x4, method="MR", resample=4, ref=idxSlice)
 MR_x9 = Volume(path=pathMR_x9, method="MR", resample=9, ref=idxSlice)
-MR_x16 = Volume(path=pathMR_x16, method="MR", resample=16, ref=idxSlice)
+#MR_x16 = Volume(path=pathMR_x16, method="MR", resample=16, ref=idxSlice)
 MR_x25 = Volume(path=pathMR_x25, method="MR", resample=25, ref=idxSlice)
 MR_x100 = Volume(path=pathMR_x100, method="MR", resample=100, ref=idxSlice)
 
@@ -68,6 +68,10 @@ modality, sets = np.shape(vol_list)
 sliceNumbers = np.arange(CT.zSize, dtype=int)
 warp = np.zeros((sets, CT.zSize, 2))
 warpMagnitude = np.zeros((sets, CT.zSize, 1))
+
+# one calculated with DC and one with DC opti
+warpDC = np.zeros((sets, CT.zSize, 1))
+warpDC_opti = np.zeros((sets, CT.zSize, 1))
 
 # 2 dc for CT, 4 dc for MR (2 using MR.centroid, 2 using CT.centroid!)
 dc_CT = np.zeros((sets, CT.zSize, 2))
@@ -94,7 +98,8 @@ for i in range(sets):
     vol_list[0][i].getCentroid()
     a = vol_list[0][i].getDice()
     aa = vol_list[0][i].diceAverage
-    b = vol_list[0][i].getDice(centroid=vol_list[0][i].centroid, iterations=iterate, plot=True,
+    b = vol_list[0][i].getDice(centroid=vol_list[0][i].centroid, iterations=iterate,
+                               # plot=True,
                                # save='{}_x{}-{}iter'.format(vol_list[1][i].method, vol_list[1][i].resample, iterate)
                                )
     bb = vol_list[0][i].diceAverage
@@ -116,16 +121,19 @@ for i in range(sets):
     dd = vol_list[1][i].diceAverage
     a = vol_list[1][i].getDice()
     aa = vol_list[1][i].diceAverage
-    b = vol_list[1][i].getDice(centroid=vol_list[1][i].centroid, iterations=iterate, plot=True,
+    b = vol_list[1][i].getDice(centroid=vol_list[1][i].centroid, iterations=iterate,
+                               # plot=True,
                                # save='{}_x{}-{}iter'.format(vol_list[1][i].method, vol_list[1][i].resample, iterate)
                                )
     bb = vol_list[1][i].diceAverage
 
     dc_MR[i] = np.column_stack((a,b,c,d))
     dc_MR_average[i] = aa,bb,cc,dd
+    warpDC[i] = warpMagnitude[i] * (1 - a)
+    warpDC_opti[i] = warpMagnitude[i] * (1 - b)
 
 
-
+'''
 fig = plt.figure()
 plt.ylim(ymin=-2.1, ymax=.5)
 plt.xlim(xmin=0, xmax=CT.zSize)
@@ -133,7 +141,7 @@ plt.plot(warp[i])
 plt.ylabel(u"warp [mm]")
 plt.xlabel(u"slice")
 
-i=0
+i=4
 fig = plt.figure()
 plt.ylim(ymin=.3, ymax=1)
 plt.xlim(xmin=0, xmax=CT.zSize)
@@ -142,11 +150,18 @@ plt.plot(dc_MR[i,:,1])
 plt.plot(dc_MR[i,:,3])
 plt.ylabel(u"DC")
 
+fig = plt.figure()
+plt.ylim(ymin=0, ymax=0.21)
+plt.xlim(xmin=0, xmax=CT.zSize)
+plt.plot(warpDC[i])
+plt.plot(warpDC_opti[i])
+plt.ylabel(u"warp*DC [mm]")
+plt.xlabel(u"slice")
 
-
+'''
 # http://stackoverflow.com/questions/16621351/how-to-use-python-numpy-savetxt-to-write-strings-and-float-number-to-an-ascii-fi
 now = datetime.datetime.now()
-COLUMNS  = 'sliceNr  warp_X  warp_Y  warpMagnitude  dc_CT  dc_CT_opti  dc_MR  dc_MR_opti  dc_MR_CT-COM  dc_MR_opti_CT-COM'
+COLUMNS  = 'sliceNr  warp_X  warp_Y  warpMagnitude  dc_CT  dc_CT_opti  dc_MR  dc_MR_opti  dc_MR_CT-COM  dc_MR_opti_CT-COM  warpDC  warpDC_opti'
 for i in range(sets):
     DATA = np.column_stack((sliceNumbers.astype(str),
                             warp[i].round(4).astype(str),
@@ -156,7 +171,9 @@ for i in range(sets):
                             dc_MR[i,:,0].round(4).astype(str),
                             dc_MR[i,:,1].round(4).astype(str),
                             dc_MR[i,:,2].round(4).astype(str),
-                            dc_MR[i,:,3].round(4).astype(str)))
+                            dc_MR[i,:,3].round(4).astype(str),
+                            warpDC[i,:].round(4).astype(str),
+                            warpDC_opti[i,:].round(4).astype(str)))
  #   text = np.row_stack((NAMES, DATA))
     head0 = "{}_x{}\n path: {}\n thresholds: {}, {}\n dc-average: {} (radius = 4)\n dc-average (opti): {} (bestRadius: {})\n".format(vol_list[0][i].method,
     vol_list[0][i].resample, vol_list[0][i].path, vol_list[0][i].lower,
@@ -175,20 +192,31 @@ for i in range(sets):
                comments="# ", fmt='%3s')
 
 
-
-'''
-
 # creates mask (pixel values either 0 or 1)
-CT.getMask()
+for i in range(sets):
+    vol_list[1][i].getMask()
 # creates CT.masked using CT.mask,
 # but assigns each slice the centroid distance*1000*spacing as pixel value
-CT.applyMask(replaceArray=warpMagnitude, spacing=CT.img.GetSpacing()[0])
-
+    vol_list[1][i].applyMask(replaceArray=warpMagnitude[i])
 # exports 3D image as .mha file
-fun.sitk_write(CT.masked, "../data/", "CT_warpMagnitude.mha")
-'''
+    fun.sitk_write(vol_list[1][i].masked, "../data/export/", "{}_{}_warpMagnitude.mha".format(vol_list[1][i].method, vol_list[1][i].resample))
+    
+    vol_list[1][i].applyMask(replaceArray=dc_MR[i,:,1])
+    fun.sitk_write(vol_list[1][i].masked, "../data/export/", "{}_{}_dc-MR-opti.mha".format(vol_list[1][i].method, vol_list[1][i].resample))
+    
+    vol_list[1][i].applyMask(replaceArray=dc_MR[i,:,3])
+    fun.sitk_write(vol_list[1][i].masked, "../data/export/", "{}_{}_dc-MR-opti_CT-COM.mha".format(vol_list[1][i].method, vol_list[1][i].resample))
+    
+    vol_list[1][i].applyMask(replaceArray=warpDC_opti[i], scale=10000)
+    fun.sitk_write(vol_list[1][i].masked, "../data/export/", "{}_{}_dc-warpDC_opti.mha".format(vol_list[1][i].method, vol_list[1][i].resample))
+
+
 # instead of opening the created file manually, you can use this lines in
 # the IPython console to start 3D Slicer and open it automatically:
 # %env SITK_SHOW_COMMAND /home/davidblacher/Downloads/Slicer-4.5.0-1-linux-amd64/Slicer
 # %env SITK_SHOW_COMMAND /home/david/Downloads/Slicer-4.5.0-1-linux-amd64/Slicer
 # sitk.Show(CT.masked)
+
+
+
+

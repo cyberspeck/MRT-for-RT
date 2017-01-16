@@ -112,9 +112,17 @@ class Volume:
             for index in range(self.zSize):
                 # if average value of slice differs too much -> badSlice
                 # difference between ref-Slice and current chosen arbitratry
+                # seems to be big enough not to detect air bubble in MRI
+                # entire air block (no liquid) should be recognised, though.
+                # small enough to notice plastic pane
                 if np.absolute(np.average(arr[index]) - average) > 40:
                     print("Irregularities detected in slice {}".format(index))
                     self.niceSlice[index] = False
+                    # maybe also set slice prior and after current slice as
+                    # self.niceSlice[index+1] = self.niceSlice[index+1] = False
+                    # because small changes happening around irregularities
+                    # might not have been big enough for detection, but already
+                    # leading to false calculations?
 
             if type(seeds) == list:
                 self.seeds = seeds
@@ -490,8 +498,8 @@ class Volume:
         self.mask = sitk_getMask(self.img, self.seeds, upper, lower)
         return self.mask
 
-    def applyMask(self, mask=None, replaceArray=False, spacing=1):
-        if (mask is None):
+    def applyMask(self, mask=0, replaceArray=False, scale=1000):
+        if mask == 0:
             if self.mask:
                 mask = self.mask
             else:
@@ -499,7 +507,7 @@ class Volume:
                 return None
 
         self.masked = sitk_applyMask(self.img, mask, replaceArray=replaceArray,
-                                     spacing=spacing)
+                                     scale=scale)
 
         return self.masked
 
@@ -529,7 +537,7 @@ class Volume:
         if interpolation is None:
             interpolation = 'nearest'
 
-        title = self.title + ", mask"
+        title = self.title + ", masked"
 
         sitk_show(img=self.masked, ref=ref, title=title,
                   interpolation=interpolation)
@@ -788,11 +796,11 @@ def sitk_getMask(img, seedList, upper, lower):
                                    replaceValue=1)
 
 
-def sitk_applyMask(img, mask, replaceArray=False, spacing=1):
+def sitk_applyMask(img, mask, replaceArray=False, scale=1000):
     '''
     masks img (SimpleITK.Image) using mask (SimpleITK.Image)
-    if a replaceArray is given, the spacing*values*1000 of the array will be used
-    as pixel intensity for an entire slice each
+    if a replaceArray is given, the values*scale (default scale=1000) of the
+    array will be used as pixel intensity for an entire slice each
     '''
     if img.GetSize() != mask.GetSize():
         print(mask.GetSize())
@@ -807,13 +815,10 @@ def sitk_applyMask(img, mask, replaceArray=False, spacing=1):
 
     imgMaskedA = arr*maskA
 
-    if (np.shape(replaceArray) == (img.GetDepth(), 1) and
-            replaceArray):
+    if np.shape(replaceArray) == (img.GetDepth(), 1) or np.shape(replaceArray) == (img.GetDepth(),):
         for slice in range(zSize):
-            for x in range(xSize):
-                for y in range(ySize):
-                    if maskA[slice, y, x] == 1:
-                        imgMaskedA[slice, y, x] = 1000*replaceArray[slice]*spacing
+            imgMaskedA[slice][imgMaskedA[slice] != 0] = replaceArray[slice]*scale
+            
 
     return sitk.GetImageFromArray(imgMaskedA)
 
