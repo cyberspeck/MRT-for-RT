@@ -15,7 +15,7 @@ plt.legend(loc='upper right')
 plt.legend(loc='lower left')
 
 plt.xlabel(u"guess [%]")  
-plt.ylabel(u"dc")
+plt.ylabel(u"DC")
 
 plt.ylabel(u"warp [mm]")
 plt.xlabel(u"slice")
@@ -72,12 +72,12 @@ warpMagnitude = np.zeros((sets, CT.zSize, 1))
 # one calculated with DC and one with DC opti
 warpDC = np.zeros((sets, CT.zSize, 1))
 warpDC_opti = np.zeros((sets, CT.zSize, 1))
-
-# 2 dc for CT, 4 dc for MR (2 using MR.centroid, 2 using CT.centroid!)
-dc_CT = np.zeros((sets, CT.zSize, 2))
-dc_CT_average = np.zeros((sets, 2))
-dc_MR = np.zeros((sets, CT.zSize, 4))
-dc_MR_average = np.zeros((sets, 4))
+    
+# 2 DC for CT, 4 DC for MR (2 using MR.centroid, 2 using CT.centroid!)
+DC_CT = np.zeros((sets, CT.zSize, 2))
+DC_CT_average = np.zeros((sets, 2))
+DC_MR = np.zeros((sets, CT.zSize, 4))
+DC_MR_average = np.zeros((sets, 4))
 iterate = 51
 
 for i in range(sets):
@@ -93,7 +93,7 @@ for i in range(sets):
 #fig = plt.figure()
 #plt.ylim(ymin=0.8, ymax=1)
 #plt.xlim(xmin=(3.5-.1), xmax=(4.5+.1))
-#calculates dc for CT
+#calculates DC for CT
 for i in range(sets):
     vol_list[0][i].getCentroid()
     a = vol_list[0][i].getDice()
@@ -103,15 +103,15 @@ for i in range(sets):
                                # save='{}_x{}-{}iter'.format(vol_list[1][i].method, vol_list[1][i].resample, iterate)
                                )
     bb = vol_list[0][i].diceAverage
-    dc_CT[i] = np.column_stack((a,b))
-    dc_CT_average[i] = aa,bb
+    DC_CT[i] = np.column_stack((a,b))
+    DC_CT_average[i] = aa,bb
     
 
 #fig = plt.figure()
 #plt.ylim(ymin=0.5, ymax=.95)
 #plt.xlim(xmin=(1.8-.1), xmax=(2.8+.1))
-#calculates dc for MR, using first CT COM, then its own COM
-#this way self.bestRadius is still set to the radius yielding the best dc
+#calculates DC for MR, using first CT COM, then its own COM
+#this way self.bestRadius is still set to the radius yielding the best DC
 #independently of the CT COM
 for i in range(sets):
     vol_list[1][i].getCentroid()
@@ -127,8 +127,8 @@ for i in range(sets):
                                )
     bb = vol_list[1][i].diceAverage
 
-    dc_MR[i] = np.column_stack((a,b,c,d))
-    dc_MR_average[i] = aa,bb,cc,dd
+    DC_MR[i] = np.column_stack((a,b,c,d))
+    DC_MR_average[i] = aa,bb,cc,dd
     warpDC[i] = warpMagnitude[i] * (1 - a)
     warpDC_opti[i] = warpMagnitude[i] * (1 - b)
 
@@ -145,9 +145,9 @@ i=4
 fig = plt.figure()
 plt.ylim(ymin=.3, ymax=1)
 plt.xlim(xmin=0, xmax=CT.zSize)
-plt.plot(dc_CT[i,:,1])
-plt.plot(dc_MR[i,:,1])
-plt.plot(dc_MR[i,:,3])
+plt.plot(DC_CT[i,:,1])
+plt.plot(DC_MR[i,:,1])
+plt.plot(DC_MR[i,:,3])
 plt.ylabel(u"DC")
 
 fig = plt.figure()
@@ -157,58 +157,58 @@ plt.plot(warpDC[i])
 plt.plot(warpDC_opti[i])
 plt.ylabel(u"warp*DC [mm]")
 plt.xlabel(u"slice")
-
 '''
+
 # http://stackoverflow.com/questions/16621351/how-to-use-python-numpy-savetxt-to-write-strings-and-float-number-to-an-ascii-fi
 now = datetime.datetime.now()
-COLUMNS  = 'sliceNr  warp_X  warp_Y  warpMagnitude  dc_CT  dc_CT_opti  dc_MR  dc_MR_opti  dc_MR_CT-COM  dc_MR_opti_CT-COM  warpDC  warpDC_opti'
+COLUMNS  = 'sliceNr  warp_X  warp_Y  warpMagnitude  DC_CT  DC_CT_opti  DC_MR  DC_MR_opti  DC_MR_CT-COM  DC_MR_opti_CT-COM  warpDC  warpDC_opti'
 for i in range(sets):
     DATA = np.column_stack((sliceNumbers.astype(str),
                             warp[i].round(4).astype(str),
                             warpMagnitude[i].round(4).astype(str),
-                            dc_CT[i,:,0].round(4).astype(str),
-                            dc_CT[i,:,1].round(4).astype(str),
-                            dc_MR[i,:,0].round(4).astype(str),
-                            dc_MR[i,:,1].round(4).astype(str),
-                            dc_MR[i,:,2].round(4).astype(str),
-                            dc_MR[i,:,3].round(4).astype(str),
+                            DC_CT[i,:,0].round(4).astype(str),
+                            DC_CT[i,:,1].round(4).astype(str),
+                            DC_MR[i,:,0].round(4).astype(str),
+                            DC_MR[i,:,1].round(4).astype(str),
+                            DC_MR[i,:,2].round(4).astype(str),
+                            DC_MR[i,:,3].round(4).astype(str),
                             warpDC[i,:].round(4).astype(str),
                             warpDC_opti[i,:].round(4).astype(str)))
  #   text = np.row_stack((NAMES, DATA))
-    head0 = "{}_x{}\n path: {}\n thresholds: {}, {}\n dc-average: {} (radius = 4)\n dc-average (opti): {} (bestRadius: {})\n".format(vol_list[0][i].method,
+    head0 = "{}_x{}\n path: {}\n thresholds: {}, {}\n DC-average: {} (radius = 4)\n DC-average (opti): {} (bestRadius: {})\n".format(vol_list[0][i].method,
     vol_list[0][i].resample, vol_list[0][i].path, vol_list[0][i].lower,
-    vol_list[0][i].upper, dc_CT_average[i][0].round(4),
-    dc_CT_average[i][1].round(4), vol_list[0][i].bestRadius)
+    vol_list[0][i].upper, DC_CT_average[i][0].round(4),
+    DC_CT_average[i][1].round(4), vol_list[0][i].bestRadius)
     
-    head1 = "{}_x{}\n path: {}\n thresholds: {}, {}\n dc-average: {} (radius = 2)\n dc-average (opti): {} (bestRadius: {})\n dc-average (CT-COM): {}\n dc-average (CT-COM, opti): {}\n".format(vol_list[1][i].method,
+    head1 = "{}_x{}\n path: {}\n thresholds: {}, {}\n DC-average: {} (radius = 2)\n DC-average (opti): {} (bestRadius: {})\n DC-average (CT-COM): {}\n DC-average (CT-COM, opti): {}\n".format(vol_list[1][i].method,
     vol_list[1][i].resample, vol_list[1][i].path, vol_list[1][i].lower,
-    vol_list[1][i].upper, dc_MR_average[i][0].round(4),
-    dc_MR_average[i][1].round(4), vol_list[1][i].bestRadius,
-    dc_MR_average[i][2].round(4), dc_MR_average[i][3].round(4))
+    vol_list[1][i].upper, DC_MR_average[i][0].round(4),
+    DC_MR_average[i][1].round(4), vol_list[1][i].bestRadius,
+    DC_MR_average[i][2].round(4), DC_MR_average[i][3].round(4))
     
     head = str(now) + '\n'+ head0 + head1 + '\n' + COLUMNS
     np.savetxt('CT-MR_x{}_{}_{}.txt'.format(vol_list[0][i].resample, 
                now.date(), now.time()), DATA, delimiter="     ", header=head,
                comments="# ", fmt='%3s')
 
-
+'''
 # creates mask (pixel values either 0 or 1)
 for i in range(sets):
-    vol_list[1][i].getMask()
+    vol_list[0][i].getMask()
 # creates CT.masked using CT.mask,
 # but assigns each slice the centroid distance*1000*spacing as pixel value
-    vol_list[1][i].applyMask(replaceArray=warpMagnitude[i])
+    vol_list[0][i].applyMask(replaceArray=warpMagnitude[i])
 # exports 3D image as .mha file
-    fun.sitk_write(vol_list[1][i].masked, "../data/export/", "{}_{}_warpMagnitude.mha".format(vol_list[1][i].method, vol_list[1][i].resample))
+    fun.sitk_write(vol_list[0][i].masked, "../data/export/", "{}_x{}_warpMagnitude.mha".format(vol_list[0][i].method, vol_list[0][i].resample))
     
-    vol_list[1][i].applyMask(replaceArray=dc_MR[i,:,1])
-    fun.sitk_write(vol_list[1][i].masked, "../data/export/", "{}_{}_dc-MR-opti.mha".format(vol_list[1][i].method, vol_list[1][i].resample))
+    vol_list[0][i].applyMask(replaceArray=DC_MR[i,:,1])
+    fun.sitk_write(vol_list[0][i].masked, "../data/export/", "{}_x{}_DC-MR-opti.mha".format(vol_list[0][i].method, vol_list[0][i].resample))
     
-    vol_list[1][i].applyMask(replaceArray=dc_MR[i,:,3])
-    fun.sitk_write(vol_list[1][i].masked, "../data/export/", "{}_{}_dc-MR-opti_CT-COM.mha".format(vol_list[1][i].method, vol_list[1][i].resample))
+    vol_list[0][i].applyMask(replaceArray=DC_MR[i,:,3])
+    fun.sitk_write(vol_list[0][i].masked, "../data/export/", "{}_x{}_DC-MR-opti_CT-COM.mha".format(vol_list[0][i].method, vol_list[0][i].resample))
     
-    vol_list[1][i].applyMask(replaceArray=warpDC_opti[i], scale=10000)
-    fun.sitk_write(vol_list[1][i].masked, "../data/export/", "{}_{}_dc-warpDC_opti.mha".format(vol_list[1][i].method, vol_list[1][i].resample))
+    vol_list[0][i].applyMask(replaceArray=warpDC_opti[i], scale=10000)
+    fun.sitk_write(vol_list[0][i].masked, "../data/export/", "{}_x{}_DC-warpDC_opti.mha".format(vol_list[0][i].method, vol_list[0][i].resample))
 
 
 # instead of opening the created file manually, you can use this lines in
@@ -216,7 +216,7 @@ for i in range(sets):
 # %env SITK_SHOW_COMMAND /home/davidblacher/Downloads/Slicer-4.5.0-1-linux-amd64/Slicer
 # %env SITK_SHOW_COMMAND /home/david/Downloads/Slicer-4.5.0-1-linux-amd64/Slicer
 # sitk.Show(CT.masked)
-
+'''
 
 
 

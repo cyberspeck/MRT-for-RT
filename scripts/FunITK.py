@@ -159,12 +159,11 @@ class Volume:
         if interpolation is None:
             a = 'nearest'
 
+        extent = None
         if pixel is False:
             extent = (-self.xSpace/2, self.xSize*self.xSpace - self.xSpace/2, self.ySize*self.ySpace - self.ySpace/2, -self.ySpace/2)
-            # The location, in data-coordinates, of the lower-left and upper-right corners
+        # The location, in data-coordinates, of the lower-left and upper-right corners
         # (left, right, bottom, top)
-        else:
-            extent = None
 
         sitk_show(img=self.img, ref=ref, extent=extent, title=self.title, interpolation=a, save=save)
 
@@ -192,6 +191,7 @@ class Volume:
             print("No seed found @ slice {}".format(ref))
             return None
 
+        x, y = -1,-1
         extent = None
         if pixel is False:
             extent = (-self.xSpace/2, self.xSize*self.xSpace - self.xSpace/2, self.ySize*self.ySpace - self.ySpace/2, -self.ySpace/2)
@@ -437,19 +437,16 @@ class Volume:
                 
         if percentLimit != "auto" and percentLimit is not False:
             self.centroid = self.xSpace * sitk_centroid(self.img, ref=self.ref,
-                                                        percentLimit=percentLimit,
-                                                        title=self.title)
+                                                        percentLimit=percentLimit)
 
         if threshold == 'auto' and percentLimit is False:
             self.getThresholds(pixelNumber=pixelNumber, scale=scale)
             self.centroid = self.xSpace * sitk_centroid(self.img, ref=self.ref,
-                                                        threshold=self.lower,
-                                                        title=self.title)
+                                                        threshold=self.lower)
 
         if threshold != "auto" and threshold is not False and percentLimit is False:
             self.centroid = self.xSpace * sitk_centroid(self.img, ref=self.ref,
-                                                        threshold=threshold,
-                                                        title=self.title)
+                                                        threshold=threshold)
 
         for index in range(self.zSize):
             if not self.niceSlice[index]:
@@ -459,7 +456,7 @@ class Volume:
         return self.centroid
 
 
-    def showCentroid(self, com2=None, title=None, pixel=False,
+    def showCentroid(self, com2=0, title=None, pixel=False,
                      interpolation='nearest', ref=None, save=False):
         
         if self.centroid is False:
@@ -511,7 +508,7 @@ class Volume:
 
         return self.masked
 
-    def showMask(self, interpolation=None, ref=None, save=False):
+    def showMask(self, interpolation=None, ref=None, save=False, pixel=False):
         if self.mask is False:
             print("Volume has no mask yet. use Volume.getMask() first!")
             return None
@@ -524,10 +521,14 @@ class Volume:
 
         title = self.title + ", mask"
 
-        sitk_show(img=self.mask, ref=ref, title=title,
-                  interpolation=interpolation, save=save)
+        extent = None
+        if pixel is False:
+            extent = (-self.xSpace/2, self.xSize*self.xSpace - self.xSpace/2, self.ySize*self.ySpace - self.ySpace/2, -self.ySpace/2)
 
-    def showMasked(self, interpolation=None, ref=None):
+        sitk_show(img=self.mask, ref=ref, title=title, extent=extent,
+                      interpolation=interpolation, save=save)
+
+    def showMasked(self, interpolation=None, ref=None, save=False):
         if self.masked is False:
             print("Volume has not been masked yet. use Volume.applyMask() first!")
             return None
@@ -539,19 +540,23 @@ class Volume:
 
         title = self.title + ", masked"
 
-        sitk_show(img=self.masked, ref=ref, title=title,
-                  interpolation=interpolation)
+        extent = None
+        if pixel is False:
+            extent = (-self.xSpace/2, self.xSize*self.xSpace - self.xSpace/2, self.ySize*self.ySpace - self.ySpace/2, -self.ySpace/2)
+
+        sitk_show(img=self.masked, ref=ref, title=title, extent=extent,
+                  interpolation=interpolation, save=save)
 
     def getDice(self, centroid=None, mask=None, iterations=0,
                 CT_guess=(3.5,4.5), MR_guess=(1.8,2.8),
-                show=False, showAll=False, plot=False, save=False):
+                show=False, showAll=False, plot=False, save=False, pixel=False):
         '''
-        Calculates dice coefficient ('dc') and average dc of the volume
-        if iterations > 0: varies radius and finds dc with best average dc 
-        else: if self.raduis == 0: use method to get raduis for dc calculation
-        average dc is mean value of all slices, except those with dc of -1
+        Calculates dice coefficient ('DC') and average DC of the volume
+        if iterations > 0: varies radius and finds DC with best average DC 
+        else: if self.raduis == 0: use method to get raduis for DC calculation
+        average DC is mean value of all slices, except those with DC of -1
         
-        slice dc is set to -1 if centroid lies outside image or reference
+        slice DC is set to -1 if centroid lies outside image or reference
         circle exceeds image
 
         Parameters
@@ -559,10 +564,10 @@ class Volume:
         centroid: numpy.ndarray, optional
             centroid to place circles in instead of self.centroid
         mask: SimpleITK image, optional
-            binary image to calculate dc of instead of self.mask
+            binary image to calculate DC of instead of self.mask
         iterations: int, optional
-        show: bool, optional
-            shows circle used to compare mask to
+        show: int, optional
+            shows circle used to compare mask to in slice nr. "show"
         showAll: bool, optional
             shows all circles tried during iteration
         plot, save: bool, optional
@@ -581,20 +586,24 @@ class Volume:
                 self.getMask()
             mask = self.mask
 
+        extent = None
+        if pixel is False:
+            extent = (-self.xSpace/2, self.xSize*self.xSpace - self.xSpace/2, self.ySize*self.ySpace - self.ySpace/2, -self.ySpace/2)
+
         if self.radius != 0:
-            print("{}_x{}.radius is {} and will therefore be used to calculate dc.".format(self.method, self.resample, self.radius))
-            self.dice = sitk_dice_circle(img=mask, centroid=com,
-                                    radius=self.radius/self.xSpace, show=show)
+            print("{}_x{}.radius is {} and will therefore be used to calculate DC.".format(self.method, self.resample, self.radius))
+            self.dice = sitk_dice_circle(img=mask, centroid=com, extent=extent,
+                                         radius=self.radius/self.xSpace, show=show)
 
         print("\n{}_x{}:".format(self.method, self.resample))
 
         if self.radius == 0 and iterations == 0:
             if self.method == "CT":
-                self.dice = sitk_dice_circle(img=mask, centroid=com,
-                                        radius=4/self.xSpace, show=show)
+                self.dice = sitk_dice_circle(img=mask, centroid=com, extent=extent,
+                                             radius=4/self.xSpace, show=show)
             if self.method == "MR":
-                self.dice = sitk_dice_circle(img=mask, centroid=com,
-                                        radius=2/self.xSpace, show=show)
+                self.dice = sitk_dice_circle(img=mask, centroid=com, extent=extent,
+                                             radius=2/self.xSpace, show=show)
             if self.method != "CT" and self.method != "MR":
                 print("Unknown method!")
                 return None
@@ -612,23 +621,24 @@ class Volume:
                 print("Unknown method!")
                 return None
 
-            dcs = np.zeros(len(radii))
+            DCs = np.zeros(len(radii))
             for index, r in enumerate(radii, start=0):
-                dice = sitk_dice_circle(img=mask, centroid=com, radius=r, show=showAll)
-                dcs[index] = np.average(dice[dice>-1])
+                dice = sitk_dice_circle(img=mask, centroid=com, radius=r,
+                                        show=showAll, extent=extent)
+                DCs[index] = np.average(dice[dice>-1])
                 
 
             if plot == True: 
 #                fig = plt.figure()
 #                plt.ylim(ymin=0.6, ymax=1)
 #                plt.xlim(xmin=(low-.1), xmax=(up+.1))
-                plt.plot(radii*self.xSpace, dcs, '+-')
+                plt.plot(radii*self.xSpace, DCs, '+-')
 #                if save is not False:
 #                    fig.savefig(str(save) + ".png")
 
             self.dice = sitk_dice_circle(img=mask, centroid=com, show=show,
-                                    radius=radii[dcs.argmax()])
-            self.bestRadius = radii[dcs.argmax()]*self.xSpace
+                                         extent=extent, radius=radii[DCs.argmax()])
+            self.bestRadius = radii[DCs.argmax()]*self.xSpace
             print("max dice-coefficient obtained for {} when compared to circle with radius = {}".format(self.method, self.bestRadius))
 
         self.diceAverage = np.average(self.dice[self.dice>-1])
@@ -667,20 +677,18 @@ def sitk_show(img, ref=0, extent=None, title=None, interpolation='nearest', save
     """
     shows plot of img at z=ref
     """
-    arr = sitk.GetArrayFromImage(img[:, :, ref])
+    arr = sitk.GetArrayFromImage(img)
     fig = plt.figure()
     plt.set_cmap("gray")
-
     if title:
         plt.title(title)
 
-    plt.imshow(arr, extent=extent, interpolation=interpolation)
+    plt.imshow(arr[ref], extent=extent, interpolation=interpolation)
     plt.show()
     if save != False:
         fig.savefig(str(save) + ".png")
 
-def sitk_centroid(img, show=False, ref=False, percentLimit=False, save=False,
-                  threshold=False, interpolation='nearest', title=None):
+def sitk_centroid(img, ref=False, percentLimit=False, threshold=False):
     '''
     returns array with y&x coordinate of centroid for every slice of img
     centroid[slice, y&x-coordinate]
@@ -719,16 +727,11 @@ def sitk_centroid(img, show=False, ref=False, percentLimit=False, save=False,
         else:
             com[index] = (-1,-1)
 
-    if show:
-        if type(show) == bool:
-            show == ref
-            sitk_centroid_show(img, com=com, title=title, save=save,
-                          interpolation=interpolation, ref=show)
-
     return com
 
-def sitk_centroid_show(img, com, com2=None, extent=None, title=None, save=False,
-                  interpolation='nearest', ref=1):
+def sitk_centroid_show(img, com, com2=0, extent=None, title=None,
+                       save=False, interpolation='nearest', ref=1):
+
         arr = sitk.GetArrayFromImage(img)
         fig = plt.figure()
         plt.set_cmap("gray")
@@ -736,7 +739,7 @@ def sitk_centroid_show(img, com, com2=None, extent=None, title=None, save=False,
             plt.title(title + ", centroid")
         x = y = 0
         plt.imshow(arr[ref, :, :], extent=extent, interpolation=interpolation)
-        if com2 == None:
+        if com2 == 0:
             x, y = com[ref]
         else:
             x = [com[ref,0],com2[ref,0]]
@@ -823,8 +826,8 @@ def sitk_applyMask(img, mask, replaceArray=False, scale=1000):
     return sitk.GetImageFromArray(imgMaskedA)
 
 
-def sitk_dice_circle(img, centroid, radius=2.1, show=False,
-                interpolation='nearest'):
+def sitk_dice_circle(img, centroid, radius=2.1, show=False, extent=None,
+                     interpolation='nearest', save=False):
     """
     Dice coefficient, inspired by
      Medpy (http://pythonhosted.org/MedPy/_modules/medpy/metric/binary.html)
@@ -850,18 +853,18 @@ def sitk_dice_circle(img, centroid, radius=2.1, show=False,
 
     Returns
     -------
-    dc : array_like
+    DC : array_like
         The Dice coefficient between the object(s) in ```input``` and the
         created circles. It ranges from 0 (no overlap) to 1 (perfect overlap).
         if centroid coordinates + radius would create circle exceeding image
-        size: dc of this slice = -1
+        size: DC of this slice = -1
         Other errors occuring during the calculation should also result in -1
     """
 
     xSize, ySize, zSize = img.GetSize()
     profile = np.zeros((zSize, ySize, xSize), dtype=np.uint8)
     centres = centroid.astype(int)    
-    dc = np.zeros((zSize, 1))
+    DC = np.zeros((zSize, 1))
     for slice in range(zSize):
         if centres[slice,0]+radius < xSize and centres[slice, 1]+radius < ySize and centres[slice,0]-radius > 0 and centres[slice, 1]-radius > 0:
 
@@ -869,7 +872,7 @@ def sitk_dice_circle(img, centroid, radius=2.1, show=False,
             profile[slice, cc, rr] = 1
         else:
             # print("something's fishy!")
-            dc[slice]= -1
+            DC[slice]= -1
 
     input = sitk.GetArrayFromImage(img)
 
@@ -885,21 +888,18 @@ def sitk_dice_circle(img, centroid, radius=2.1, show=False,
         size_reference[slice] = np.count_nonzero(reference[slice, :, :])
 
         try:
-            if (dc[slice] == 0) and (float(size_input[slice] + size_reference[slice]) != 0):
-                dc[slice] = 2. * intersection[slice] / float(size_input[slice] + size_reference[slice])
+            if (DC[slice] == 0) and (float(size_input[slice] + size_reference[slice]) != 0):
+                DC[slice] = 2. * intersection[slice] / float(size_input[slice] + size_reference[slice])
 
         except ZeroDivisionError:
-            dc[slice] = -1
+            DC[slice] = -1
 
-    if show:
-        plt.set_cmap("gray")
-        plt.title("profile, radius: {}".format(radius))
+    if show != False:
+        sitk_centroid_show(profile, centroid, com2=centres, extent=extent,
+                           title="profile, radius: {}".format(radius),
+                           ref=show, save=save)
 
-        plt.imshow(profile[show, :, :], interpolation=interpolation)
-        plt.scatter(*centres[show, :])
-        plt.show()
-
-    return dc
+    return DC
 
 
 # to view in 3D Slicer, type this in IPython console or in jupyter notebook:
