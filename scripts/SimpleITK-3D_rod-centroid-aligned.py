@@ -199,16 +199,16 @@ for i in range(sets):
 # but assigns each slice the centroid distance*1000*spacing as pixel value
     vol_list[0][i].applyMask(replaceArray=warpMagnitude[i])
 # exports 3D image as .mha file
-    fun.sitk_write(vol_list[0][i].masked, "../data/export/", "{}_x{}_warpMagnitude.mha".format(vol_list[0][i].method, vol_list[0][i].resample))
+    fun.sitk_write(vol_list[0][i].masked, "../data_final/export/", "{}_x{}_warpMagnitude.mha".format(vol_list[0][i].method, vol_list[0][i].resample))
     
     vol_list[0][i].applyMask(replaceArray=DC_MR[i,:,1])
-    fun.sitk_write(vol_list[0][i].masked, "../data/export/", "{}_x{}_DC-MR-opti.mha".format(vol_list[0][i].method, vol_list[0][i].resample))
+    fun.sitk_write(vol_list[0][i].masked, "../data_final/export/", "{}_x{}_DC-MR-opti.mha".format(vol_list[0][i].method, vol_list[0][i].resample))
     
     vol_list[0][i].applyMask(replaceArray=DC_MR[i,:,3])
-    fun.sitk_write(vol_list[0][i].masked, "../data/export/", "{}_x{}_DC-MR-opti_CT-COM.mha".format(vol_list[0][i].method, vol_list[0][i].resample))
+    fun.sitk_write(vol_list[0][i].masked, "../data_final/export/", "{}_x{}_DC-MR-opti_CT-COM.mha".format(vol_list[0][i].method, vol_list[0][i].resample))
     
     vol_list[0][i].applyMask(replaceArray=warpDC_opti[i], scale=10000)
-    fun.sitk_write(vol_list[0][i].masked, "../data/export/", "{}_x{}_DC-warpDC_opti.mha".format(vol_list[0][i].method, vol_list[0][i].resample))
+    fun.sitk_write(vol_list[0][i].masked, "../data_final/export/", "{}_x{}_DC-warpDC_opti.mha".format(vol_list[0][i].method, vol_list[0][i].resample))
 
 
 # instead of opening the created file manually, you can use this lines in
