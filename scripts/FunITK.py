@@ -528,7 +528,7 @@ class Volume:
         sitk_show(img=self.mask, ref=ref, title=title, extent=extent,
                       interpolation=interpolation, save=save)
 
-    def showMasked(self, interpolation=None, ref=None, save=False):
+    def showMasked(self, interpolation=None, ref=None, save=False, pixel=False):
         if self.masked is False:
             print("Volume has not been masked yet. use Volume.applyMask() first!")
             return None
@@ -799,7 +799,7 @@ def sitk_getMask(img, seedList, upper, lower):
                                    replaceValue=1)
 
 
-def sitk_applyMask(img, mask, replaceArray=False, scale=1000):
+def sitk_applyMask(img, mask, replaceArray=False, scale=1000, errorValue=-1):
     '''
     masks img (SimpleITK.Image) using mask (SimpleITK.Image)
     if a replaceArray is given, the values*scale (default scale=1000) of the
@@ -816,11 +816,12 @@ def sitk_applyMask(img, mask, replaceArray=False, scale=1000):
     maskA = sitk.GetArrayFromImage(mask)
     xSize, ySize, zSize = img.GetSize()
 
-    imgMaskedA = arr*maskA
+    imgMaskedA = (arr - arr.min() + 1)*maskA
 
     if np.shape(replaceArray) == (img.GetDepth(), 1) or np.shape(replaceArray) == (img.GetDepth(),):
         for slice in range(zSize):
             imgMaskedA[slice][imgMaskedA[slice] != 0] = replaceArray[slice]*scale
+            imgMaskedA[slice][imgMaskedA[slice] < 0] = errorValue
             
 
     return sitk.GetImageFromArray(imgMaskedA)

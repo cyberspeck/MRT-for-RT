@@ -130,7 +130,9 @@ for i in range(sets):
     DC_MR[i] = np.column_stack((a,b,c,d))
     DC_MR_average[i] = aa,bb,cc,dd
     warpDC[i] = warpMagnitude[i] * (1 - a)
+    warpDC[i][warpDC[i] < 0] = -1
     warpDC_opti[i] = warpMagnitude[i] * (1 - b)
+    warpDC_opti[i][warpDC_opti[i] < 0] = -1
 
 
 '''
@@ -157,6 +159,8 @@ plt.plot(warpDC[i])
 plt.plot(warpDC_opti[i])
 plt.ylabel(u"warp*DC [mm]")
 plt.xlabel(u"slice")
+'''
+
 '''
 
 # http://stackoverflow.com/questions/16621351/how-to-use-python-numpy-savetxt-to-write-strings-and-float-number-to-an-ascii-fi
@@ -191,7 +195,7 @@ for i in range(sets):
                now.date(), now.time()), DATA, delimiter="     ", header=head,
                comments="# ", fmt='%3s')
 
-'''
+
 # creates mask (pixel values either 0 or 1)
 for i in range(sets):
     vol_list[0][i].getMask()
@@ -199,16 +203,16 @@ for i in range(sets):
 # but assigns each slice the centroid distance*1000*spacing as pixel value
     vol_list[0][i].applyMask(replaceArray=warpMagnitude[i])
 # exports 3D image as .mha file
-    fun.sitk_write(vol_list[0][i].masked, "../data_final/export/", "{}_x{}_warpMagnitude.mha".format(vol_list[0][i].method, vol_list[0][i].resample))
+    fun.sitk_write(vol_list[0][i].masked, "../data_final_export_-1/", "{}_x{}_warpMagnitude.mha".format(vol_list[0][i].method, vol_list[0][i].resample))
     
     vol_list[0][i].applyMask(replaceArray=DC_MR[i,:,1])
-    fun.sitk_write(vol_list[0][i].masked, "../data_final/export/", "{}_x{}_DC-MR-opti.mha".format(vol_list[0][i].method, vol_list[0][i].resample))
+    fun.sitk_write(vol_list[0][i].masked, "../data_final_export_-1/", "{}_x{}_DC-MR-opti.mha".format(vol_list[0][i].method, vol_list[0][i].resample))
     
     vol_list[0][i].applyMask(replaceArray=DC_MR[i,:,3])
-    fun.sitk_write(vol_list[0][i].masked, "../data_final/export/", "{}_x{}_DC-MR-opti_CT-COM.mha".format(vol_list[0][i].method, vol_list[0][i].resample))
+    fun.sitk_write(vol_list[0][i].masked, "../data_final_export_-1/", "{}_x{}_DC-MR-opti_CT-COM.mha".format(vol_list[0][i].method, vol_list[0][i].resample))
     
     vol_list[0][i].applyMask(replaceArray=warpDC_opti[i], scale=10000)
-    fun.sitk_write(vol_list[0][i].masked, "../data_final/export/", "{}_x{}_DC-warpDC_opti.mha".format(vol_list[0][i].method, vol_list[0][i].resample))
+    fun.sitk_write(vol_list[0][i].masked, "../data_final_export_-1/", "{}_x{}_DC-warpDC_opti.mha".format(vol_list[0][i].method, vol_list[0][i].resample))
 
 
 # instead of opening the created file manually, you can use this lines in
@@ -217,6 +221,3 @@ for i in range(sets):
 # %env SITK_SHOW_COMMAND /home/david/Downloads/Slicer-4.5.0-1-linux-amd64/Slicer
 # sitk.Show(CT.masked)
 '''
-
-
-
