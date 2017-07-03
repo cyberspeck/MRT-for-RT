@@ -1,0 +1,72 @@
+
+load packages
+load MRI / CT dicom files as 'Volume'
+
+calculate:
+ -Centroids
+ -coordShift
+ -coordDist
+ -Dice
+
+----------------------------------
+Volume:
+
+read files as SimplITK image
+denoise (optional)
+check for inregularities (needs ref slice)
+	gets average brightness of ref slice
+	loops through all slices:
+		current slice average brightness deviates too much from ref slice: irregular slice
+
+if no seeds given: save location of brightest pixel in each regular slice as seed
+
+----------------------------------
+getCentroid:
+
+executes getThresholds
+ based on imaging modality, known diameter of rod, and pixel spacing,
+ the script calculates how pixelNumber that is needed to form a circular area corresponding to the (undistorted) cross section area visible on one slice
+ max value of ref slice is saved as upper threshold
+ value of brightest pixel after ignoring the brightest pixelNumber pixels is saved as lower threshold
+
+executes sitk_centroid
+ loops through all slices:
+	if current slice has no pixel above lower threshold: set centroid to (-1,-1) ERROR
+	else: use all pixels above lower threshold to calculate their centre of mass (= centroid)
+
+----------------------------------
+sitk_coordShift:
+
+calculate x and y shift between to lists of centroids
+
+----------------------------------
+sitk_coordDist:
+
+calculates norm for each entry of array
+returns array with list of calculated values
+
+----------------------------------
+getDice:
+
+execute getMask:
+ create new SimpleITK image with equal dimension as loaded image, but pixels have either value 0 or 1
+ value 1 is assigned to all pixels above lower threshold, 0 elsewhere.
+ additional constraint: area has to be connected to seed
+
+execute sitk_dice_circle
+ Dice coefficient, inspired by
+ Medpy (http://pythonhosted.org/MedPy/_modules/medpy/metric/binary.html)
+
+ Computes the Dice coefficient (akas Sorensen index) between a binary
+ object in an image and a circle.
+
+ The metric is defined as:
+  DC=\frac{2|A\cap B|}{|A|+|B|}
+ where A is the first and B the second set of samples (here: binary objects)
+ The Dice coefficient between the object(s) in ```input``` and the
+  created circles. It ranges from 0 (no overlap) to 1 (perfect overlap).
+  if centroid coordinates + radius would create circle exceeding image
+  size: DC of this slice = -1
+  Other errors occuring during the calculation should also result in -1
+
+or execute sitk_dice_circle with iterations

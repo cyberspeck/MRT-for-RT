@@ -22,6 +22,9 @@ plt.xlabel(u"slice")
 
 plt.tight_layout()
 
+# print entire array:
+# numpy.set_printoptions(threshold='nan')
+
 """
 
 import FunITK as fun

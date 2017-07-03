@@ -252,6 +252,8 @@ class Volume:
         self.upper = np.double(arr.max())
 
         hist, bins = np.histogram(arr[self.ref, :, :].ravel(), bins=100)
+    # alternatively, increase number of bins for images with many pixels
+    #   hist, bins = np.histogram(arr[self.ref, :, :].ravel(), bins=int(pn*2))
         self.lower = np.double(bins[np.argmax((np.cumsum(hist[::-1]) < pn)[::-1])])
         print("number of pixels (pn): {}\n lower: {}\n upper: {}".format(pn, self.lower, self.upper))
 
@@ -710,6 +712,9 @@ def sitk_centroid(img, ref=False, percentLimit=False, threshold=False):
     if threshold is False:
         hist, bins = np.histogram(arr[ref, :, :].ravel(),
                                   density=True, bins=100)
+     # alternatively, increase number of bins for images with many pixels
+     # hist, bins = np.histogram(arr[ref, :, :].ravel(),
+     #                           density=True, bins=int(pn*2))
         threshold = bins[np.concatenate((np.array([0]), np.cumsum(hist))) *
                          (bins[1] - bins[0]) > percentLimit][0]
 
@@ -841,7 +846,7 @@ def sitk_dice_circle(img, centroid, radius=2.1, show=False, extent=None,
         DC=\frac{2|A\cap B|}{|A|+|B|}
 
     where A is the first and B the second set of samples (here: binary objects)
-    sys.argv[2]
+    
     Parameters
     ----------
     input_umg : SimpleITK.Image
