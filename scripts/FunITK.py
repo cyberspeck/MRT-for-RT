@@ -260,7 +260,7 @@ class Volume:
         return (self.lower, self.upper)
 
     def getCentroid(self, threshold='auto', pixelNumber=0, scale=1,
-                    percentLimit=False, iterations=5, halfShift=0.2,
+                    percentLimit=False, iterations=5,
                     plot=False, save=False):
         '''
         Calculates centroid, either by setting threshold or percentLimit
@@ -289,21 +289,26 @@ class Volume:
             print("If percentLimit is True: will be used instead of threshold method!")
             return None
 
+
         if percentLimit == "auto":
             # EXPERIMENTAL!!!
-            # value A @ 0.5*(1-halfShift) and B @ 0.5*(1+halfShift) times pn
-            # if A > B: next value around 0.25
-            # else: around 0.75
-            # and so forth
-            # calculates 10 centroids with different percentLimits
+            # looks at whole range of possible percentLimits
+            # reduces range by finding out which half yields higher result
+            # starts at A=25% and B=75% of all pixels
+            # if DC(A) > DC(B): next values come from lower half (0-50%)
+            # else: upper half (50-100%)
+            # calculates 5 centroids with different percentLimits
             # gets dice coefficient for each centroid percentLimit combination
             # returns best result
 
+            print("\n\n")
             arr = sitk.GetArrayFromImage(self.img)
             guess = np.zeros(iterations+1)
             guess[0] = 0.5
-            left = 0
-            right = 1
+            left = np.zeros(iterations+1)
+            right = np.zeros(iterations+1)
+            left[0] = 0
+            right[0] = 1
             a = 0  # counts how often new iteration has led to smaller score
             thresholdsA = np.zeros((iterations+1,2))
             thresholdsB = np.zeros((iterations,2))
@@ -314,8 +319,8 @@ class Volume:
             diceA = np.zeros((iterations+1, self.zSize, 1))
             diceB = np.zeros((iterations+1, self.zSize, 1))
             for index in range(iterations):
-                print(" Iteration #{}, A @ {}% = {} pixels".format(index, guess[index]*(1-halfShift)*100, self.xSize*self.ySize*guess[index]*(1-halfShift)))
-                thresholdsA[index] = self.getThresholds(pixelNumber=self.xSize*self.ySize*guess[index]*(1-halfShift))
+                print("    ITERATION #{}, current guess: {}\nA @ {}%".format(index, guess[index], (guess[index]+left[index])/2*100))
+                thresholdsA[index] = self.getThresholds(pixelNumber=self.xSize*self.ySize*(guess[index]+left[index])/2)
                 maskA = sitk.ConnectedThreshold(image1=self.img,
                                                 seedList=self.seeds,
                                                 lower=self.lower,
@@ -328,13 +333,10 @@ class Volume:
                                                               threshold=arr.min()+1)
                 diceA[index] = self.getDice(centroidsA[index], maskA)
                 centroidScoreA[index] = np.average(diceA[index,diceA[index]>-1])
-                # sitk_show(maskA, ref= self.ref)
-                # self.centroid = centroidsA[index]
-                # print("threshold: {} \ncentroid[{}]: {}".format(arr.min()+1, self.ref, self.centroid[self.ref]))
-                # self.showCentroid()
 
-                print("\n Iteration #{}, B @ {}% = {} pixels".format(index, guess[index]*(1+halfShift)*100, self.xSize*self.ySize*guess[index]*(1+halfShift)))
-                thresholdsB[index] = self.getThresholds(pixelNumber=self.xSize*self.ySize*guess[index]*(1+halfShift))
+
+                print("\nB @ {}%".format((guess[index]+right[index])/2*100))
+                thresholdsB[index] = self.getThresholds(pixelNumber=self.xSize*self.ySize*(guess[index]+right[index])/2)
                 maskB = sitk.ConnectedThreshold(image1=self.img,
                                                 seedList=self.seeds,
                                                 lower=self.lower,
@@ -347,22 +349,23 @@ class Volume:
                                                               threshold=arr.min()+1)
                 diceB[index] = self.getDice(centroidsB[index], maskB)
                 centroidScoreB[index] = np.average(diceB[index,diceB[index]>-1])
-                # sitk_show(maskB, ref= self.ref)
-                # self.centroid = centroidsB[index]
-                # print("threshold: {} \ncentroid[{}]: {}".format(arr.min()+1, self.ref, self.centroid[self.ref]))
-                # self.showCentroid()
-                print("--------------------------")
+
 
                 if centroidScoreA[index] < centroidScoreB[index]:
-                    guess[index+1] = (right + guess[index]) / 2
-                    left = guess[index]
-                    print("current guess = {}".format((guess[index])))
-                elif centroidScoreA[index] >= centroidScoreB[index]:
-                    right = guess[index]
-                    guess[index+1] = (left + guess[index]) / 2
-                    print("current guess = {}".format((guess[index])))
+                    left[index+1] = guess[index]
+                    right[index+1] = right[index]
+                    guess[index+1] = (left[index+1] + right[index+1]) / 2
+                elif centroidScoreA[index] > centroidScoreB[index]:
+                    right[index+1] = guess[index]
+                    left[index+1] = left[index]
+                    guess[index+1] = (left[index+1] + right[index+1]) / 2
+                elif centroidScoreA[index] == centroidScoreB[index]:
+                    right[index+1] = (guess[index] + right[index]) / 2
+                    left[index+1] = (guess[index] + left[index]) / 2
+                    guess[index+1] = guess[index]
                 else:
                     break
+                print("--------------------------")
 
                 # this checks if new iterations get lower scores: 
                 if np.array([centroidScoreA, centroidScoreB]).max() > np.array([centroidScoreA[index], centroidScoreB[index]]).max() and a==0:
@@ -381,9 +384,9 @@ class Volume:
                 else:
                     a = 0
 
-                print("next guess (#{}) = {} \n \n".format(index+1, guess[index+1]))
+                print("next guess (#{}) = {}% \n\n\n\n".format(index+1, guess[index+1]*100))
 
-            print(" Final iteration (#{}) @ {}% = {} pixels".format(iterations, guess[iterations]*100, self.xSize*self.ySize*guess[iterations]))
+            print("FINAL GUESS (#{}) @ {}%".format(iterations, guess[iterations]*100))
             thresholdsA[iterations] = self.getThresholds(pixelNumber=self.xSize*self.ySize*guess[iterations])
             maskA = sitk.ConnectedThreshold(image1=self.img,
                                             seedList=self.seeds,
@@ -395,11 +398,9 @@ class Volume:
             centroidsA[iterations] = self.xSpace*sitk_centroid(maskedA,
                                                                ref=self.ref,
                                                                threshold=arr.min()+1)
-            centroidScoreA[iterations] = self.getDice(centroidsA[iterations], maskA)
-            # sitk_show(maskA, ref= self.ref)
-            # self.centroid = centroidsA[iterations]
-            # print("threshold: {} \ncentroid[{}]: {}".format(arr.min()+1, self.ref, self.centroid[self.ref]))
-            # self.showCentroid()
+            diceA[iterations] = self.getDice(centroidsA[iterations], maskA)
+            centroidScoreA[iterations] = np.average(diceA[iterations,diceA[iterations]>-1])
+
 
         
             if centroidScoreA.max() > centroidScoreB.max():
@@ -420,8 +421,8 @@ class Volume:
             print("\n\n")
             for index in range(np.size(guess)-1):
                 print("\niteration #{}".format(index))
-                print("A: {}, Score: {}".format(guess[index]*(1-halfShift)*100, centroidScoreA[index]))
-                print("B: {}, Score: {}".format(guess[index]*(1+halfShift)*100, centroidScoreB[index]))
+                print("A: {}%, Score: {}".format((guess[index]+left[index])/2*100, centroidScoreA[index]))
+                print("B: {}%, Score: {}".format((guess[index]+right[index])/2*100, centroidScoreB[index]))
             print("\niteration #{}".format(iterations))
             print("A: {}, Score: {}\n".format(guess[iterations]*100, centroidScoreA[iterations]))
 
@@ -430,13 +431,14 @@ class Volume:
                 fig = plt.figure()
                 for index in range(iterations):
                     if guess[index] > 0 and centroidScoreA[index] > 0:
-                        plt.plot(guess[index]*(1-halfShift)*100, centroidScoreA[index], 'bo')
+                        plt.plot((guess[index]+left[index])/2*100, centroidScoreA[index], 'bo')
                     if guess[index] > 0 and centroidScoreB[index] > 0:
-                        plt.plot(guess[index]*(1+halfShift)*100, centroidScoreB[index], 'go')                
+                        plt.plot((guess[index]+right[index])/2*100, centroidScoreB[index], 'go')                
                 plt.show()
                 if save != False:
                     fig.savefig(str(save) + ".png")
-                
+
+
         if percentLimit != "auto" and percentLimit is not False:
             self.centroid = self.xSpace * sitk_centroid(self.img, ref=self.ref,
                                                         percentLimit=percentLimit)
@@ -597,7 +599,7 @@ class Volume:
             self.dice = sitk_dice_circle(img=mask, centroid=com, extent=extent,
                                          radius=self.radius/self.xSpace, show=show)
 
-        print("\n{}_x{}:".format(self.method, self.resample))
+#        print("\n{}_x{}:".format(self.method, self.resample))
 
         if self.radius == 0 and iterations == 0:
             if self.method == "CT":
