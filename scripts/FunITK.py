@@ -247,7 +247,7 @@ class Volume:
                     return None
             pixelNumber = np.power(realRadius, 2)*np.pi/np.power(self.xSpace, 2)*scale
 
-        pn = pixelNumber
+        pn = int(pixelNumber)
         arr = sitk.GetArrayFromImage(self.img)
         self.upper = np.double(arr.max())
 
@@ -303,23 +303,24 @@ class Volume:
 
             print("\n\n")
             arr = sitk.GetArrayFromImage(self.img)
-            guess = np.zeros(iterations+1)
+            guess = np.zeros(iterations)
             guess[0] = 0.5
-            left = np.zeros(iterations+1)
-            right = np.zeros(iterations+1)
+            direction = np.zeros(iterations)
+            left = np.zeros(iterations)
+            right = np.zeros(iterations)
             left[0] = 0
             right[0] = 1
             a = 0  # counts how often new iteration has led to smaller score
-            thresholdsA = np.zeros((iterations+1,2))
+            thresholdsA = np.zeros((iterations,2))
             thresholdsB = np.zeros((iterations,2))
-            centroidScoreA = np.zeros(iterations+1)
-            centroidScoreB = np.zeros(iterations+1)
-            centroidsA = np.zeros((iterations+1, self.zSize, 2))
-            centroidsB = np.zeros((iterations+1, self.zSize, 2))
-            diceA = np.zeros((iterations+1, self.zSize, 1))
-            diceB = np.zeros((iterations+1, self.zSize, 1))
+            centroidScoreA = np.zeros(iterations)
+            centroidScoreB = np.zeros(iterations)
+            centroidsA = np.zeros((iterations, self.zSize, 2))
+            centroidsB = np.zeros((iterations, self.zSize, 2))
+            diceA = np.zeros((iterations, self.zSize, 1))
+            diceB = np.zeros((iterations, self.zSize, 1))
             for index in range(iterations):
-                print("    ITERATION #{}, current guess: {}\nA @ {}%".format(index, guess[index], (guess[index]+left[index])/2*100))
+                print("    ITERATION #{}, current guess: ~{:.4f}\nA @ ~{:.4f}%".format(index, guess[index]*100, (guess[index]+left[index])/2*100))
                 thresholdsA[index] = self.getThresholds(pixelNumber=self.xSize*self.ySize*(guess[index]+left[index])/2)
                 maskA = sitk.ConnectedThreshold(image1=self.img,
                                                 seedList=self.seeds,
@@ -335,7 +336,7 @@ class Volume:
                 centroidScoreA[index] = np.average(diceA[index,diceA[index]>-1])
 
 
-                print("\nB @ {}%".format((guess[index]+right[index])/2*100))
+                print("\nB @ ~{:.4f}%".format((guess[index]+right[index])/2*100))
                 thresholdsB[index] = self.getThresholds(pixelNumber=self.xSize*self.ySize*(guess[index]+right[index])/2)
                 maskB = sitk.ConnectedThreshold(image1=self.img,
                                                 seedList=self.seeds,
@@ -351,56 +352,56 @@ class Volume:
                 centroidScoreB[index] = np.average(diceB[index,diceB[index]>-1])
 
 
-                if centroidScoreA[index] < centroidScoreB[index]:
+                if centroidScoreA[index] < centroidScoreB[index] and index < iterations-1:
                     left[index+1] = guess[index]
                     right[index+1] = right[index]
                     guess[index+1] = (left[index+1] + right[index+1]) / 2
-                elif centroidScoreA[index] > centroidScoreB[index]:
+                    direction[index] = 1
+                elif centroidScoreA[index] > centroidScoreB[index] and index < iterations-1:
                     right[index+1] = guess[index]
                     left[index+1] = left[index]
                     guess[index+1] = (left[index+1] + right[index+1]) / 2
-                elif centroidScoreA[index] == centroidScoreB[index]:
+                    direction[index] = -1
+                elif centroidScoreA[index] == centroidScoreB[index] and index < iterations-1:
                     right[index+1] = (guess[index] + right[index]) / 2
                     left[index+1] = (guess[index] + left[index]) / 2
                     guess[index+1] = guess[index]
                 else:
                     break
-                print("--------------------------")
 
                 # this checks if new iterations get lower scores: 
-                if np.array([centroidScoreA, centroidScoreB]).max() > np.array([centroidScoreA[index], centroidScoreB[index]]).max() and a==0:
-                    a = 1
-                elif np.array([centroidScoreA, centroidScoreB]).max() > np.array([centroidScoreA[index], centroidScoreB[index]]).max() and a==1:
-                    a = 2
-                elif np.array([centroidScoreA, centroidScoreB]).max() > np.array([centroidScoreA[index], centroidScoreB[index]]).max() and a==2:
+#                if np.array([centroidScoreA, centroidScoreB]).max() > np.array([centroidScoreA[index], centroidScoreB[index]]).max() and a==0 and index < iterations-1:
+#                    a = 1
+#                    print("\nCurrent iteration led to smaller DC than last!")
+#                elif np.array([centroidScoreA, centroidScoreB]).max() > np.array([centroidScoreA[index], centroidScoreB[index]]).max() and a==1 and index < iterations-1:
+#                    a = 2
+#                    print("\nCurrent iteration led to smaller DC than the one two steps ago!")
+#                elif np.array([centroidScoreA, centroidScoreB]).max() > np.array([centroidScoreA[index], centroidScoreB[index]]).max() and a==2 and index < iterations-1:
+#                    a = 3
+#                    print("\nCurrent iteration led to smaller DC than the one three steps ago!")
+#                elif np.array([centroidScoreA, centroidScoreB]).max() > np.array([centroidScoreA[index], centroidScoreB[index]]).max() and a==3 and index < iterations-1:
                     # skips to last iteration, and sets guess yielding best
                     # result so far
-                    if centroidScoreA.max() >= centroidScoreB.max():
-                        guess[iterations] = guess[centroidScoreA.argmax()]
-                    else:
-                        guess[iterations] = guess[centroidScoreB.argmax()]
-                    print("\n\nIteration found region yielding acceptable result, skipping right to")
-                    break
-                else:
-                    a = 0
+#                   print("\nCurrent iteration led to smaller DC than the one four steps ago!")
+#                   print("We'll go back and choose the other half to be sure we did not make a wrong turn.")
+#                   if direction[index-3] == -1:
+#                       left[index+1] = guess[index-3]
+#                       right[index+1] = right[index-3]
+#                       guess[index+1] = (left[index+1] + right[index+1]) / 2
+#                       direction[index] = 0
+#                        a = 0
+#                    elif direction[index-3] == +1:
+#                        right[index+1] = guess[index-3]
+#                        left[index+1] = left[index-3]
+#                        guess[index+1] = (left[index+1] + right[index+1]) / 2
+#                        direction[index] = 0
+#                        a = 0
+#                    else:
+#                        print("\n\nIteration found region yielding acceptable result.")
+#                        break
 
-                print("next guess (#{}) = {}% \n\n\n\n".format(index+1, guess[index+1]*100))
-
-            print("FINAL GUESS (#{}) @ {}%".format(iterations, guess[iterations]*100))
-            thresholdsA[iterations] = self.getThresholds(pixelNumber=self.xSize*self.ySize*guess[iterations])
-            maskA = sitk.ConnectedThreshold(image1=self.img,
-                                            seedList=self.seeds,
-                                            lower=self.lower,
-                                            upper=self.upper,
-                                            replaceValue=1)
-            maskedA2 = sitk_applyMask(self.img - arr.min(), maskA)
-            maskedA = maskedA2 + arr.min()
-            centroidsA[iterations] = self.xSpace*sitk_centroid(maskedA,
-                                                               ref=self.ref,
-                                                               threshold=arr.min()+1)
-            diceA[iterations] = self.getDice(centroidsA[iterations], maskA)
-            centroidScoreA[iterations] = np.average(diceA[iterations,diceA[iterations]>-1])
-
+                print("--------------------------")
+                print("next guess (#{}): ~{:.4f}% \n\n\n\n".format(index+1, guess[index+1]*100))
 
         
             if centroidScoreA.max() > centroidScoreB.max():
@@ -408,23 +409,27 @@ class Volume:
                 self.lower, self.upper = thresholdsA[centroidScoreA.argmax()]
                 self.dice = diceA[centroidScoreA.argmax()]
                 self.diceAverage = centroidScoreA.max()
-                print("\nmax dice-coefficient obtained during iteration #{}: {}".format(centroidScoreA.argmax(), centroidScoreA.max()))
+                print("\nmax dice-coefficient obtained during iteration #{}: ~{:.4f}".format(centroidScoreA.argmax(), centroidScoreA.max()))
             elif (centroidScoreA.max() <= centroidScoreB.max() and centroidScoreB.max() != 0):
                 self.centroid = centroidsB[centroidScoreB.argmax()]
                 self.lower, self.upper = thresholdsB[centroidScoreB.argmax()]
                 self.dice = diceB[centroidScoreB.argmax()]
                 self.diceAverage = centroidScoreB.max()
-                print("\nmax dice-coefficient obtained during iteration #{}: {}".format(centroidScoreB.argmax(), centroidScoreB.max()))
+                print("\nmax dice-coefficient obtained during iteration #{}: ~{:.4f}".format(centroidScoreB.argmax(), centroidScoreB.max()))
             else:
                 return None
                 
-            print("\n\n")
-            for index in range(np.size(guess)-1):
-                print("\niteration #{}".format(index))
-                print("A: {}%, Score: {}".format((guess[index]+left[index])/2*100, centroidScoreA[index]))
-                print("B: {}%, Score: {}".format((guess[index]+right[index])/2*100, centroidScoreB[index]))
-            print("\niteration #{}".format(iterations))
-            print("A: {}, Score: {}\n".format(guess[iterations]*100, centroidScoreA[iterations]))
+            print("\n\n-o-o-o-o-- Summary: --o-o-o-o-\n")
+            for index in range(np.size(guess)):
+                print("\n  Iteration #{}: range({},{})".format(index, left[index]*100, right[index]*100))
+                if centroidScoreA[index] > centroidScoreB[index]:
+                    print("A @ {}%, Score: {}  <---".format((guess[index]+left[index])/2*100, centroidScoreA[index]))
+                    print("B @ {}%, Score: {}".format((guess[index]+right[index])/2*100, centroidScoreB[index]))
+                if centroidScoreA[index] < centroidScoreB[index]:
+                    print("A @ {}%, Score: {}".format((guess[index]+left[index])/2*100, centroidScoreA[index]))
+                    print("B @ {}%, Score: {}  <---".format((guess[index]+right[index])/2*100, centroidScoreB[index]))
+                if centroidScoreA[index] == centroidScoreB[index]:
+                    print("A @ {}% same as for B @ {}%, Score: = {}".format((guess[index]+left[index])/2*100, (guess[index]+right[index])/2*100, centroidScoreA[index]))
 
 
             if plot == True:
@@ -457,6 +462,7 @@ class Volume:
                 self.centroid[index] = -1, -1
             if self.centroid[index,0] < 0 or self.centroid[index,1] < 0 :
                 self.centroid[index] = -1
+        print("\n\n")
         return self.centroid
 
 
@@ -646,7 +652,7 @@ class Volume:
             print("max dice-coefficient obtained for {} when compared to circle with radius = {}".format(self.method, self.bestRadius))
 
         self.diceAverage = np.average(self.dice[self.dice>-1])
-        print("dice-coefficient average for the whole volume is: {}".format(self.diceAverage))
+        print("dice-coefficient average for the whole volume is: {:.4f}".format(self.diceAverage))
         return self.dice
 
 
