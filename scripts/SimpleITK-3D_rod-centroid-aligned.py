@@ -168,7 +168,8 @@ plt.xlabel(u"slice")
 
 # http://stackoverflow.com/questions/16621351/how-to-use-python-numpy-savetxt-to-write-strings-and-float-number-to-an-ascii-fi
 now = datetime.datetime.now()
-COLUMNS  = 'sliceNr  warp_X  warp_Y  warpMagnitude  DC_CT  DC_CT_opti  DC_MR  DC_MR_opti  DC_MR_CT-COM  DC_MR_opti_CT-COM  warpDC  warpDC_opti'
+COLUMNS  = 'sliceNo  warp_x  warp_y  warpMagnitude  DC_CT  DC_CT_opti  DC_MR  DC_MR_opti  DC_MR_CT-COM  DC_MR_opti_CT-COM  warpDC  warpDC_opti'
+#COLUMNS  = 'slice & $warp_x$  & $warp_y$  & $warp$ & $DC_{CT}$  & $DC^*_{CT}$ & $DC_{MR}$  & $DC^*_{MR}$ & $DC_{MR(CT-COM)}$ & $DC^*_{MR(CT-COM)}$ & $warpDC$ & $warpDC^*$'
 for i in range(sets):
     DATA = np.column_stack((sliceNumbers.astype(str),
                             warp[i].round(4).astype(str),
@@ -195,7 +196,7 @@ for i in range(sets):
     
     head = str(now) + '\n'+ head0 + head1 + '\n' + COLUMNS
     np.savetxt('CT-MR_x{}_{}_{}.txt'.format(vol_list[0][i].resample, 
-               now.date(), now.time()), DATA, delimiter="     ", header=head,
+               now.date(), now.time()), DATA, delimiter="   &  ", header=head,
                comments="# ", fmt='%3s')
 
 
