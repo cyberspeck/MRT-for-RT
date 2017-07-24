@@ -63,9 +63,17 @@ class Volume:
     spacing: double, optional
         by default SitpleITK.img.GetSpacing is used to find relation of pixels
         to real length (in mm)
+    skip: int, optional
+        neglecting first 'skip' number of slices
+    leave: int, optional
+        neglects last 'leave' number of slices
+    rotate: bool, optional
+        if True: mirrors x- & z-axis, effectively rotating the image by 180°
+        (looked at from above), this is applied after skip&size
     '''
     def __init__(self, path=None, method=None, denoise=False, ref=None,
-                 resample=False, seeds='auto', radius=0, spacing=0):
+                 resample=False, seeds='auto', radius=0, spacing=0, skip=0,
+                 leave=False, rotate=False):
         if(path is None):
             print("Error: no path given!")
         else:
@@ -82,58 +90,69 @@ class Volume:
             self.lower = False
             self.upper = False
 
-            print("\n Import DICOM Files from: ", path)
-            self.img = sitk_read(path, self.denoise)
-
-            if (self.img and self.denoise):
-                a = self.title
-                self.title = a + " denoised"
-
-            if resample:
-                a = self.title
-                self.title = a + ", x" + str(resample)
-
-            self.xSize, self.ySize, self.zSize = self.img.GetSize()
-            if spacing == 0:
-                self.xSpace, self.ySpace, self.zSpace = self.img.GetSpacing()
-
-            if type(ref) == int:
-                self.ref = ref
+            file_no = len([name for name in os.listdir(path) if os.path.isfile(os.path.join(path, name))])
+            size = file_no - skip - leave
+            if size <= 0:
+                print("There nothing left to load after skipping {} file(s) and ignoring the last {} files.".format(skip,leave))
+                print("The directory only contains {} files!".format(file_no))
             else:
-                self.ref = int(self.zSize / 2)
-
-            # niceSlice used to remember which slices show irregularities such
-            # as parts of plastic pane (CT)
-            # and should therefore not be used to calculate COM, dice, etc.
-            self.niceSlice = np.ones((self.zSize, 1), dtype=bool)
-            arr = sitk.GetArrayFromImage(self.img)
-            average = np.average(arr[ref])
-#                print("\nAverage @ ref: ", average)
-            for index in range(self.zSize):
-                # if average value of slice differs too much -> badSlice
-                # difference between ref-Slice and current chosen arbitratry
-                # seems to be big enough not to detect air bubble in MRI
-                # entire air block (no liquid) should be recognised, though.
-                # small enough to notice plastic pane
-                if np.absolute(np.average(arr[index]) - average) > 40:
-                    print("Irregularities detected in slice {}".format(index))
-                    self.niceSlice[index] = False
-                    # maybe also set slice prior and after current slice as
-                    # self.niceSlice[index+1] = self.niceSlice[index+1] = False
-                    # because small changes happening around irregularities
-                    # might not have been big enough for detection, but already
-                    # leading to false calculations?
-
-            if type(seeds) == list:
-                self.seeds = seeds
-            elif seeds == 'auto':
-                self.seeds = []
+                
+                print("\n Import {} DICOM Files from: {}".format(size, path))
+                shortened_img = sitk_read(path, denoise)[:, :, skip:(file_no + skip - leave)]
+                if rotate is True:
+                    self.img = shortened_img[::-1,:,::-1]
+                else:
+                    self.img = shortened_img
+                        
+                if (self.img and self.denoise):
+                    a = self.title
+                    self.title = a + " denoised"
+    
+                if resample:
+                    a = self.title
+                    self.title = a + ", x" + str(resample)
+    
+                self.xSize, self.ySize, self.zSize = self.img.GetSize()
+                if spacing == 0:
+                    self.xSpace, self.ySpace, self.zSpace = self.img.GetSpacing()
+    
+                if type(ref) == int:
+                    self.ref = ref
+                else:
+                    self.ref = int(self.zSize / 2)
+    
+                # niceSlice used to remember which slices show irregularities such
+                # as parts of plastic pane (CT)
+                # and should therefore not be used to calculate COM, dice, etc.
+                self.niceSlice = np.ones((self.zSize, 1), dtype=bool)
+                arr = sitk.GetArrayFromImage(self.img)
+                average = np.average(arr[ref])
+    #                print("\nAverage @ ref: ", average)
                 for index in range(self.zSize):
-                    yMax = int(arr[index].argmax() / self.xSize)
-                    xMax = arr[index].argmax() - yMax*self.xSize
-                    if self.niceSlice[index] == True:
-                        self.seeds.append((xMax, yMax, index))
-#                    print("{}: found max at ({},{})".format(index, xMax, yMax))
+                    # if average value of slice differs too much -> badSlice
+                    # difference between ref-Slice and current chosen arbitratry
+                    # seems to be big enough not to detect air bubble in MRI
+                    # entire air block (no liquid) should be recognised, though.
+                    # small enough to notice plastic pane
+                    if np.absolute(np.average(arr[index]) - average) > 40:
+                        print("Irregularities detected in slice {}".format(index))
+                        self.niceSlice[index] = False
+                        # maybe also set slice prior and after current slice as
+                        # self.niceSlice[index+1] = self.niceSlice[index+1] = False
+                        # because small changes happening around irregularities
+                        # might not have been big enough for detection, but already
+                        # leading to false calculations?
+    
+                if type(seeds) == list:
+                    self.seeds = seeds
+                elif seeds == 'auto':
+                    self.seeds = []
+                    for index in range(self.zSize):
+                        yMax = int(arr[index].argmax() / self.xSize)
+                        xMax = arr[index].argmax() - yMax*self.xSize
+                        if self.niceSlice[index] == True:
+                            self.seeds.append((xMax, yMax, index))
+    #                    print("{}: found max at ({},{})".format(index, xMax, yMax))
 
     def show(self, pixel=False, interpolation=None, ref=None, save=False):
         '''
@@ -259,7 +278,7 @@ class Volume:
 
         return (self.lower, self.upper)
 
-    def getCentroid(self, threshold='auto', pixelNumber=0, scale=1,
+    def getCentroid(self, threshold='default', pixelNumber=0, scale=1,
                     percentLimit=False, iterations=5,
                     plot=False, save=False):
         '''
@@ -284,13 +303,11 @@ class Volume:
         self.centroid: numpy.ndarray
         '''
 
-        if (threshold is False and percentLimit is False):
-            print("Please use percentLimit or threshold! (default threshold = 'auto')")
-            print("If percentLimit is True: will be used instead of threshold method!")
+        if (threshold is False and percentLimit is False) or (percentLimit == "auto" and threshold is not False and threshold != 'default'):
+            print("Please use percentLimit or threshold! (default setting: threshold = 'auto')")
             return None
 
-
-        if percentLimit == "auto":
+        if (percentLimit == "auto" and percentLimit is False) or (percentLimit == "auto" and percentLimit == 'default'):
             # EXPERIMENTAL!!!
             # looks at whole range of possible percentLimits
             # reduces range by finding out which half yields higher result
@@ -448,12 +465,12 @@ class Volume:
             self.centroid = self.xSpace * sitk_centroid(self.img, ref=self.ref,
                                                         percentLimit=percentLimit)
 
-        if threshold == 'auto' and percentLimit is False:
+        if (threshold == 'auto' or threshold == 'default') and percentLimit is False:
             self.getThresholds(pixelNumber=pixelNumber, scale=scale)
             self.centroid = self.xSpace * sitk_centroid(self.img, ref=self.ref,
                                                         threshold=self.lower)
 
-        if threshold != "auto" and threshold is not False and percentLimit is False:
+        if (threshold != "auto" and threshold != 'default') and threshold is not False and percentLimit is False:
             self.centroid = self.xSpace * sitk_centroid(self.img, ref=self.ref,
                                                         threshold=threshold)
 
@@ -752,12 +769,12 @@ def sitk_centroid_show(img, com, com2=0, extent=None, title=None,
             plt.title(title + ", centroid")
         x = y = 0
         plt.imshow(arr[ref, :, :], extent=extent, interpolation=interpolation)
-        if com2 == 0:
-            x, y = com[ref]
-        else:
+        if type(com2) == np.ndarray:
             x = [com[ref,0],com2[ref,0]]
             y = [com[ref,1],com2[ref,1]]
-        plt.scatter(x, y, c=['b','g'])
+        else:
+            x, y = com[ref]
+        plt.scatter(x, y, c=['b','r'])
         plt.show()
         if save != False:
             fig.savefig(str(save) + ".png")

@@ -23,7 +23,7 @@ plt.xlabel(u"slice")
 plt.tight_layout()
 
 # print entire array:
-# numpy.set_printoptions(threshold='nan')
+numpy.set_printoptions(threshold='nan')
 
 """
 
@@ -31,55 +31,94 @@ import FunITK as fun
 from FunITK import Volume
 import datetime
 import numpy as np
-# https://docs.scipy.org/doc/numpy/reference/generated/numpy.set_printoptions.html
-# np.set_printoptions(threshold=np.nan)
+idxSlice = 200
 
+'''
+old_pathCT = "../data/phantom2/CT_x1"
+old_pathMR = "../data/phantom2/MR_x1"
+old_pathCT_x4 = "../data/phantom2/CT_x4"
+old_pathMR_x4 = "../data/phantom2/MR_x4"
+old_pathCT_x9 = "../data/phantom2/CT_x9"
+old_pathMR_x9 = "../data/phantom2/MR_x9"
+old_pathCT_x25 = "../data/phantom2/CT_x25"
+old_pathMR_x25 = "../data/phantom2/MR_x25"
+old_pathCT_x100 = "../data/phantom2/CT_x100"
+old_pathMR_x100 = "../data/phantom2/MR_x100"
 # CT images not usable @173-192
+# -> iso-centre @ 182
+# --> to be symmetrical: Slices 1 - 365
 # MR images has airbubble @306
+old_CT = Volume(path=old_pathCT, method="CT", resample=1, ref=idxSlice, leave=31)
+old_CT_x4 = Volume(path=old_pathCT_x4, method="CT", resample=4, ref=idxSlice, leave=31)
+old_CT_x9 = Volume(path=old_pathCT_x9, method="CT", resample=9, ref=idxSlice, leave=31)
+old_CT_x25 = Volume(path=old_pathCT_x25, method="CT", resample=25, ref=idxSlice, leave=31)
+old_CT_x100 = Volume(path=old_pathCT_x100, method="CT", resample=100, ref=idxSlice, leave=31)
 
-pathCT = "../data_final/CT_x1/"
-pathMR = "../data_final/MR_x1/"
-pathCT_x4 = "../data_final/CT_x4/"
-pathMR_x4 = "../data_final/MR_x4/"
-pathCT_x9 = "../data_final/CT_x9/"
-pathMR_x9 = "../data_final/MR_x9/"
-#pathCT_x16 = "../data_final/CT_x16/"
-#pathMR_x16 = "../data_final/MR_x16/"
-pathCT_x25 = "../data_final/CT_x25/"
-pathMR_x25 = "../data_final/MR_x25/"
-pathCT_x100 = "../data_final/CT_x100/"
-pathMR_x100 = "../data_final/MR_x100/"
-idxSlice = 10
+old_MR = Volume(path=old_pathMR, method="MR", resample=1, ref=idxSlice, leave=31)
+old_MR_x4 = Volume(path=old_pathMR_x4, method="MR", resample=4, ref=idxSlice, leave=31)
+old_MR_x9 = Volume(path=old_pathMR_x9, method="MR", resample=9, ref=idxSlice, leave=31)
+old_MR_x25 = Volume(path=old_pathMR_x25, method="MR", resample=25, ref=idxSlice, leave=31)
+old_MR_x100 = Volume(path=old_pathMR_x100, method="MR", resample=100, ref=idxSlice, leave=31)
+vol_list = [[old_CT, old_CT_x4, old_CT_x9, old_CT_x25, old_CT_x100],[old_MR, old_MR_x4, old_MR_x9, old_MR_x25, old_MR_x100]]
+modality, sets = np.shape(vol_list)
+length = old_CT.zSize
+'''
+
+# phantom3 (oil) is looked at from the front, phantom2 from behind.
+# phantom3: as slice no. increase, scan goes back (looking at phantom from the front)
+# phantom2: as slice no. increase, scan comes closer (looking at phantom from the front)
+# front = where you can insert rods
+# to be consistend, we invert z & x axis (turn 180° seen from above) 
+# or was the phantom simply put in the MRI scanner the other way around?
+# to rotate data set just add: 'rotate=True' (e.g. with all oil-scans)
+pathCT = "../data/phantom3/oil_CT_x1"
+pathMR = "../data/phantom3/oil_MR_x1"
+pathCT_x4 = "../data/phantom3/oil_CT_x4"
+pathMR_x4 = "../data/phantom3/oil_MR_x4"
+pathCT_x9 = "../data/phantom3/oil_CT_x9"
+pathMR_x9 = "../data/phantom3/oil_MR_x9"
+pathCT_x25 = "../data/phantom3/oil_CT_x25"
+pathMR_x25 = "../data/phantom3/oil_MR_x25"
+pathCT_x100 = "../data/phantom3/oil_CT_x100"
+pathMR_x100 = "../data/phantom3/oil_MR_x100"
+# MR images much darker until slice 119 because of air bubble
 
 CT = Volume(path=pathCT, method="CT", resample=1, ref=idxSlice)
 CT_x4 = Volume(path=pathCT_x4, method="CT", resample=4, ref=idxSlice)
 CT_x9 = Volume(path=pathCT_x9, method="CT", resample=9, ref=idxSlice)
-#CT_x16 = Volume(path=pathCT_x16, method="CT", resample=16, ref=idxSlice)
 CT_x25 = Volume(path=pathCT_x25, method="CT", resample=25, ref=idxSlice)
 CT_x100 = Volume(path=pathCT_x100, method="CT", resample=100, ref=idxSlice)
 
 MR = Volume(path=pathMR, method="MR", resample=1, ref=idxSlice)
 MR_x4 = Volume(path=pathMR_x4, method="MR", resample=4, ref=idxSlice)
 MR_x9 = Volume(path=pathMR_x9, method="MR", resample=9, ref=idxSlice)
-#MR_x16 = Volume(path=pathMR_x16, method="MR", resample=16, ref=idxSlice)
 MR_x25 = Volume(path=pathMR_x25, method="MR", resample=25, ref=idxSlice)
 MR_x100 = Volume(path=pathMR_x100, method="MR", resample=100, ref=idxSlice)
 
 vol_list = [[CT, CT_x4, CT_x9, CT_x25, CT_x100],[MR, MR_x4, MR_x9, MR_x25, MR_x100]]
 modality, sets = np.shape(vol_list)
+length = CT.zSize
 
-sliceNumbers = np.arange(CT.zSize, dtype=int)
-warp = np.zeros((sets, CT.zSize, 2))
-warpMagnitude = np.zeros((sets, CT.zSize, 1))
+# both data sets look as if the distortion is bigger in the back,
+# maybe not good calibrated? external factors?
+# However, DC seems to be better in the back than in the front in oil scann,
+# whereas 
+
+
+
+
+sliceNumbers = np.arange(length, dtype=int)
+warp = np.zeros((sets, length, 2))
+warpMagnitude = np.zeros((sets, length, 1))
 
 # one calculated with DC and one with DC opti
-warpDC = np.zeros((sets, CT.zSize, 1))
-warpDC_opti = np.zeros((sets, CT.zSize, 1))
+warpDC = np.zeros((sets, length, 1))
+warpDC_opti = np.zeros((sets, length, 1))
     
 # 2 DC for CT, 4 DC for MR (2 using MR.centroid, 2 using CT.centroid!)
-DC_CT = np.zeros((sets, CT.zSize, 2))
+DC_CT = np.zeros((sets, length, 2))
 DC_CT_average = np.zeros((sets, 2))
-DC_MR = np.zeros((sets, CT.zSize, 4))
+DC_MR = np.zeros((sets, length, 4))
 DC_MR_average = np.zeros((sets, 4))
 iterate = 51
 
@@ -139,17 +178,27 @@ for i in range(sets):
 
 
 '''
+# x and y warp
 fig = plt.figure()
-plt.ylim(ymin=-2.1, ymax=.5)
-plt.xlim(xmin=0, xmax=CT.zSize)
+#plt.ylim(ymin=-2.1, ymax=.5)
+plt.xlim(xmin=0, xmax=length-1)
 plt.plot(warp[i])
+plt.ylabel(u"warp [mm]")
+plt.xlabel(u"slice")
+
+# warpMagnitude
+fig = plt.figure()
+#plt.ylim(ymin=-2.1, ymax=.5)
+plt.xlim(xmin=0, xmax=length-1)
+plt.plot(warpMagnitude[i])
 plt.ylabel(u"warp [mm]")
 plt.xlabel(u"slice")
 
 i=4
 fig = plt.figure()
-plt.ylim(ymin=.3, ymax=1)
-plt.xlim(xmin=0, xmax=CT.zSize)
+#plt.ylim(ymin=.3, ymax=1)
+plt.xlim(xmin=0, xmax=length-1)
+plt.xlim(xmin=68, xmax=length-1-68)
 plt.plot(DC_CT[i,:,1])
 plt.plot(DC_MR[i,:,1])
 plt.plot(DC_MR[i,:,3])
@@ -157,7 +206,7 @@ plt.ylabel(u"DC")
 
 fig = plt.figure()
 plt.ylim(ymin=0, ymax=0.21)
-plt.xlim(xmin=0, xmax=CT.zSize)
+plt.xlim(xmin=0, xmax=length-1)
 plt.plot(warpDC[i])
 plt.plot(warpDC_opti[i])
 plt.ylabel(u"warp*DC [mm]")
@@ -195,7 +244,7 @@ for i in range(sets):
     DC_MR_average[i][2].round(4), DC_MR_average[i][3].round(4))
     
     head = str(now) + '\n'+ head0 + head1 + '\n' + COLUMNS
-    np.savetxt('CT-MR_x{}_{}_{}.txt'.format(vol_list[0][i].resample, 
+    np.savetxt('../data/txt_output/CT-MR_x{}_{}_{}.txt'.format(vol_list[0][i].resample, 
                now.date(), now.time()), DATA, delimiter="   &  ", header=head,
                comments="# ", fmt='%3s')
 
