@@ -97,7 +97,7 @@ class Volume:
                 print("The directory only contains {} files!".format(file_no))
             else:
                 
-                print("\n Import {} DICOM Files from: {}".format(size, path))
+                print("Import {} DICOM Files from: {}\n".format(size, path))
                 shortened_img = sitk_read(path, denoise)[:, :, skip:(file_no + skip - leave)]
                 if rotate is True:
                     self.img = shortened_img[::-1,:,::-1]

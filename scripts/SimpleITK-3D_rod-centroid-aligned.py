@@ -23,7 +23,7 @@ plt.xlabel(u"slice")
 plt.tight_layout()
 
 # print entire array:
-numpy.set_printoptions(threshold='nan')
+np.set_printoptions(threshold='nan')
 
 """
 
@@ -31,6 +31,8 @@ import FunITK as fun
 from FunITK import Volume
 import datetime
 import numpy as np
+import matplotlib.pyplot as plt
+import os
 idxSlice = 200
 
 '''
@@ -62,6 +64,7 @@ old_MR_x100 = Volume(path=old_pathMR_x100, method="MR", resample=100, ref=idxSli
 vol_list = [[old_CT, old_CT_x4, old_CT_x9, old_CT_x25, old_CT_x100],[old_MR, old_MR_x4, old_MR_x9, old_MR_x25, old_MR_x100]]
 modality, sets = np.shape(vol_list)
 length = old_CT.zSize
+spacing =old_CT.zSpace
 '''
 
 # phantom3 (oil) is looked at from the front, phantom2 from behind.
@@ -98,6 +101,7 @@ MR_x100 = Volume(path=pathMR_x100, method="MR", resample=100, ref=idxSlice)
 vol_list = [[CT, CT_x4, CT_x9, CT_x25, CT_x100],[MR, MR_x4, MR_x9, MR_x25, MR_x100]]
 modality, sets = np.shape(vol_list)
 length = CT.zSize
+spacing = CT.zSpace
 
 # both data sets look as if the distortion is bigger in the back,
 # maybe not good calibrated? external factors?
@@ -108,6 +112,8 @@ length = CT.zSize
 
 
 sliceNumbers = np.arange(length, dtype=int)
+# for data centered around iso-centre, this is real x-axis:
+dist = ( (sliceNumbers - int(length/2))*spacing ).round(2)
 warp = np.zeros((sets, length, 2))
 warpMagnitude = np.zeros((sets, length, 1))
 
@@ -181,46 +187,54 @@ for i in range(sets):
 # x and y warp
 fig = plt.figure()
 #plt.ylim(ymin=-2.1, ymax=.5)
-plt.xlim(xmin=0, xmax=length-1)
-plt.plot(warp[i])
+plt.xlim(xmin=dist[0], xmax=dist[-1])
+plt.plot(dist, warp[i])
+plt.legend(('x-shift', 'y-shift'),loc=2)
 plt.ylabel(u"warp [mm]")
-plt.xlabel(u"slice")
+plt.xlabel(u"z-axis [mm]")
+#plt.title('Economic Cost over Time')
+#plt.show()
+
 
 # warpMagnitude
 fig = plt.figure()
-#plt.ylim(ymin=-2.1, ymax=.5)
-plt.xlim(xmin=0, xmax=length-1)
-plt.plot(warpMagnitude[i])
+plt.ylim(ymin=0, ymax=warpMagnitude[i].max())
+plt.xlim(xmin=dist[0], xmax=dist[-1])
+plt.plot(dist, warpMagnitude[i])
+#plt.legend(('warpMagnitude'),loc=0)
 plt.ylabel(u"warp [mm]")
-plt.xlabel(u"slice")
+plt.xlabel(u"z-axis [mm]")
 
-i=4
+# DC for CT and MRI and MRI (CT COM)
 fig = plt.figure()
-#plt.ylim(ymin=.3, ymax=1)
-plt.xlim(xmin=0, xmax=length-1)
-plt.xlim(xmin=68, xmax=length-1-68)
-plt.plot(DC_CT[i,:,1])
-plt.plot(DC_MR[i,:,1])
-plt.plot(DC_MR[i,:,3])
+plt.ylim(ymin=0, ymax=1)
+plt.xlim(xmin=dist[0], xmax=dist[-1])
+plt.plot(dist, DC_CT[i,:,1])
+plt.plot(dist, DC_MR[i,:,1])
+plt.plot(dist, DC_MR[i,:,3])
+plt.legend(('CT', 'MR', 'MR (CT COM)'),loc=0)
 plt.ylabel(u"DC")
+plt.xlabel(u"z-axis [mm]")
 
+# warpDC
 fig = plt.figure()
-plt.ylim(ymin=0, ymax=0.21)
-plt.xlim(xmin=0, xmax=length-1)
-plt.plot(warpDC[i])
-plt.plot(warpDC_opti[i])
-plt.ylabel(u"warp*DC [mm]")
-plt.xlabel(u"slice")
+plt.ylim(ymin=0, ymax=warpDC_opti[i].max())
+plt.xlim(xmin=dist[0], xmax=dist[-1])
+plt.plot(dist, warpDC[i])
+plt.plot(dist, warpDC_opti[i])
+plt.legend(('DC', 'DC optimised'),loc=0)
+plt.ylabel(u"warpDC [mm]")
+plt.xlabel(u"z-axis [mm]")
 '''
 
-'''
 
+'''
 # http://stackoverflow.com/questions/16621351/how-to-use-python-numpy-savetxt-to-write-strings-and-float-number-to-an-ascii-fi
 now = datetime.datetime.now()
 COLUMNS  = 'sliceNo  warp_x  warp_y  warpMagnitude  DC_CT  DC_CT_opti  DC_MR  DC_MR_opti  DC_MR_CT-COM  DC_MR_opti_CT-COM  warpDC  warpDC_opti'
 #COLUMNS  = 'slice & $warp_x$  & $warp_y$  & $warp$ & $DC_{CT}$  & $DC^*_{CT}$ & $DC_{MR}$  & $DC^*_{MR}$ & $DC_{MR(CT-COM)}$ & $DC^*_{MR(CT-COM)}$ & $warpDC$ & $warpDC^*$'
 for i in range(sets):
-    DATA = np.column_stack((sliceNumbers.astype(str),
+    DATA = np.column_stack((dist.astype(str),
                             warp[i].round(4).astype(str),
                             warpMagnitude[i].round(4).astype(str),
                             DC_CT[i,:,0].round(4).astype(str),
@@ -244,11 +258,13 @@ for i in range(sets):
     DC_MR_average[i][2].round(4), DC_MR_average[i][3].round(4))
     
     head = str(now) + '\n'+ head0 + head1 + '\n' + COLUMNS
-    np.savetxt('../data/txt_output/CT-MR_x{}_{}_{}.txt'.format(vol_list[0][i].resample, 
+    np.savetxt('../data/output_txt/phantom3_out_txt/CT-MR_x{}_{}_{}.txt'.format(vol_list[0][i].resample, 
                now.date(), now.time()), DATA, delimiter="   &  ", header=head,
                comments="# ", fmt='%3s')
+'''
 
 
+'''
 # creates mask (pixel values either 0 or 1)
 for i in range(sets):
     vol_list[0][i].getMask()
