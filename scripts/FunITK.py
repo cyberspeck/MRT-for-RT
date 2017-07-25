@@ -125,16 +125,21 @@ class Volume:
                 # as parts of plastic pane (CT)
                 # and should therefore not be used to calculate COM, dice, etc.
                 self.niceSlice = np.ones((self.zSize, 1), dtype=bool)
+                self.maxBrightness = np.zeros((self.zSize, 1))
+                self.meanBrightness = np.zeros((self.zSize, 1))
                 arr = sitk.GetArrayFromImage(self.img)
                 average = np.average(arr[ref])
     #                print("\nAverage @ ref: ", average)
                 for index in range(self.zSize):
+                    # save value of brightest pixel in each slice
+                    self.maxBrightness[index] = arr[index].max()
+                    self.meanBrightness[index] = np.average(arr[index])
                     # if average value of slice differs too much -> badSlice
                     # difference between ref-Slice and current chosen arbitratry
                     # seems to be big enough not to detect air bubble in MRI
                     # entire air block (no liquid) should be recognised, though.
-                    # small enough to notice plastic pane
-                    if np.absolute(np.average(arr[index]) - average) > 40:
+                    # small enough to notice plastic pane 
+                    if np.absolute(self.meanBrightness[index] - average) > 40:
                         print("Irregularities detected in slice {}".format(index))
                         self.niceSlice[index] = False
                         # maybe also set slice prior and after current slice as

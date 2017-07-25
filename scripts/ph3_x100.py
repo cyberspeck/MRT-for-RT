@@ -1,7 +1,9 @@
+#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 """
-Created on Sun Jul 17 15:17:57 2016
-@author: david
+Created on Tue Jul 25 16:22:50 2017
+
+@author: davidblacher
 
 
 plt.clf()
@@ -33,39 +35,8 @@ import datetime
 import numpy as np
 import matplotlib.pyplot as plt
 import os
-idxSlice = 200
+idxSlice = 130
 
-'''
-old_pathCT = "../data/phantom2/CT_x1"
-old_pathMR = "../data/phantom2/MR_x1"
-old_pathCT_x4 = "../data/phantom2/CT_x4"
-old_pathMR_x4 = "../data/phantom2/MR_x4"
-old_pathCT_x9 = "../data/phantom2/CT_x9"
-old_pathMR_x9 = "../data/phantom2/MR_x9"
-old_pathCT_x25 = "../data/phantom2/CT_x25"
-old_pathMR_x25 = "../data/phantom2/MR_x25"
-old_pathCT_x100 = "../data/phantom2/CT_x100"
-old_pathMR_x100 = "../data/phantom2/MR_x100"
-# CT images not usable @173-192
-# -> iso-centre @ 182
-# --> to be symmetrical: Slices 1 - 365
-# MR images has airbubble @306
-old_CT = Volume(path=old_pathCT, method="CT", resample=1, ref=idxSlice, leave=31)
-old_CT_x4 = Volume(path=old_pathCT_x4, method="CT", resample=4, ref=idxSlice, leave=31)
-old_CT_x9 = Volume(path=old_pathCT_x9, method="CT", resample=9, ref=idxSlice, leave=31)
-old_CT_x25 = Volume(path=old_pathCT_x25, method="CT", resample=25, ref=idxSlice, leave=31)
-old_CT_x100 = Volume(path=old_pathCT_x100, method="CT", resample=100, ref=idxSlice, leave=31)
-
-old_MR = Volume(path=old_pathMR, method="MR", resample=1, ref=idxSlice, leave=31)
-old_MR_x4 = Volume(path=old_pathMR_x4, method="MR", resample=4, ref=idxSlice, leave=31)
-old_MR_x9 = Volume(path=old_pathMR_x9, method="MR", resample=9, ref=idxSlice, leave=31)
-old_MR_x25 = Volume(path=old_pathMR_x25, method="MR", resample=25, ref=idxSlice, leave=31)
-old_MR_x100 = Volume(path=old_pathMR_x100, method="MR", resample=100, ref=idxSlice, leave=31)
-vol_list = [[old_CT, old_CT_x4, old_CT_x9, old_CT_x25, old_CT_x100],[old_MR, old_MR_x4, old_MR_x9, old_MR_x25, old_MR_x100]]
-modality, sets = np.shape(vol_list)
-length = old_CT.zSize
-spacing =old_CT.zSpace
-'''
 
 # phantom3 (oil) is looked at from the front, phantom2 from behind.
 # phantom3: as slice no. increase, scan goes back (looking at phantom from the front)
@@ -74,34 +45,18 @@ spacing =old_CT.zSpace
 # to be consistend, we invert z & x axis (turn 180° seen from above) 
 # or was the phantom simply put in the MRI scanner the other way around?
 # to rotate data set just add: 'rotate=True' (e.g. with all oil-scans)
-pathCT = "../data/phantom3/oil_CT_x1"
-pathMR = "../data/phantom3/oil_MR_x1"
-pathCT_x4 = "../data/phantom3/oil_CT_x4"
-pathMR_x4 = "../data/phantom3/oil_MR_x4"
-pathCT_x9 = "../data/phantom3/oil_CT_x9"
-pathMR_x9 = "../data/phantom3/oil_MR_x9"
-pathCT_x25 = "../data/phantom3/oil_CT_x25"
-pathMR_x25 = "../data/phantom3/oil_MR_x25"
 pathCT_x100 = "../data/phantom3/oil_CT_x100"
 pathMR_x100 = "../data/phantom3/oil_MR_x100"
 # MR images much darker until slice 119 because of air bubble
 
-CT = Volume(path=pathCT, method="CT", resample=1, ref=idxSlice)
-CT_x4 = Volume(path=pathCT_x4, method="CT", resample=4, ref=idxSlice)
-CT_x9 = Volume(path=pathCT_x9, method="CT", resample=9, ref=idxSlice)
-CT_x25 = Volume(path=pathCT_x25, method="CT", resample=25, ref=idxSlice)
 CT_x100 = Volume(path=pathCT_x100, method="CT", resample=100, ref=idxSlice)
-
-MR = Volume(path=pathMR, method="MR", resample=1, ref=idxSlice)
-MR_x4 = Volume(path=pathMR_x4, method="MR", resample=4, ref=idxSlice)
-MR_x9 = Volume(path=pathMR_x9, method="MR", resample=9, ref=idxSlice)
-MR_x25 = Volume(path=pathMR_x25, method="MR", resample=25, ref=idxSlice)
 MR_x100 = Volume(path=pathMR_x100, method="MR", resample=100, ref=idxSlice)
+iso = 361
 
-vol_list = [[CT, CT_x4, CT_x9, CT_x25, CT_x100],[MR, MR_x4, MR_x9, MR_x25, MR_x100]]
+vol_list = [[CT_x100],[MR_x100]]
 modality, sets = np.shape(vol_list)
-length = CT.zSize
-spacing = CT.zSpace
+length = CT_x100.zSize
+spacing = CT_x100.zSpace
 
 # both data sets look as if the distortion is bigger in the back,
 # maybe not good calibrated? external factors?
@@ -109,11 +64,9 @@ spacing = CT.zSpace
 # whereas 
 
 
-
-
 sliceNumbers = np.arange(length, dtype=int)
 # for data centered around iso-centre, this is real x-axis:
-dist = ( (sliceNumbers - int(length/2))*spacing ).round(2)
+dist = ( (sliceNumbers - iso ) ).round(2)
 warp = np.zeros((sets, length, 2))
 warpMagnitude = np.zeros((sets, length, 1))
     
@@ -175,12 +128,37 @@ for i in range(sets):
     DC_MR_average[i] = aa,bb,cc,dd
 
 '''
+# brightness
+fig = plt.figure()
+#plt.ylim(ymin=-2.1, ymax=.5)
+plt.xlim(xmin=dist[0], xmax=dist[-1])
+plt.plot(dist, MR_x100.meanBrightness)
+plt.plot(dist, MR_x100.maxBrightness)
+plt.legend(('mean', 'max'),loc=0)
+plt.ylabel(u"pixel value")
+plt.xlabel(u"z-axis [mm]")
+#plt.title('Economic Cost over Time')
+#plt.show()
+
+
+# nice-heit
+fig = plt.figure()
+plt.ylim(ymin=-.1, ymax=1.1)
+plt.xlim(xmin=dist[0], xmax=dist[-1])
+plt.plot(dist, CT_x100.niceSlice)
+plt.plot(dist, MR_x100.niceSlice)
+plt.ylabel(u"nice?")
+plt.xlabel(u"z-axis [mm]")
+#plt.title('Economic Cost over Time')
+#plt.show()
+
+
 # x and y warp
 fig = plt.figure()
 #plt.ylim(ymin=-2.1, ymax=.5)
 plt.xlim(xmin=dist[0], xmax=dist[-1])
 plt.plot(dist, warp[i])
-plt.legend(('x-shift', 'y-shift'),loc=2)
+plt.legend(('x-shift', 'y-shift'),loc=0)
 plt.ylabel(u"warp [mm]")
 plt.xlabel(u"z-axis [mm]")
 #plt.title('Economic Cost over Time')
@@ -207,15 +185,7 @@ plt.legend(('CT', 'MR', 'MR (CT COM)'),loc=0)
 plt.ylabel(u"DC")
 plt.xlabel(u"z-axis [mm]")
 
-# warpDC
-fig = plt.figure()
-plt.ylim(ymin=0, ymax=warpDC_opti[i].max())
-plt.xlim(xmin=dist[0], xmax=dist[-1])
-plt.plot(dist, warpDC[i])
-plt.plot(dist, warpDC_opti[i])
-plt.legend(('DC', 'DC optimised'),loc=0)
-plt.ylabel(u"warpDC [mm]")
-plt.xlabel(u"z-axis [mm]")
+
 '''
 
 
