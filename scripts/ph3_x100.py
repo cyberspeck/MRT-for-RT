@@ -45,37 +45,36 @@ idxSlice = 130
 # to be consistend, we invert z & x axis (turn 180° seen from above) 
 # or was the phantom simply put in the MRI scanner the other way around?
 # to rotate data set just add: 'rotate=True' (e.g. with all oil-scans)
-pathCT_x100 = "../data/phantom3/oil_CT_x100"
-pathMR_x100 = "../data/phantom3/oil_MR_x100"
-# MR images much darker until slice 119 because of air bubble
 
-CT_x100 = Volume(path=pathCT_x100, method="CT", resample=100, ref=idxSlice)
-MR_x100 = Volume(path=pathMR_x100, method="MR", resample=100, ref=idxSlice)
-iso = 361
+ph3_CT_x100 = Volume(path="../data/phantom3/ph3_CT_x100", method="CT", resample=100, ref=idxSlice)
+ph3_MR_v1_x100 = Volume(path="../data/phantom3/ph3_MR_v1_x100", method="MR", resample=100, ref=idxSlice)
+ph3_MR_v2_x100 = Volume(path="../data/phantom3/ph3_MR_v2_x100", method="MR", resample=100, ref=idxSlice)
 
-vol_list = [[CT_x100],[MR_x100]]
+
+vol_list = [[ph3_CT_x100,ph3_CT_x100],[ph3_MR_v1_x100,ph3_MR_v2_x100]]
 modality, sets = np.shape(vol_list)
-length = CT_x100.zSize
-spacing = CT_x100.zSpace
 
-# both data sets look as if the distortion is bigger in the back,
-# maybe not good calibrated? external factors?
-# However, DC seems to be better in the back than in the front in oil scann,
-# whereas 
+MR_warp = np.zeros((sets, length, 2))
+MR_warpMagnitude = np.zeros((sets, length, 1))    
 
 
+iso = 361
+length = ph3_CT_x100.zSize
+spacing = ph3_CT_x100.zSpace
 sliceNumbers = np.arange(length, dtype=int)
 # for data centered around iso-centre, this is real x-axis:
 dist = ( (sliceNumbers - iso ) ).round(2)
+
+
 warp = np.zeros((sets, length, 2))
-warpMagnitude = np.zeros((sets, length, 1))
-    
+warpMagnitude = np.zeros((sets, length, 1))  
 # 2 DC for CT, 4 DC for MR (2 using MR.centroid, 2 using CT.centroid!)
 DC_CT = np.zeros((sets, length, 2))
 DC_CT_average = np.zeros((sets, 2))
 DC_MR = np.zeros((sets, length, 4))
 DC_MR_average = np.zeros((sets, 4))
 iterate = 51
+
 
 for i in range(sets):
     vol_list[0][i].getCentroid()
@@ -128,6 +127,7 @@ for i in range(sets):
     DC_MR_average[i] = aa,bb,cc,dd
 
 '''
+
 # brightness
 fig = plt.figure()
 #plt.ylim(ymin=-2.1, ymax=.5)
@@ -157,11 +157,26 @@ plt.xlabel(u"z-axis [mm]")
 fig = plt.figure()
 #plt.ylim(ymin=-2.1, ymax=.5)
 plt.xlim(xmin=dist[0], xmax=dist[-1])
-plt.plot(dist, warp[i])
+plt.plot(dist, warp[0])
+plt.legend(('x-shift (v1)', 'y-shift (v1)'),loc=0)
+#plt.plot(dist, warp[1])
+#plt.legend(('x-shift (v2)', 'y-shift (v2)'),loc=0)
+#plt.legend(('x-shift (v1)', 'y-shift (v1)','x-shift (v2)', 'y-shift (v2)'),loc=0)
+plt.ylabel(u"warp [mm]")
+plt.xlabel(u"z-axis [mm]")
+plt.title('x & y warp (CT-MRI)')
+#plt.show()
+
+
+# x and y warp (MRI only)
+fig = plt.figure()
+#plt.ylim(ymin=-2.1, ymax=.5)
+plt.xlim(xmin=dist[0], xmax=dist[-1])
+plt.plot(dist, ph3_MR_v1_x100.centroid-ph3_MR_v2_x100.centroid)
 plt.legend(('x-shift', 'y-shift'),loc=0)
 plt.ylabel(u"warp [mm]")
 plt.xlabel(u"z-axis [mm]")
-#plt.title('Economic Cost over Time')
+plt.title('MRI shift v1-v2')
 #plt.show()
 
 
@@ -169,8 +184,9 @@ plt.xlabel(u"z-axis [mm]")
 fig = plt.figure()
 plt.ylim(ymin=0, ymax=warpMagnitude[i].max())
 plt.xlim(xmin=dist[0], xmax=dist[-1])
-plt.plot(dist, warpMagnitude[i])
-#plt.legend(('warpMagnitude'),loc=0)
+plt.plot(dist, warpMagnitude[0])
+plt.plot(dist, warpMagnitude[1])
+plt.legend(('warpMagnitude (v1)','warpMagnitude (v2)'),loc=0)
 plt.ylabel(u"warp [mm]")
 plt.xlabel(u"z-axis [mm]")
 
@@ -178,10 +194,11 @@ plt.xlabel(u"z-axis [mm]")
 fig = plt.figure()
 plt.ylim(ymin=0, ymax=1)
 plt.xlim(xmin=dist[0], xmax=dist[-1])
-plt.plot(dist, DC_CT[i,:,1])
-plt.plot(dist, DC_MR[i,:,1])
-plt.plot(dist, DC_MR[i,:,3])
-plt.legend(('CT', 'MR', 'MR (CT COM)'),loc=0)
+plt.plot(dist, DC_CT[0,:,1])
+plt.plot(dist, DC_MR[0,:,1])
+plt.plot(dist, DC_MR[0,:,3])
+plt.plot(dist, DC_MR[1,:,3])
+plt.legend(('CT', 'MR', 'MR (CT COM)', 'MR (CT COM, v2)'),loc=0)
 plt.ylabel(u"DC")
 plt.xlabel(u"z-axis [mm]")
 
@@ -219,9 +236,10 @@ for i in range(sets):
     DC_MR_average[i][2].round(4), DC_MR_average[i][3].round(4))
     
     head = str(now) + '\n'+ head0 + head1 + '\n' + COLUMNS
-    np.savetxt('../data/output_txt/phantom2_out_txt/CT-MR_x{}_{}_{}.txt'.format(vol_list[0][i].resample, 
+    np.savetxt('../data/output_txt/phantom3_out_txt/CT-MR_v{}_x{}_{}_{}.txt'.format(i+1,vol_list[0][i].resample, 
                now.date(), now.time()), DATA, delimiter="   &  ", header=head,
                comments="# ", fmt='%3s')
+    print(i)
 '''
 
 
