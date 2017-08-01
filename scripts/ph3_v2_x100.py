@@ -47,16 +47,11 @@ idxSlice = 130
 # to rotate data set just add: 'rotate=True' (e.g. with all oil-scans)
 
 ph3_CT_x100 = Volume(path="../data/phantom3/ph3_CT_x100", method="CT", resample=100, ref=idxSlice)
-ph3_MR_v1_x100 = Volume(path="../data/phantom3/ph3_MR_v1_x100", method="MR", resample=100, ref=idxSlice)
 ph3_MR_v2_x100 = Volume(path="../data/phantom3/ph3_MR_v2_x100", method="MR", resample=100, ref=idxSlice)
 
 
-vol_list = [[ph3_CT_x100,ph3_CT_x100],[ph3_MR_v1_x100,ph3_MR_v2_x100]]
+vol_list = [[ph3_CT_x100],[ph3_MR_v2_x100]]
 modality, sets = np.shape(vol_list)
-
-MR_warp = np.zeros((sets, length, 2))
-MR_warpMagnitude = np.zeros((sets, length, 1))    
-
 
 iso = 361
 length = ph3_CT_x100.zSize
@@ -132,8 +127,8 @@ for i in range(sets):
 fig = plt.figure()
 #plt.ylim(ymin=-2.1, ymax=.5)
 plt.xlim(xmin=dist[0], xmax=dist[-1])
-plt.plot(dist, MR_x100.meanBrightness)
-plt.plot(dist, MR_x100.maxBrightness)
+plt.plot(dist, ph3_MR_v2_x100.meanBrightness)
+plt.plot(dist, ph3_MR_v2_x100.maxBrightness)
 plt.legend(('mean', 'max'),loc=0)
 plt.ylabel(u"pixel value")
 plt.xlabel(u"z-axis [mm]")
@@ -145,8 +140,8 @@ plt.xlabel(u"z-axis [mm]")
 fig = plt.figure()
 plt.ylim(ymin=-.1, ymax=1.1)
 plt.xlim(xmin=dist[0], xmax=dist[-1])
-plt.plot(dist, CT_x100.niceSlice)
-plt.plot(dist, MR_x100.niceSlice)
+plt.plot(dist, ph3_CT_x100.niceSlice)
+plt.plot(dist, ph3_MR_v2_x100.niceSlice)
 plt.ylabel(u"nice?")
 plt.xlabel(u"z-axis [mm]")
 #plt.title('Economic Cost over Time')
@@ -158,25 +153,10 @@ fig = plt.figure()
 #plt.ylim(ymin=-2.1, ymax=.5)
 plt.xlim(xmin=dist[0], xmax=dist[-1])
 plt.plot(dist, warp[0])
-plt.legend(('x-shift (v1)', 'y-shift (v1)'),loc=0)
-#plt.plot(dist, warp[1])
-#plt.legend(('x-shift (v2)', 'y-shift (v2)'),loc=0)
-#plt.legend(('x-shift (v1)', 'y-shift (v1)','x-shift (v2)', 'y-shift (v2)'),loc=0)
-plt.ylabel(u"warp [mm]")
-plt.xlabel(u"z-axis [mm]")
-plt.title('x & y warp (CT-MRI)')
-#plt.show()
-
-
-# x and y warp (MRI only)
-fig = plt.figure()
-#plt.ylim(ymin=-2.1, ymax=.5)
-plt.xlim(xmin=dist[0], xmax=dist[-1])
-plt.plot(dist, ph3_MR_v1_x100.centroid-ph3_MR_v2_x100.centroid)
 plt.legend(('x-shift', 'y-shift'),loc=0)
 plt.ylabel(u"warp [mm]")
 plt.xlabel(u"z-axis [mm]")
-plt.title('MRI shift v1-v2')
+#plt.title('x & y warp (CT-MRI)')
 #plt.show()
 
 
@@ -185,8 +165,6 @@ fig = plt.figure()
 plt.ylim(ymin=0, ymax=warpMagnitude[i].max())
 plt.xlim(xmin=dist[0], xmax=dist[-1])
 plt.plot(dist, warpMagnitude[0])
-plt.plot(dist, warpMagnitude[1])
-plt.legend(('warpMagnitude (v1)','warpMagnitude (v2)'),loc=0)
 plt.ylabel(u"warp [mm]")
 plt.xlabel(u"z-axis [mm]")
 
@@ -197,8 +175,7 @@ plt.xlim(xmin=dist[0], xmax=dist[-1])
 plt.plot(dist, DC_CT[0,:,1])
 plt.plot(dist, DC_MR[0,:,1])
 plt.plot(dist, DC_MR[0,:,3])
-plt.plot(dist, DC_MR[1,:,3])
-plt.legend(('CT', 'MR', 'MR (CT COM)', 'MR (CT COM, v2)'),loc=0)
+plt.legend(('CT', 'MR', 'MR (CT COM)'),loc=0)
 plt.ylabel(u"DC")
 plt.xlabel(u"z-axis [mm]")
 
