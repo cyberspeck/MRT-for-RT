@@ -1,3 +1,4 @@
+#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 """
 Created on Sun Jul 17 15:17:57 2016
@@ -33,87 +34,31 @@ import datetime
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+
 idxSlice = 200
+ph2_CT = Volume(path="../data/phantom2/CT_x1", method="CT", resample=1, ref=idxSlice)
+ph2_CT_x4 = Volume(path="../data/phantom2/CT_x4", method="CT", resample=4, ref=idxSlice)
+ph2_CT_x9 = Volume(path="../data/phantom2/CT_x9", method="CT", resample=9, ref=idxSlice)
+ph2_CT_x25 = Volume(path="../data/phantom2/CT_x25", method="CT", resample=25, ref=idxSlice)
+ph2_CT_x100 = Volume(path="../data/phantom2/CT_x100", method="CT", resample=100, ref=idxSlice)
 
-'''
-old_pathCT = "../data/phantom2/CT_x1"
-old_pathMR = "../data/phantom2/MR_x1"
-old_pathCT_x4 = "../data/phantom2/CT_x4"
-old_pathMR_x4 = "../data/phantom2/MR_x4"
-old_pathCT_x9 = "../data/phantom2/CT_x9"
-old_pathMR_x9 = "../data/phantom2/MR_x9"
-old_pathCT_x25 = "../data/phantom2/CT_x25"
-old_pathMR_x25 = "../data/phantom2/MR_x25"
-old_pathCT_x100 = "../data/phantom2/CT_x100"
-old_pathMR_x100 = "../data/phantom2/MR_x100"
-# CT images not usable @173-192
-# -> iso-centre @ 182
-# --> to be symmetrical: Slices 1 - 365
-# MR images has airbubble @306
-old_CT = Volume(path=old_pathCT, method="CT", resample=1, ref=idxSlice, leave=31)
-old_CT_x4 = Volume(path=old_pathCT_x4, method="CT", resample=4, ref=idxSlice, leave=31)
-old_CT_x9 = Volume(path=old_pathCT_x9, method="CT", resample=9, ref=idxSlice, leave=31)
-old_CT_x25 = Volume(path=old_pathCT_x25, method="CT", resample=25, ref=idxSlice, leave=31)
-old_CT_x100 = Volume(path=old_pathCT_x100, method="CT", resample=100, ref=idxSlice, leave=31)
+ph2_MR = Volume(path="../data/phantom2/MR_x1", method="MR", resample=1, ref=idxSlice)
+ph2_MR_x4 = Volume(path="../data/phantom2/MR_x4", method="MR", resample=4, ref=idxSlice)
+ph2_MR_x9 = Volume(path="../data/phantom2/MR_x9", method="MR", resample=9, ref=idxSlice)
+ph2_MR_x25 = Volume(path="../data/phantom2/MR_x25", method="MR", resample=25, ref=idxSlice)
+ph2_MR_x100 = Volume(path="../data/phantom2/MR_x100", method="MR", resample=100, ref=idxSlice)
 
-old_MR = Volume(path=old_pathMR, method="MR", resample=1, ref=idxSlice, leave=31)
-old_MR_x4 = Volume(path=old_pathMR_x4, method="MR", resample=4, ref=idxSlice, leave=31)
-old_MR_x9 = Volume(path=old_pathMR_x9, method="MR", resample=9, ref=idxSlice, leave=31)
-old_MR_x25 = Volume(path=old_pathMR_x25, method="MR", resample=25, ref=idxSlice, leave=31)
-old_MR_x100 = Volume(path=old_pathMR_x100, method="MR", resample=100, ref=idxSlice, leave=31)
-vol_list = [[old_CT, old_CT_x4, old_CT_x9, old_CT_x25, old_CT_x100],[old_MR, old_MR_x4, old_MR_x9, old_MR_x25, old_MR_x100]]
+vol_list = [[ph2_CT, ph2_CT_x4, ph2_CT_x9, ph2_CT_x25, ph2_CT_x100],[ph2_MR, ph2_MR_x4, ph2_MR_x9, ph2_MR_x25, ph2_MR_x100]]
 modality, sets = np.shape(vol_list)
-length = old_CT.zSize
-spacing =old_CT.zSpace
-'''
 
-# phantom3 (oil) is looked at from the front, phantom2 from behind.
-# phantom3: as slice no. increase, scan goes back (looking at phantom from the front)
-# phantom2: as slice no. increase, scan comes closer (looking at phantom from the front)
-# front = where you can insert rods
-# to be consistend, we invert z & x axis (turn 180° seen from above) 
-# or was the phantom simply put in the MRI scanner the other way around?
-# to rotate data set just add: 'rotate=True' (e.g. with all oil-scans)
-pathCT = "../data/phantom3/oil_CT_x1"
-pathMR = "../data/phantom3/oil_MR_x1"
-pathCT_x4 = "../data/phantom3/oil_CT_x4"
-pathMR_x4 = "../data/phantom3/oil_MR_x4"
-pathCT_x9 = "../data/phantom3/oil_CT_x9"
-pathMR_x9 = "../data/phantom3/oil_MR_x9"
-pathCT_x25 = "../data/phantom3/oil_CT_x25"
-pathMR_x25 = "../data/phantom3/oil_MR_x25"
-pathCT_x100 = "../data/phantom3/oil_CT_x100"
-pathMR_x100 = "../data/phantom3/oil_MR_x100"
-# MR images much darker until slice 119 because of air bubble
-
-CT = Volume(path=pathCT, method="CT", resample=1, ref=idxSlice)
-CT_x4 = Volume(path=pathCT_x4, method="CT", resample=4, ref=idxSlice)
-CT_x9 = Volume(path=pathCT_x9, method="CT", resample=9, ref=idxSlice)
-CT_x25 = Volume(path=pathCT_x25, method="CT", resample=25, ref=idxSlice)
-CT_x100 = Volume(path=pathCT_x100, method="CT", resample=100, ref=idxSlice)
-
-MR = Volume(path=pathMR, method="MR", resample=1, ref=idxSlice)
-MR_x4 = Volume(path=pathMR_x4, method="MR", resample=4, ref=idxSlice)
-MR_x9 = Volume(path=pathMR_x9, method="MR", resample=9, ref=idxSlice)
-MR_x25 = Volume(path=pathMR_x25, method="MR", resample=25, ref=idxSlice)
-MR_x100 = Volume(path=pathMR_x100, method="MR", resample=100, ref=idxSlice)
-
-vol_list = [[CT, CT_x4, CT_x9, CT_x25, CT_x100],[MR, MR_x4, MR_x9, MR_x25, MR_x100]]
-modality, sets = np.shape(vol_list)
-length = CT.zSize
-spacing = CT.zSpace
-
-# both data sets look as if the distortion is bigger in the back,
-# maybe not good calibrated? external factors?
-# However, DC seems to be better in the back than in the front in oil scann,
-# whereas 
-
-
-
-
+length = ph2_CT.zSize
+spacing = ph2_CT.zSpace
 sliceNumbers = np.arange(length, dtype=int)
+
 # for data centered around iso-centre, this is real x-axis:
-dist = ( (sliceNumbers - int(length/2))*spacing ).round(2)
+iso = 183
+dist = ( (sliceNumbers - iso ) ).round(2)
+
 warp = np.zeros((sets, length, 2))
 warpMagnitude = np.zeros((sets, length, 1))
     

@@ -54,16 +54,17 @@ ph3_MR_v2_x100 = Volume(path="../data/phantom3/ph3_MR_v2_x100", method="MR", res
 vol_list = [[ph3_CT_x100,ph3_CT_x100],[ph3_MR_v1_x100,ph3_MR_v2_x100]]
 modality, sets = np.shape(vol_list)
 
-iso = 361
 length = ph3_CT_x100.zSize
 spacing = ph3_CT_x100.zSpace
+sliceNumbers = np.arange(length, dtype=int)
+
+# for data centered around iso-centre, this is real x-axis:
+iso = 361
+dist = ( (sliceNumbers - iso ) ).round(2)
+
 MR_warp = np.zeros((sets, length, 2))
 MR_warpMagnitude = np.zeros((sets, length, 1))    
 
-
-sliceNumbers = np.arange(length, dtype=int)
-# for data centered around iso-centre, this is real x-axis:
-dist = ( (sliceNumbers - iso ) ).round(2)
 
 
 warp = np.zeros((sets, length, 2))

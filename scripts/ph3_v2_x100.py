@@ -35,17 +35,8 @@ import datetime
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+
 idxSlice = 130
-
-
-# phantom3 (oil) is looked at from the front, phantom2 from behind.
-# phantom3: as slice no. increase, scan goes back (looking at phantom from the front)
-# phantom2: as slice no. increase, scan comes closer (looking at phantom from the front)
-# front = where you can insert rods
-# to be consistend, we invert z & x axis (turn 180° seen from above) 
-# or was the phantom simply put in the MRI scanner the other way around?
-# to rotate data set just add: 'rotate=True' (e.g. with all oil-scans)
-
 ph3_CT_x100 = Volume(path="../data/phantom3/ph3_CT_x100", method="CT", resample=100, ref=idxSlice)
 ph3_MR_v2_x100 = Volume(path="../data/phantom3/ph3_MR_v2_x100", method="MR", resample=100, ref=idxSlice)
 
@@ -53,23 +44,24 @@ ph3_MR_v2_x100 = Volume(path="../data/phantom3/ph3_MR_v2_x100", method="MR", res
 vol_list = [[ph3_CT_x100],[ph3_MR_v2_x100]]
 modality, sets = np.shape(vol_list)
 
-iso = 361
 length = ph3_CT_x100.zSize
 spacing = ph3_CT_x100.zSpace
 sliceNumbers = np.arange(length, dtype=int)
+
 # for data centered around iso-centre, this is real x-axis:
+iso = 361
 dist = ( (sliceNumbers - iso ) ).round(2)
 
 
 warp = np.zeros((sets, length, 2))
-warpMagnitude = np.zeros((sets, length, 1))  
+warpMagnitude = np.zeros((sets, length, 1))
+
 # 2 DC for CT, 4 DC for MR (2 using MR.centroid, 2 using CT.centroid!)
 DC_CT = np.zeros((sets, length, 2))
 DC_CT_average = np.zeros((sets, 2))
 DC_MR = np.zeros((sets, length, 4))
 DC_MR_average = np.zeros((sets, 4))
 iterate = 51
-
 
 for i in range(sets):
     vol_list[0][i].getCentroid()
@@ -183,6 +175,7 @@ plt.xlabel(u"z-axis [mm]")
 '''
 
 
+
 '''
 # http://stackoverflow.com/questions/16621351/how-to-use-python-numpy-savetxt-to-write-strings-and-float-number-to-an-ascii-fi
 now = datetime.datetime.now()
@@ -216,7 +209,6 @@ for i in range(sets):
     np.savetxt('../data/output_txt/phantom3_out_txt/CT-MR_v{}_x{}_{}_{}.txt'.format(i+1,vol_list[0][i].resample, 
                now.date(), now.time()), DATA, delimiter="   &  ", header=head,
                comments="# ", fmt='%3s')
-    print(i)
 '''
 
 
