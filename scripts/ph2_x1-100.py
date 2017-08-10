@@ -120,6 +120,32 @@ for i in range(sets):
     DC_MR_average[i] = aa,bb,cc,dd
 
 '''
+# brightness
+fig = plt.figure()
+#plt.ylim(ymin=-2.1, ymax=.5)
+plt.xlim(xmin=dist[0], xmax=dist[-1])
+plt.plot(dist, ph2_MR_x100.meanBrightness)
+plt.plot(dist, ph2_MR_x100.maxBrightness)
+plt.legend(('mean', 'max'),loc=0)
+plt.ylabel(u"pixel value")
+plt.xlabel(u"z-axis [mm]")
+#plt.title('Economic Cost over Time')
+#plt.show()
+
+# brightness
+fig = plt.figure()
+#plt.ylim(ymin=-2.1, ymax=.5)
+plt.xlim(xmin=dist[0], xmax=dist[-1])
+plt.plot(dist, ph2_CT_x100.meanBrightness)
+plt.plot(dist, ph2_CT_x100.maxBrightness)
+plt.legend(('mean', 'max'),loc=0)
+plt.ylabel(u"pixel value")
+plt.xlabel(u"z-axis [mm]")
+#plt.title('Economic Cost over Time')
+#plt.show()
+
+
+
 # x and y warp
 fig = plt.figure()
 #plt.ylim(ymin=-2.1, ymax=.5)

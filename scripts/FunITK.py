@@ -332,7 +332,6 @@ class Volume:
             right = np.zeros(iterations)
             left[0] = 0
             right[0] = 1
-            a = 0  # counts how often new iteration has led to smaller score
             thresholdsA = np.zeros((iterations,2))
             thresholdsB = np.zeros((iterations,2))
             centroidScoreA = np.zeros(iterations)
@@ -391,37 +390,6 @@ class Volume:
                 else:
                     break
 
-                # this checks if new iterations get lower scores: 
-#                if np.array([centroidScoreA, centroidScoreB]).max() > np.array([centroidScoreA[index], centroidScoreB[index]]).max() and a==0 and index < iterations-1:
-#                    a = 1
-#                    print("\nCurrent iteration led to smaller DC than last!")
-#                elif np.array([centroidScoreA, centroidScoreB]).max() > np.array([centroidScoreA[index], centroidScoreB[index]]).max() and a==1 and index < iterations-1:
-#                    a = 2
-#                    print("\nCurrent iteration led to smaller DC than the one two steps ago!")
-#                elif np.array([centroidScoreA, centroidScoreB]).max() > np.array([centroidScoreA[index], centroidScoreB[index]]).max() and a==2 and index < iterations-1:
-#                    a = 3
-#                    print("\nCurrent iteration led to smaller DC than the one three steps ago!")
-#                elif np.array([centroidScoreA, centroidScoreB]).max() > np.array([centroidScoreA[index], centroidScoreB[index]]).max() and a==3 and index < iterations-1:
-                    # skips to last iteration, and sets guess yielding best
-                    # result so far
-#                   print("\nCurrent iteration led to smaller DC than the one four steps ago!")
-#                   print("We'll go back and choose the other half to be sure we did not make a wrong turn.")
-#                   if direction[index-3] == -1:
-#                       left[index+1] = guess[index-3]
-#                       right[index+1] = right[index-3]
-#                       guess[index+1] = (left[index+1] + right[index+1]) / 2
-#                       direction[index] = 0
-#                        a = 0
-#                    elif direction[index-3] == +1:
-#                        right[index+1] = guess[index-3]
-#                        left[index+1] = left[index-3]
-#                        guess[index+1] = (left[index+1] + right[index+1]) / 2
-#                        direction[index] = 0
-#                        a = 0
-#                    else:
-#                        print("\n\nIteration found region yielding acceptable result.")
-#                        break
-
                 print("--------------------------")
                 print("next guess (#{}): ~{:.4f}% \n\n\n\n".format(index+1, guess[index+1]*100))
 
@@ -479,7 +447,7 @@ class Volume:
             self.centroid = self.xSpace * sitk_centroid(self.img, ref=self.ref,
                                                         threshold=threshold)
 
-        for index in range(self.zSize):
+        for index in range(self.zSize):	
             if not self.niceSlice[index]:
                 self.centroid[index] = -1, -1
             if self.centroid[index,0] < 0 or self.centroid[index,1] < 0 :
@@ -665,8 +633,8 @@ class Volume:
 #                plt.ylim(ymin=0.6, ymax=1)
 #                plt.xlim(xmin=(low-.1), xmax=(up+.1))
                 plt.plot(radii*self.xSpace, DCs, '+-')
-#                if save is not False:
-#                    fig.savefig(str(save) + ".png")
+                if save is not False:
+                    fig.savefig(str(save) + ".png")
 
             self.dice = sitk_dice_circle(img=mask, centroid=com, show=show,
                                          extent=extent, radius=radii[DCs.argmax()])

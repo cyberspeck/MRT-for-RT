@@ -82,7 +82,7 @@ for i in range(sets):
     a = vol_list[0][i].getDice()
     aa = vol_list[0][i].diceAverage
     b = vol_list[0][i].getDice(centroid=vol_list[0][i].centroid, iterations=iterate,
-                               # plot=True,
+                               plot=True,
                                # save='{}_x{}-{}iter'.format(vol_list[1][i].method, vol_list[1][i].resample, iterate)
                                )
     bb = vol_list[0][i].diceAverage
@@ -105,7 +105,7 @@ for i in range(sets):
     a = vol_list[1][i].getDice()
     aa = vol_list[1][i].diceAverage
     b = vol_list[1][i].getDice(centroid=vol_list[1][i].centroid, iterations=iterate,
-                               # plot=True,
+                               plot=True, MR_guess=(1.8,3.8),
                                # save='{}_x{}-{}iter'.format(vol_list[1][i].method, vol_list[1][i].resample, iterate)
                                )
     bb = vol_list[1][i].diceAverage
@@ -127,6 +127,17 @@ plt.xlabel(u"z-axis [mm]")
 #plt.title('Economic Cost over Time')
 #plt.show()
 
+# brightness
+fig = plt.figure()
+#plt.ylim(ymin=-2.1, ymax=.5)
+plt.xlim(xmin=dist[0], xmax=dist[-1])
+plt.plot(dist, ph3_CT_x100.meanBrightness)
+plt.plot(dist, ph3_CT_x100.maxBrightness)
+plt.legend(('mean', 'max'),loc=0)
+plt.ylabel(u"pixel value")
+plt.xlabel(u"z-axis [mm]")
+#plt.title('Economic Cost over Time')
+#plt.show()
 
 # nice-heit
 fig = plt.figure()
@@ -139,7 +150,6 @@ plt.xlabel(u"z-axis [mm]")
 #plt.title('Economic Cost over Time')
 #plt.show()
 
-
 # x and y warp
 fig = plt.figure()
 #plt.ylim(ymin=-2.1, ymax=.5)
@@ -150,7 +160,6 @@ plt.ylabel(u"warp [mm]")
 plt.xlabel(u"z-axis [mm]")
 #plt.title('x & y warp (CT-MRI)')
 #plt.show()
-
 
 # warpMagnitude
 fig = plt.figure()
