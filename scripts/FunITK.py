@@ -312,7 +312,7 @@ class Volume:
             print("Please use percentLimit or threshold! (default setting: threshold = 'auto')")
             return None
 
-        if (percentLimit == "auto" and percentLimit is False) or (percentLimit == "auto" and percentLimit == 'default'):
+        if (percentLimit == "auto" and threshold is False) or (percentLimit == "auto" and threshold == 'default'):
             # EXPERIMENTAL!!!
             # looks at whole range of possible percentLimits
             # reduces range by finding out which half yields higher result
