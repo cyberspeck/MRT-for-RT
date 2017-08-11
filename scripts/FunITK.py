@@ -275,9 +275,9 @@ class Volume:
         arr = sitk.GetArrayFromImage(self.img)
         self.upper = np.double(arr.max())
 
-        hist, bins = np.histogram(arr[self.ref, :, :].ravel(), bins=100)
+    #    hist, bins = np.histogram(arr[self.ref, :, :].ravel(), bins=100)
     # alternatively, increase number of bins for images with many pixels
-    #   hist, bins = np.histogram(arr[self.ref, :, :].ravel(), bins=int(pn*2))
+        hist, bins = np.histogram(arr[self.ref, :, :].ravel(), bins=int(pn*2))
         self.lower = np.double(bins[np.argmax((np.cumsum(hist[::-1]) < pn)[::-1])])
         print("number of pixels (pn): {}\n lower: {}\n upper: {}".format(pn, self.lower, self.upper))
 
@@ -354,7 +354,8 @@ class Volume:
                                                               ref=self.ref,
                                                               threshold=arr.min()+1)
                 diceA[index] = self.getDice(centroidsA[index], maskA)
-                centroidScoreA[index] = np.average(diceA[index,diceA[index]>-1])
+ #               centroidScoreA[index] = np.average(diceA[index,diceA[index]>-1])
+                centroidScoreA[index] = np.average(diceA[index])
 
 
                 print("\nB @ ~{:.4f}%".format((guess[index]+right[index])/2*100))
@@ -370,7 +371,8 @@ class Volume:
                                                               ref=self.ref,
                                                               threshold=arr.min()+1)
                 diceB[index] = self.getDice(centroidsB[index], maskB)
-                centroidScoreB[index] = np.average(diceB[index,diceB[index]>-1])
+ #               centroidScoreB[index] = np.average(diceB[index,diceB[index]>-1])
+                centroidScoreB[index] = np.average(diceB[index])
 
 
                 if centroidScoreA[index] < centroidScoreB[index] and index < iterations-1:
@@ -625,7 +627,8 @@ class Volume:
             for index, r in enumerate(radii, start=0):
                 dice = sitk_dice_circle(img=mask, centroid=com, radius=r,
                                         show=showAll, extent=extent)
-                DCs[index] = np.average(dice[dice>-1])
+#                DCs[index] = np.average(dice[dice>-1])
+                DCs[index] = np.average(dice)
                 
 
             if plot == True: 
@@ -641,7 +644,8 @@ class Volume:
             self.bestRadius = radii[DCs.argmax()]*self.xSpace
             print("max dice-coefficient obtained for {} when compared to circle with radius = {}".format(self.method, self.bestRadius))
 
-        self.diceAverage = np.average(self.dice[self.dice>-1])
+#        self.diceAverage = np.average(self.dice[self.dice>-1])
+        self.diceAverage = np.average(self.dice)
         print("dice-coefficient average for the whole volume is: {:.4f}".format(self.diceAverage))
         return self.dice
 
@@ -708,11 +712,9 @@ def sitk_centroid(img, ref=False, percentLimit=False, threshold=False):
         ref = int(z/2)
 
     if threshold is False:
-        hist, bins = np.histogram(arr[ref, :, :].ravel(),
-                                  density=True, bins=100)
-     # alternatively, increase number of bins for images with many pixels
-     # hist, bins = np.histogram(arr[ref, :, :].ravel(),
-     #                           density=True, bins=int(pn*2))
+#        hist, bins = np.histogram(arr[ref, :, :].ravel(), density=True, bins=100)
+     #  alternatively, increase number of bins for images with many pixels
+        hist, bins = np.histogram(arr[ref, :, :].ravel(), density=True, bins=int(y*x))
         threshold = bins[np.concatenate((np.array([0]), np.cumsum(hist))) *
                          (bins[1] - bins[0]) > percentLimit][0]
 

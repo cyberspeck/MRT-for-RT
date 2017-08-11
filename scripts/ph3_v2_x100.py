@@ -215,7 +215,7 @@ for i in range(sets):
     DC_MR_average[i][2].round(4), DC_MR_average[i][3].round(4))
     
     head = str(now) + '\n'+ head0 + head1 + '\n' + COLUMNS
-    np.savetxt('../data/output_txt/phantom3_out_txt/CT-MR_v{}_x{}_{}_{}.txt'.format(i+1,vol_list[0][i].resample, 
+    np.savetxt('../data/output_txt/phantom3_out_txt/CT-MR_v2_x{}_{}_{}.txt'.format(vol_list[0][i].resample, 
                now.date(), now.time()), DATA, delimiter="   &  ", header=head,
                comments="# ", fmt='%3s')
 '''
