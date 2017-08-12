@@ -284,7 +284,7 @@ class Volume:
         return (self.lower, self.upper)
 
     def getCentroid(self, threshold='default', pixelNumber=0, scale=1,
-                    percentLimit=False, iterations=5,
+                    percentLimit=False, iterations=5, top = 1,
                     plot=False, save=False):
         '''
         Calculates centroid, either by setting threshold or percentLimit
@@ -325,13 +325,13 @@ class Volume:
 
             print("\n\n")
             arr = sitk.GetArrayFromImage(self.img)
-            guess = np.zeros(iterations)
-            guess[0] = 0.5
             direction = np.zeros(iterations)
             left = np.zeros(iterations)
             right = np.zeros(iterations)
             left[0] = 0
-            right[0] = 1
+            right[0] = top
+            guess = np.zeros(iterations)
+            guess[0] = (left[0]+right[0])/2
             thresholdsA = np.zeros((iterations,2))
             thresholdsB = np.zeros((iterations,2))
             centroidScoreA = np.zeros(iterations)
@@ -353,9 +353,13 @@ class Volume:
                 centroidsA[index] = self.xSpace*sitk_centroid(maskedA,
                                                               ref=self.ref,
                                                               threshold=arr.min()+1)
-                diceA[index] = self.getDice(centroidsA[index], maskA)
- #               centroidScoreA[index] = np.average(diceA[index,diceA[index]>-1])
-                centroidScoreA[index] = np.average(diceA[index])
+                diceA[index] = self.getDice(centroidsA[index], maskA, iterations=10)
+                # all irregular Slices result in DC of -1:
+                diceA[index][np.where(self.niceSlice==False)] = -1
+                # for the final DC score it will look only at the niceSlices:
+                centroidScoreA[index] = np.average(diceA[index, self.niceSlice==True])
+#                centroidScoreA[index] = np.average(diceA[index,diceA[index]>-1])
+#                centroidScoreA[index] = np.average(diceA[index])
 
 
                 print("\nB @ ~{:.4f}%".format((guess[index]+right[index])/2*100))
@@ -370,9 +374,13 @@ class Volume:
                 centroidsB[index] = self.xSpace*sitk_centroid(maskedB,
                                                               ref=self.ref,
                                                               threshold=arr.min()+1)
-                diceB[index] = self.getDice(centroidsB[index], maskB)
- #               centroidScoreB[index] = np.average(diceB[index,diceB[index]>-1])
-                centroidScoreB[index] = np.average(diceB[index])
+                diceB[index] = self.getDice(centroidsB[index], maskB, iterations=10)
+                # all irregular Slices result in DC of -1:
+                diceB[index][np.where(self.niceSlice==False)] = -1
+                # for the final DC score it will look only at the niceSlices:
+                centroidScoreB[index] = np.average(diceB[index, self.niceSlice==True])
+#                centroidScoreB[index] = np.average(diceB[index,diceB[index]>-1])
+#                centroidScoreB[index] = np.average(diceB[index])
 
 
                 if centroidScoreA[index] < centroidScoreB[index] and index < iterations-1:
@@ -453,7 +461,7 @@ class Volume:
             if not self.niceSlice[index]:
                 self.centroid[index] = -1, -1
             if self.centroid[index,0] < 0 or self.centroid[index,1] < 0 :
-                self.centroid[index] = -1
+                self.centroid[index] = -1, -1
         print("\n\n")
         return self.centroid
 
@@ -550,7 +558,7 @@ class Volume:
                   interpolation=interpolation, save=save)
 
     def getDice(self, centroid=None, mask=None, iterations=0,
-                CT_guess=(3.5,4.5), MR_guess=(1.8,2.8),
+                CT_guess=(3.5,4.5), MR_guess=(3,4.4),
                 show=False, showAll=False, plot=False, save=False, pixel=False):
         '''
         Calculates dice coefficient ('DC') and average DC of the volume
@@ -627,8 +635,9 @@ class Volume:
             for index, r in enumerate(radii, start=0):
                 dice = sitk_dice_circle(img=mask, centroid=com, radius=r,
                                         show=showAll, extent=extent)
+#                DCs[index] = np.average(dice)
 #                DCs[index] = np.average(dice[dice>-1])
-                DCs[index] = np.average(dice)
+                DCs[index] = np.average(dice[self.niceSlice==True])
                 
 
             if plot == True: 

@@ -66,6 +66,8 @@ iterate = 51
 for i in range(sets):
     vol_list[0][i].getCentroid()
     vol_list[1][i].getCentroid()
+#    vol_list[0][i].getCentroid(percentLimit='auto', plot=True, iterations=5, top=0.10)
+#    vol_list[1][i].getCentroid(percentLimit='auto', plot=True, iterations=5, top=0.10)
     # this calculates the coordinate difference of MR.centroid relative to CT.centroid
     warp[i] = fun.sitk_coordShift(vol_list[0][i].centroid, vol_list[1][i].centroid)
     # this calculates the norm (=absolute distance) between the centroids in each slice
@@ -82,8 +84,8 @@ for i in range(sets):
     a = vol_list[0][i].getDice()
     aa = vol_list[0][i].diceAverage
     b = vol_list[0][i].getDice(centroid=vol_list[0][i].centroid, iterations=iterate,
-                               plot=True,
-                               # save='{}_x{}-{}iter'.format(vol_list[1][i].method, vol_list[1][i].resample, iterate)
+                               #plot=True,
+                               #save='{}_x{}-{}iter'.format(vol_list[1][i].method, vol_list[1][i].resample, iterate)
                                )
     bb = vol_list[0][i].diceAverage
     DC_CT[i] = np.column_stack((a,b))
@@ -105,7 +107,7 @@ for i in range(sets):
     a = vol_list[1][i].getDice()
     aa = vol_list[1][i].diceAverage
     b = vol_list[1][i].getDice(centroid=vol_list[1][i].centroid, iterations=iterate,
-                               plot=True, MR_guess=(1.8,3.8),
+                               #plot=True, MR_guess=(1.8,3.8),
                                # save='{}_x{}-{}iter'.format(vol_list[1][i].method, vol_list[1][i].resample, iterate)
                                )
     bb = vol_list[1][i].diceAverage
@@ -185,7 +187,7 @@ plt.xlabel(u"z-axis [mm]")
 
 
 
-'''
+
 # http://stackoverflow.com/questions/16621351/how-to-use-python-numpy-savetxt-to-write-strings-and-float-number-to-an-ascii-fi
 now = datetime.datetime.now()
 
@@ -205,20 +207,20 @@ for i in range(sets):
  #   text = np.row_stack((NAMES, DATA))
     head0 = "{}_x{}\n path: {}\n thresholds: {}, {}\n DC-average: {} (radius = 4)\n DC-average (opti): {} (bestRadius: {})\n".format(vol_list[0][i].method,
     vol_list[0][i].resample, vol_list[0][i].path, vol_list[0][i].lower,
-    vol_list[0][i].upper, DC_CT_average[i][0].round(4),
-    DC_CT_average[i][1].round(4), vol_list[0][i].bestRadius)
+    vol_list[0][i].upper, DC_CT_average[i][0],
+    DC_CT_average[i][1], vol_list[0][i].bestRadius)
     
     head1 = "{}_x{}\n path: {}\n thresholds: {}, {}\n DC-average: {} (radius = 2)\n DC-average (opti): {} (bestRadius: {})\n DC-average (CT-COM): {}\n DC-average (CT-COM, opti): {}\n".format(vol_list[1][i].method,
     vol_list[1][i].resample, vol_list[1][i].path, vol_list[1][i].lower,
     vol_list[1][i].upper, DC_MR_average[i][0].round(4),
-    DC_MR_average[i][1].round(4), vol_list[1][i].bestRadius,
-    DC_MR_average[i][2].round(4), DC_MR_average[i][3].round(4))
+    DC_MR_average[i][1], vol_list[1][i].bestRadius,
+    DC_MR_average[i][2], DC_MR_average[i][3])
     
     head = str(now) + '\n'+ head0 + head1 + '\n' + COLUMNS
     np.savetxt('../data/output_txt/phantom3_out_txt/CT-MR_v2_x{}_{}_{}.txt'.format(vol_list[0][i].resample, 
                now.date(), now.time()), DATA, delimiter="   &  ", header=head,
                comments="# ", fmt='%3s')
-'''
+
 
 
 '''
