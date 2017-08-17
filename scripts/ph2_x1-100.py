@@ -59,65 +59,84 @@ sliceNumbers = np.arange(length, dtype=int)
 iso = 183
 dist = ( (sliceNumbers - iso ) ).round(2)
 
-warp = np.zeros((sets, length, 2))
-warpMagnitude = np.zeros((sets, length, 1))
-    
-# 2 DC for CT, 4 DC for MR (2 using MR.centroid, 2 using CT.centroid!)
+
+warp_simple = np.zeros((sets, length, 2))
+warp_iter = np.zeros((sets, length, 2))
+warpMagnitude_simple = np.zeros((sets, length, 1))
+warpMagnitude_iter = np.zeros((sets, length, 1))
+lows_CT = np.zeros((sets, 2))
+radii_CT = np.zeros((sets, 2))
+lows_MR = np.zeros((sets, 4))
+radii_MR = np.zeros((sets, 4))
+
+# 2 DC for CT, 3 DC for MR (2 using MR.centroid, 1 using CT.centroid!)
 DC_CT = np.zeros((sets, length, 2))
 DC_CT_average = np.zeros((sets, 2))
 DC_MR = np.zeros((sets, length, 4))
 DC_MR_average = np.zeros((sets, 4))
-iterate = 51
 
-for i in range(sets):
+#fig = plt.figure()
+#plt.ylim(ymin=0.2, ymax=1)
+##plt.xlim(xmin=(3.5-.1), xmax=(5.5+.1))
+#plt.xlim(xmin=(1.5-.1), xmax=(4.5+.1))
+#plt.ylabel(u"DC")
+#plt.xlabel(u"radius [mm]")
+
+for i in range(sets): 
     vol_list[0][i].getCentroid()
+    CT_DC_simple = vol_list[0][i].getDice(plot=True)
+    CT_DC_simple_average = vol_list[0][i].diceAverage
+    CT_lower_simple = vol_list[0][i].lower
+    CT_radius_simple = vol_list[0][i].bestRadius
+    
     vol_list[1][i].getCentroid()
+    MR_DC_simple = vol_list[1][i].getDice(plot=True)
+    MR_DC_simple_average = vol_list[1][i].diceAverage
+    MR_lower_simple = vol_list[1][i].lower
+    MR_radius_simple = vol_list[1][i].bestRadius
+    MR_DC_simple_CT_COM = vol_list[1][i].getDice(centroid=vol_list[0][i].centroid, plot=True)
+    MR_DC_simple_CT_COM_average = vol_list[1][i].diceAverage
+    MR_lower_simple_CT_COM = vol_list[1][i].lower
+    MR_radius_simple_CT_COM = vol_list[1][i].bestRadius
     # this calculates the coordinate difference of MR.centroid relative to CT.centroid
-    warp[i] = fun.sitk_coordShift(vol_list[0][i].centroid, vol_list[1][i].centroid)
+    warp_simple[i] = fun.sitk_coordShift(vol_list[0][i].centroid, vol_list[1][i].centroid)
     # this calculates the norm (=absolute distance) between the centroids in each slice
-    warpMagnitude[i] = fun.sitk_coordDist(warp[i])
-    
-    
-
-#fig = plt.figure()
-#plt.ylim(ymin=0.8, ymax=1)
-#plt.xlim(xmin=(3.5-.1), xmax=(4.5+.1))
-#calculates DC for CT
-for i in range(sets):
-    vol_list[0][i].getCentroid()
-    a = vol_list[0][i].getDice()
-    aa = vol_list[0][i].diceAverage
-    b = vol_list[0][i].getDice(centroid=vol_list[0][i].centroid, iterations=iterate,
-                               # plot=True,
-                               # save='{}_x{}-{}iter'.format(vol_list[1][i].method, vol_list[1][i].resample, iterate)
-                               )
-    bb = vol_list[0][i].diceAverage
-    DC_CT[i] = np.column_stack((a,b))
-    DC_CT_average[i] = aa,bb
+    warpMagnitude_simple[i] = fun.sitk_coordDist(warp_simple[i])
     
 
-#fig = plt.figure()
-#plt.ylim(ymin=0.5, ymax=.95)
-#plt.xlim(xmin=(1.8-.1), xmax=(2.8+.1))
-#calculates DC for MR, using first CT COM, then its own COM
-#this way self.bestRadius is still set to the radius yielding the best DC
-#independently of the CT COM
-for i in range(sets):
-    vol_list[1][i].getCentroid()
-    c = vol_list[1][i].getDice(centroid=vol_list[0][i].centroid)
-    cc = vol_list[1][i].diceAverage
-    d = vol_list[1][i].getDice(centroid=vol_list[0][i].centroid, iterations=iterate)
-    dd = vol_list[1][i].diceAverage
-    a = vol_list[1][i].getDice()
-    aa = vol_list[1][i].diceAverage
-    b = vol_list[1][i].getDice(centroid=vol_list[1][i].centroid, iterations=iterate,
-                               # plot=True,
-                               # save='{}_x{}-{}iter'.format(vol_list[1][i].method, vol_list[1][i].resample, iterate)
-                               )
-    bb = vol_list[1][i].diceAverage
+    vol_list[0][i].getCentroid(percentLimit='auto', plot=True, iterations=6, top=0.20)
+    CT_DC_iter = vol_list[0][i].dice
+    CT_DC_iter_average = vol_list[0][i].diceAverage
+    CT_lower_iter = vol_list[0][i].lower
+    CT_radius_iter = vol_list[0][i].bestRadius
+    
+    vol_list[1][i].getCentroid(percentLimit='auto', plot=True, iterations=6, top=0.20)
+    MR_DC_iter = vol_list[1][i].dice
+    MR_DC_iter_average = vol_list[1][i].diceAverage
+    MR_lower_iter = vol_list[1][i].lower
+    MR_radius_iter = vol_list[1][i].bestRadius
+    MR_DC_iter_CT_COM = vol_list[1][i].getDice(centroid=vol_list[0][i].centroid)
+    MR_DC_iter_CT_COM_average = vol_list[1][i].diceAverage
+    MR_lower_iter_CT_COM = vol_list[1][i].lower
+    MR_radius_iter_CT_COM = vol_list[1][i].bestRadius
+    
+    # this calculates the coordinate difference of MR.centroid relative to CT.centroid
+    warp_iter[i] = fun.sitk_coordShift(vol_list[0][i].centroid, vol_list[1][i].centroid)
+    # this calculates the norm (=absolute distance) between the centroids in each slice
+    warpMagnitude_iter[i] = fun.sitk_coordDist(warp_iter[i])
+    
+    
+    DC_CT[i] = np.column_stack((CT_DC_simple,CT_DC_iter))
+    DC_CT_average[i] = CT_DC_simple_average,CT_DC_iter_average
+    
+    DC_MR[i] = np.column_stack((MR_DC_simple, MR_DC_iter, MR_DC_simple_CT_COM, MR_DC_iter_CT_COM))
+    DC_MR_average[i] = MR_DC_simple_average, MR_DC_iter_average, MR_DC_simple_CT_COM_average, MR_DC_iter_CT_COM_average
+    lows_CT[i] = CT_lower_simple, CT_lower_iter
+    lows_MR[i] = MR_lower_simple, MR_lower_iter, MR_lower_simple_CT_COM, MR_lower_iter_CT_COM
+    radii_CT[i] = CT_radius_simple, CT_radius_iter
+    radii_MR[i] = MR_radius_simple, MR_radius_iter, MR_radius_simple_CT_COM, MR_radius_iter_CT_COM
 
-    DC_MR[i] = np.column_stack((a,b,c,d))
-    DC_MR_average[i] = aa,bb,cc,dd
+#plt.legend(('x1','x4','x9','x16','x100'), loc='upper right')
 
 '''
 # brightness
@@ -149,25 +168,45 @@ plt.xlabel(u"z-axis [mm]")
 # x and y warp
 fig = plt.figure()
 #plt.ylim(ymin=-2.1, ymax=.5)
+plt.ylim(ymin=warp_simple[i].min()-0.1, ymax=warp_simple[i].max()+0.1)
 plt.xlim(xmin=dist[0], xmax=dist[-1])
-plt.plot(dist, warp[i])
-plt.legend(('x-shift', 'y-shift'),loc=2)
+plt.plot(dist, warp_simple[i])
+plt.legend(('x-shift', 'y-shift'),loc=3)
 plt.ylabel(u"warp [mm]")
 plt.xlabel(u"z-axis [mm]")
 #plt.title('Economic Cost over Time')
 #plt.show()
 
 
-# warpMagnitude
+# warpMagnitude simple
 fig = plt.figure()
-plt.ylim(ymin=0, ymax=warpMagnitude[i].max())
+plt.ylim(ymin=warpMagnitude_simple[i].min()-0.1, ymax=warpMagnitude_simple[i].max()+0.1)
 plt.xlim(xmin=dist[0], xmax=dist[-1])
-plt.plot(dist, warpMagnitude[i])
+plt.plot(dist, warpMagnitude_simple[i])
 #plt.legend(('warpMagnitude'),loc=0)
-plt.ylabel(u"warp [mm]")
+plt.ylabel(u"warpMagnitude [mm]")
+plt.xlabel(u"z-axis [mm]")
+# warpMagnitude iter
+fig = plt.figure()
+plt.ylim(ymin=-1.1, ymax=warpMagnitude_iter[i].max()+0.1)
+plt.xlim(xmin=dist[0], xmax=dist[-1])
+plt.plot(dist, warpMagnitude_iter[i])
+#plt.legend(('warpMagnitude'),loc=0)
+plt.ylabel(u"warpMagnitude [mm]")
 plt.xlabel(u"z-axis [mm]")
 
-# DC for CT and MRI and MRI (CT COM)
+
+# DC for CT and MRI and MRI (CT COM) simple
+fig = plt.figure()
+plt.ylim(ymin=0, ymax=1)
+plt.xlim(xmin=dist[0], xmax=dist[-1])
+plt.plot(dist, DC_CT[i,:,0])
+plt.plot(dist, DC_MR[i,:,0])
+plt.plot(dist, DC_MR[i,:,2])
+plt.legend(('CT', 'MR', 'MR (CT COM)'),loc=0)
+plt.ylabel(u"DC")
+plt.xlabel(u"z-axis [mm]")
+# DC for CT and MRI and MRI (CT COM) iter
 fig = plt.figure()
 plt.ylim(ymin=0, ymax=1)
 plt.xlim(xmin=dist[0], xmax=dist[-1])
@@ -178,15 +217,6 @@ plt.legend(('CT', 'MR', 'MR (CT COM)'),loc=0)
 plt.ylabel(u"DC")
 plt.xlabel(u"z-axis [mm]")
 
-# warpDC
-fig = plt.figure()
-plt.ylim(ymin=0, ymax=warpDC_opti[i].max())
-plt.xlim(xmin=dist[0], xmax=dist[-1])
-plt.plot(dist, warpDC[i])
-plt.plot(dist, warpDC_opti[i])
-plt.legend(('DC', 'DC optimised'),loc=0)
-plt.ylabel(u"warpDC [mm]")
-plt.xlabel(u"z-axis [mm]")
 '''
 
 
@@ -194,35 +224,39 @@ plt.xlabel(u"z-axis [mm]")
 # http://stackoverflow.com/questions/16621351/how-to-use-python-numpy-savetxt-to-write-strings-and-float-number-to-an-ascii-fi
 now = datetime.datetime.now()
 
-COLUMNS  = 'sliceNo dist warp_x  warp_y  warpMagnitude  DC_CT  DC_CT_opti  DC_MR  DC_MR_opti  DC_MR_CT-COM  DC_MR_opti_CT-COM'
-#COLUMNS  = 'sliceNo & dist & $warp_x$  & $warp_y$  & $warp$ & $DC_{CT}$  & $DC^*_{CT}$ & $DC_{MR}$  & $DC^*_{MR}$ & $DC_{MR(CT-COM)}$ & $DC^*_{MR(CT-COM)}$'
+COLUMNS  = 'sliceNo dist warp_x  warp_y  warpMagnitude  DC_CT  DC_MR  DC_MR_CT-COM  warp_x*  warp_y*  warpMagnitude*   DC_CT*  DC_MR*  DC_MR_CT-COM*'
 for i in range(sets):
     DATA = np.column_stack((sliceNumbers.astype(str),
                             dist.astype(str),
-                            warp[i].round(4).astype(str),
-                            warpMagnitude[i].round(4).astype(str),
+                            
+                            warp_simple[i].round(4).astype(str),
+                            warpMagnitude_simple[i].round(4).astype(str),
                             DC_CT[i,:,0].round(4).astype(str),
-                            DC_CT[i,:,1].round(4).astype(str),
                             DC_MR[i,:,0].round(4).astype(str),
-                            DC_MR[i,:,1].round(4).astype(str),
                             DC_MR[i,:,2].round(4).astype(str),
+                            
+                            warp_iter[i].round(4).astype(str),
+                            warpMagnitude_iter[i].round(4).astype(str),
+                            DC_CT[i,:,1].round(4).astype(str),
+                            DC_MR[i,:,1].round(4).astype(str),
                             DC_MR[i,:,3].round(4).astype(str)))
  #   text = np.row_stack((NAMES, DATA))
-    head0 = "{}_x{}\n path: {}\n thresholds: {}, {}\n DC-average: {} (radius = 4)\n DC-average (opti): {} (bestRadius: {})\n".format(vol_list[0][i].method,
-    vol_list[0][i].resample, vol_list[0][i].path, vol_list[0][i].lower,
-    vol_list[0][i].upper, DC_CT_average[i][0],
-    DC_CT_average[i][1], vol_list[0][i].bestRadius)
+    head0 = "{}_x{}\n path: {}\n thresholds:\n lower (simple): {},\n lower (iter): {}\n upper: {}\n DC-average (simple): {} (bestRadius: {})\n DC-average (iter): {} (bestRadius: {})\n".format(vol_list[0][i].method,
+    vol_list[0][i].resample, vol_list[0][i].path,
+    lows_CT[i][0], lows_CT[i][1], vol_list[0][i].upper,
+    DC_CT_average[i][0], radii_CT[i][0], DC_CT_average[i][1], radii_CT[i][1])
     
-    head1 = "{}_x{}\n path: {}\n thresholds: {}, {}\n DC-average: {} (radius = 2)\n DC-average (opti): {} (bestRadius: {})\n DC-average (CT-COM): {}\n DC-average (CT-COM, opti): {}\n".format(vol_list[1][i].method,
-    vol_list[1][i].resample, vol_list[1][i].path, vol_list[1][i].lower,
-    vol_list[1][i].upper, DC_MR_average[i][0].round(4),
-    DC_MR_average[i][1], vol_list[1][i].bestRadius,
-    DC_MR_average[i][2], DC_MR_average[i][3])
+    head1 = "{}_x{}\n path: {}\n thresholds:\n lower (simple): {},\n lower (iter): {}\n lower (simple_CT-COM): {}\n lower (iter_CT-COM): {}\n upper: {}\n DC-average (simple): {} (bestRadius: {})\n DC-average (iter): {} (bestRadius: {})\n DC-average (CT-COM, simple): {} (bestRadius: {})\n DC-average (CT-COM, iter): {} (bestRadius: {})".format(vol_list[1][i].method,
+    vol_list[1][i].resample, vol_list[1][i].path,
+    lows_MR[i][0], lows_MR[i][1], lows_MR[i][2], lows_MR[i][3], vol_list[1][i].upper,
+    DC_MR_average[i][0], radii_MR[i][0], DC_MR_average[i][1], radii_MR[i][1],
+    DC_MR_average[i][2], radii_MR[i][2], DC_MR_average[i][3], radii_MR[i][3])
     
     head = str(now) + '\n'+ head0 + head1 + '\n' + COLUMNS
     np.savetxt('../data/output_txt/phantom2_out_txt/CT-MR_x{}_{}_{}.txt'.format(vol_list[0][i].resample, 
                now.date(), now.time()), DATA, delimiter="   &  ", header=head,
                comments="# ", fmt='%3s')
+
 
 
 
