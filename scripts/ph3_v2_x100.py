@@ -40,7 +40,7 @@ idxSlice = 130
 ph3_CT_x100 = Volume(path="../data/phantom3/ph3_CT_x100", method="CT", resample=100, ref=idxSlice)
 ph3_MR_v2_x100 = Volume(path="../data/phantom3/ph3_MR_v2_x100", method="MR", resample=100, ref=idxSlice)
 
-
+zz
 vol_list = [[ph3_CT_x100],[ph3_MR_v2_x100]]
 modality, sets = np.shape(vol_list)
 

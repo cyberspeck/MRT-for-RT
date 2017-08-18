@@ -343,13 +343,17 @@ class Volume:
             for index in range(iterations):
                 print("    ITERATION #{}, current guess: ~{:.4f}\nA @ ~{:.4f}%".format(index, guess[index]*100, (guess[index]+left[index])/2*100))
                 thresholdsA[index] = self.getThresholds(pixelNumber=self.xSize*self.ySize*(guess[index]+left[index])/2)
+                # create mask including all pixels relevant for guess
                 maskA = sitk.ConnectedThreshold(image1=self.img,
                                                 seedList=self.seeds,
                                                 lower=self.lower,
                                                 upper=self.upper,
                                                 replaceValue=1)
+                # shift values so that they're all positive and apply mask
                 maskedA2 = sitk_applyMask(self.img - arr.min(), maskA)
+                # now shift values back, this results in all masked pixels to be assigned the minimum value
                 maskedA = maskedA2 + arr.min()
+                # use all pixels above minimum value for centroid:
                 centroidsA[index] = self.xSpace*sitk_centroid(maskedA,
                                                               ref=self.ref,
                                                               threshold=arr.min()+1)
@@ -466,7 +470,7 @@ class Volume:
         return self.centroid
 
 
-    def showCentroid(self, com2=0, title=None, pixel=False,
+    def showCentroid(self, img=None, com2=0, title=None, pixel=False,
                      interpolation='nearest', ref=None, save=False):
         
         if self.centroid is False:
@@ -477,14 +481,16 @@ class Volume:
             title = self.title
         if ref is None:
             ref = self.ref
+        if img is None:
+            img = self.img
 
         if pixel is False:
             extent = (-self.xSpace/2, self.xSize*self.xSpace - self.xSpace/2, self.ySize*self.ySpace - self.ySpace/2, -self.ySpace/2)
-            sitk_centroid_show(img=self.img, com=self.centroid, com2=com2,
+            sitk_centroid_show(img=img, com=self.centroid, com2=com2,
                           extent=extent, save=save, title=title,
                           interpolation=interpolation, ref=ref)
         else:
-            sitk_centroid_show(img=self.img, com=self.centroid/self.xSpace,
+            sitk_centroid_show(img=img, com=self.centroid/self.xSpace,
                           com2=com2/self.xSpace, save=save, title=title,
                           interpolation=interpolation, ref=ref)
 
@@ -752,7 +758,7 @@ def sitk_centroid_show(img, com, com2=0, extent=None, title=None,
         if title:
             plt.title(title + ", centroid")
         x = y = 0
-        plt.imshow(arr[ref, :, :], extent=extent, interpolation=interpolation)
+        plt.imshow(arr[ref], extent=extent, interpolation=interpolation)
         if type(com2) == np.ndarray:
             x = [com[ref,0],com2[ref,0]]
             y = [com[ref,1],com2[ref,1]]
@@ -877,13 +883,13 @@ def sitk_dice_circle(img, centroid, radius=2.1, show=False, extent=None,
     """
 
     xSize, ySize, zSize = img.GetSize()
+    xSpace, ySpace, zSpace = img.GetSpacing()
     profile = np.zeros((zSize, ySize, xSize), dtype=np.uint8)
-    centres = centroid.astype(int)    
     DC = np.zeros((zSize, 1))
     for slice in range(zSize):
-        if centres[slice,0]+radius < xSize and centres[slice, 1]+radius < ySize and centres[slice,0]-radius > 0 and centres[slice, 1]-radius > 0:
+        if centroid[slice,0]+radius < xSize and centroid[slice, 1]+radius < ySize and centroid[slice,0]-radius > 0 and centroid[slice, 1]-radius > 0:
 
-            rr, cc = circle(centres[slice, 0], centres[slice, 1], radius, (xSize,ySize))
+            rr, cc = circle(centroid[slice, 0], centroid[slice, 1], radius, (xSize,ySize))
             profile[slice, cc, rr] = 1
         else:
             # print("something's fishy!")
@@ -910,8 +916,9 @@ def sitk_dice_circle(img, centroid, radius=2.1, show=False, extent=None,
             DC[slice] = -1
 
     if show != False:
-        sitk_centroid_show(profile, centroid, com2=centres, extent=extent,
-                           title="profile, radius: {}".format(radius),
+        profile_img = sitk.GetImageFromArray(profile)
+        sitk_centroid_show(profile_img, centroid*xSpace, extent=extent,
+                           title="profile, radius: {:03.2f}".format(radius*xSpace),
                            ref=show, save=save)
 
     return DC
