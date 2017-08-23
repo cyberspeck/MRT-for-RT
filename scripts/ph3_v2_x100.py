@@ -37,15 +37,15 @@ import matplotlib.pyplot as plt
 import os
 
 idxSlice = 130
-ph3_CT_x100 = Volume(path="../data/phantom3/ph3_CT_x100", method="CT", resample=100, ref=idxSlice)
-ph3_MR_v2_x100 = Volume(path="../data/phantom3/ph3_MR_v2_x100", method="MR", resample=100, ref=idxSlice)
+ph3_CT_x100 = Volume(path="../data/phantom3_MR_v2/ph3_CT_x100", method="CT", resample=100, ref=idxSlice)
+ph3_MR_v2_x100 = Volume(path="../data/phantom3_MR_v2/ph3_MR_v2_x100", method="MR", resample=100, ref=idxSlice)
 
-zz
+
 vol_list = [[ph3_CT_x100],[ph3_MR_v2_x100]]
 modality, sets = np.shape(vol_list)
 
 length = ph3_CT_x100.zSize
-spacing = ph3_CT_x100.zSpace
+lspacing = ph3_CT_x100.zSpace
 sliceNumbers = np.arange(length, dtype=int)
 
 # for data centered around iso-centre, this is real x-axis:
@@ -90,13 +90,13 @@ for i in range(sets):
     warpMagnitude_simple[i] = fun.sitk_coordDist(warp_simple[i])
     
 
-    vol_list[0][i].getCentroid(percentLimit='auto', plot=True, iterations=5, top=0.10)
+    vol_list[0][i].getCentroid(percentLimit='auto', plot=True, iterations=5, top=0.20)
     CT_DC_iter = vol_list[0][i].dice
     CT_DC_iter_average = vol_list[0][i].diceAverage
     CT_lower_iter = vol_list[0][i].lower
     CT_radius_iter = vol_list[0][i].bestRadius
     
-    vol_list[1][i].getCentroid(percentLimit='auto', plot=True, iterations=5, top=0.10)
+    vol_list[1][i].getCentroid(percentLimit='auto', plot=True, iterations=5, top=0.20)
     MR_DC_iter = vol_list[1][i].dice
     MR_DC_iter_average = vol_list[1][i].diceAverage
     MR_lower_iter = vol_list[1][i].lower
@@ -298,24 +298,33 @@ for i in range(sets):
 
 
 
-'''
-
 
 
 # creates mask (pixel values either 0 or 1)
 for i in range(sets):
-    vol_list[0][i].getMask()
+#    vol_list[0][i].getMask()
 # creates CT.masked using CT.mask,
 # but assigns each slice the centroid distance*1000*spacing as pixel value
-    vol_list[0][i].applyMask(replaceArray=warpMagnitude[i])
+    vol_list[0][i].applyMask(replaceArray=warpMagnitude_simple[i])
 # exports 3D image as .mha file
-    fun.sitk_write(vol_list[0][i].masked, "../data_final_export_-1/", "{}_x{}_warpMagnitude.mha".format(vol_list[0][i].method, vol_list[0][i].resample))
+    fun.sitk_write(vol_list[0][i].masked, "../data/output_img/ph3_MR_v2_out_img/mha_files", "{}_x{}_warpMagnitude_simple.mha".format(vol_list[0][i].method, vol_list[0][i].resample))
     
-    vol_list[0][i].applyMask(replaceArray=DC_MR[i,:,1])
-    fun.sitk_write(vol_list[0][i].masked, "../data_final_export_-1/", "{}_x{}_DC-MR-opti.mha".format(vol_list[0][i].method, vol_list[0][i].resample))
+    vol_list[0][i].applyMask(replaceArray=warpMagnitude_iter[i])
+# exports 3D image as .mha file
+    fun.sitk_write(vol_list[0][i].masked, "../data/output_img/ph3_MR_v2_out_img/mha_files", "{}_x{}_warpMagnitude_iter.mha".format(vol_list[0][i].method, vol_list[0][i].resample))
     
-    vol_list[0][i].applyMask(replaceArray=DC_MR[i,:,3])
-    fun.sitk_write(vol_list[0][i].masked, "../data_final_export_-1/", "{}_x{}_DC-MR-opti_CT-COM.mha".format(vol_list[0][i].method, vol_list[0][i].resample))
+    vol_list[1][i].applyMask(replaceArray=DC_MR[i,:,0])
+    fun.sitk_write(vol_list[1][i].masked, "../data/output_img/ph3_MR_v2_out_img/mha_files", "{}_x{}_DC_MR_simple.mha".format(vol_list[1][i].method, vol_list[0][i].resample))
+    
+    vol_list[1][i].applyMask(replaceArray=DC_MR[i,:,2])
+    fun.sitk_write(vol_list[1][i].masked, "../data/output_img/ph3_MR_v2_out_img/mha_files", "{}_x{}_DC_MR_CT-COM_simple.mha".format(vol_list[1][i].method, vol_list[0][i].resample))
+
+
+    vol_list[1][i].applyMask(replaceArray=DC_MR[i,:,1])
+    fun.sitk_write(vol_list[1][i].masked, "../data/output_img/ph3_MR_v2_out_img/mha_files", "{}_x{}_DC_MR_iter.mha".format(vol_list[1][i].method, vol_list[0][i].resample))
+    
+    vol_list[1][i].applyMask(replaceArray=DC_MR[i,:,3])
+    fun.sitk_write(vol_list[1][i].masked, "../data/output_img/ph3_MR_v2_out_img/mha_files", "{}_x{}_DC_MR_CT-COM_iter.mha".format(vol_list[1][i].method, vol_list[0][i].resample))
 
 
 # instead of opening the created file manually, you can use this lines in
@@ -323,4 +332,3 @@ for i in range(sets):
 # %env SITK_SHOW_COMMAND /home/davidblacher/Downloads/Slicer-4.5.0-1-linux-amd64/Slicer
 # %env SITK_SHOW_COMMAND /home/david/Downloads/Slicer-4.5.0-1-linux-amd64/Slicer
 # sitk.Show(CT.masked)
-'''
