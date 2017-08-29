@@ -37,11 +37,20 @@ import matplotlib.pyplot as plt
 import os
 
 idxSlice = 130
+ph3_CT = Volume(path="../data/phantom3_MR_v2/ph3_CT_x1", method="CT", resample=1, ref=idxSlice)
+ph3_CT_x4 = Volume(path="../data/phantom3_MR_v2/ph3_CT_x4", method="CT", resample=4, ref=idxSlice)
+ph3_CT_x9 = Volume(path="../data/phantom3_MR_v2/ph3_CT_x9", method="CT", resample=9, ref=idxSlice)
+ph3_CT_x25 = Volume(path="../data/phantom3_MR_v2/ph3_CT_x25", method="CT", resample=25, ref=idxSlice)
 ph3_CT_x100 = Volume(path="../data/phantom3_MR_v2/ph3_CT_x100", method="CT", resample=100, ref=idxSlice)
+
+ph3_MR_v2 = Volume(path="../data/phantom3_MR_v2/ph3_MR_v2_x1", method="MR", resample=1, ref=idxSlice)
+ph3_MR_v2_x4 = Volume(path="../data/phantom3_MR_v2/ph3_MR_v2_x4", method="MR", resample=4, ref=idxSlice)
+ph3_MR_v2_x9 = Volume(path="../data/phantom3_MR_v2/ph3_MR_v2_x9", method="MR", resample=9, ref=idxSlice)
+ph3_MR_v2_x25 = Volume(path="../data/phantom3_MR_v2/ph3_MR_v2_x25", method="MR", resample=25, ref=idxSlice)
 ph3_MR_v2_x100 = Volume(path="../data/phantom3_MR_v2/ph3_MR_v2_x100", method="MR", resample=100, ref=idxSlice)
 
 
-vol_list = [[ph3_CT_x100],[ph3_MR_v2_x100]]
+vol_list = [[ph3_CT, ph3_CT_x4, ph3_CT_x9, ph3_CT_x25, ph3_CT_x100,],[ph3_MR_v2, ph3_MR_v2_x4, ph3_MR_v2_x9, ph3_MR_v2_x25, ph3_MR_v2_x100]]
 modality, sets = np.shape(vol_list)
 
 length = ph3_CT_x100.zSize
@@ -67,6 +76,13 @@ DC_CT = np.zeros((sets, length, 2))
 DC_CT_average = np.zeros((sets, 2))
 DC_MR = np.zeros((sets, length, 4))
 DC_MR_average = np.zeros((sets, 4))
+
+#fig = plt.figure()
+#plt.ylim(ymin=0.35, ymax=.7)
+##plt.xlim(xmin=(3.5-.1), xmax=(5.5+.1))
+#plt.xlim(xmin=(1.5-.1), xmax=(4.5+.1))
+#plt.ylabel(u"DC")
+#plt.xlabel(u"radius [mm]")
 
 for i in range(sets): 
     vol_list[0][i].getCentroid()
