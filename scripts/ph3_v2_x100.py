@@ -79,10 +79,11 @@ DC_MR_average = np.zeros((sets, 4))
 
 #fig = plt.figure()
 #plt.ylim(ymin=0.35, ymax=.7)
-##plt.xlim(xmin=(3.5-.1), xmax=(5.5+.1))
+#plt.xlim(xmin=(3.5-.1), xmax=(5.5+.1))
 #plt.xlim(xmin=(1.5-.1), xmax=(4.5+.1))
 #plt.ylabel(u"DC")
 #plt.xlabel(u"radius [mm]")
+#plt.legend(('x1', 'x4', 'x9', 'x25', 'x100'),loc=0)
 
 for i in range(sets): 
     vol_list[0][i].getCentroid()
@@ -96,6 +97,7 @@ for i in range(sets):
     MR_DC_simple_average = vol_list[1][i].diceAverage
     MR_lower_simple = vol_list[1][i].lower
     MR_radius_simple = vol_list[1][i].bestRadius
+    vol_list[1][i].getMask()
     MR_DC_simple_CT_COM = vol_list[1][i].getDice(centroid=vol_list[0][i].centroid)
     MR_DC_simple_CT_COM_average = vol_list[1][i].diceAverage
     MR_lower_simple_CT_COM = vol_list[1][i].lower
@@ -106,17 +108,18 @@ for i in range(sets):
     warpMagnitude_simple[i] = fun.sitk_coordDist(warp_simple[i])
     
 
-    vol_list[0][i].getCentroid(percentLimit='auto', plot=True, iterations=5, top=0.20)
+    vol_list[0][i].getCentroid(percentLimit='auto', iterations=5, top=0.20)
     CT_DC_iter = vol_list[0][i].dice
     CT_DC_iter_average = vol_list[0][i].diceAverage
     CT_lower_iter = vol_list[0][i].lower
     CT_radius_iter = vol_list[0][i].bestRadius
     
-    vol_list[1][i].getCentroid(percentLimit='auto', plot=True, iterations=5, top=0.20)
+    vol_list[1][i].getCentroid(percentLimit='auto', iterations=5, top=0.20)
     MR_DC_iter = vol_list[1][i].dice
     MR_DC_iter_average = vol_list[1][i].diceAverage
     MR_lower_iter = vol_list[1][i].lower
     MR_radius_iter = vol_list[1][i].bestRadius
+    vol_list[1][i].getMask()
     MR_DC_iter_CT_COM = vol_list[1][i].getDice(centroid=vol_list[0][i].centroid)
     MR_DC_iter_CT_COM_average = vol_list[1][i].diceAverage
     MR_lower_iter_CT_COM = vol_list[1][i].lower
@@ -265,12 +268,12 @@ plt.ylabel(u"DC")
 plt.xlabel(u"z-axis [mm]")
 # DC for CT and MRI and MRI (CT COM) iter
 fig = plt.figure()
-plt.ylim(ymin=0, ymax=1)
+plt.ylim(ymin=0.3, ymax=1)
 plt.xlim(xmin=dist[0], xmax=dist[-1])
 plt.plot(dist, DC_CT[i,:,1])
 plt.plot(dist, DC_MR[i,:,1])
 plt.plot(dist, DC_MR[i,:,3])
-plt.legend(('CT', 'MR', 'MR (CT COM)'),loc=0)
+plt.legend(('CT', 'MR', 'MR (CT COM)'),loc=4)
 plt.ylabel(u"DC")
 plt.xlabel(u"z-axis [mm]")
 

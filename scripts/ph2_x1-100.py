@@ -49,10 +49,11 @@ ph2_MR_x25 = Volume(path="../data/phantom2/MR_x25", method="MR", resample=25, re
 ph2_MR_x100 = Volume(path="../data/phantom2/MR_x100", method="MR", resample=100, ref=idxSlice)
 
 vol_list = [[ph2_CT, ph2_CT_x4, ph2_CT_x9, ph2_CT_x25, ph2_CT_x100],[ph2_MR, ph2_MR_x4, ph2_MR_x9, ph2_MR_x25, ph2_MR_x100]]
+#vol_list = [[ph2_CT_x100],[ph2_MR_x100]]
 modality, sets = np.shape(vol_list)
 
-length = ph2_CT.zSize
-spacing = ph2_CT.zSpace
+length = ph2_CT_x100.zSize
+spacing = ph2_CT_x100.zSpace
 sliceNumbers = np.arange(length, dtype=int)
 
 # for data centered around iso-centre, this is real x-axis:
@@ -94,6 +95,7 @@ for i in range(sets):
     MR_DC_simple_average = vol_list[1][i].diceAverage
     MR_lower_simple = vol_list[1][i].lower
     MR_radius_simple = vol_list[1][i].bestRadius
+    vol_list[1][i].getMask()
     MR_DC_simple_CT_COM = vol_list[1][i].getDice(centroid=vol_list[0][i].centroid)
     MR_DC_simple_CT_COM_average = vol_list[1][i].diceAverage
     MR_lower_simple_CT_COM = vol_list[1][i].lower
@@ -104,17 +106,18 @@ for i in range(sets):
     warpMagnitude_simple[i] = fun.sitk_coordDist(warp_simple[i])
     
 
-    vol_list[0][i].getCentroid(percentLimit='auto', plot=True, iterations=6, top=0.20)
+    vol_list[0][i].getCentroid(percentLimit='auto', iterations=6, top=0.20)
     CT_DC_iter = vol_list[0][i].dice
     CT_DC_iter_average = vol_list[0][i].diceAverage
     CT_lower_iter = vol_list[0][i].lower
     CT_radius_iter = vol_list[0][i].bestRadius
     
-    vol_list[1][i].getCentroid(percentLimit='auto', plot=True, iterations=6, top=0.20)
+    vol_list[1][i].getCentroid(percentLimit='auto', iterations=6, top=0.20)
     MR_DC_iter = vol_list[1][i].dice
     MR_DC_iter_average = vol_list[1][i].diceAverage
     MR_lower_iter = vol_list[1][i].lower
     MR_radius_iter = vol_list[1][i].bestRadius
+    vol_list[1][i].getMask()
     MR_DC_iter_CT_COM = vol_list[1][i].getDice(centroid=vol_list[0][i].centroid)
     MR_DC_iter_CT_COM_average = vol_list[1][i].diceAverage
     MR_lower_iter_CT_COM = vol_list[1][i].lower
@@ -188,27 +191,19 @@ plt.ylabel(u"warpMagnitude [mm]")
 plt.xlabel(u"z-axis [mm]")
 # warpMagnitude iter
 fig = plt.figure()
-plt.ylim(ymin=-1.1, ymax=warpMagnitude_iter[i].max()+0.1)
+plt.ylim(ymin=-1.1, ymax=warpMagnitude_iter[0].max()+0.1)
 plt.xlim(xmin=dist[0], xmax=dist[-1])
-plt.plot(dist, warpMagnitude_iter[i])
-#plt.legend(('warpMagnitude'),loc=0)
+plt.plot(dist, warpMagnitude_iter[0],'r')
+plt.plot(dist, warpMagnitude_iter[4],'b')
+plt.legend(('x1','x100'),loc=4)
 plt.ylabel(u"warpMagnitude [mm]")
 plt.xlabel(u"z-axis [mm]")
 
 
-# DC for CT and MRI and MRI (CT COM) simple
-fig = plt.figure()
-plt.ylim(ymin=0, ymax=1)
-plt.xlim(xmin=dist[0], xmax=dist[-1])
-plt.plot(dist, DC_CT[i,:,0])
-plt.plot(dist, DC_MR[i,:,0])
-plt.plot(dist, DC_MR[i,:,2])
-plt.legend(('CT', 'MR', 'MR (CT COM)'),loc=0)
-plt.ylabel(u"DC")
-plt.xlabel(u"z-axis [mm]")
+
 # DC for CT and MRI and MRI (CT COM) iter
 fig = plt.figure()
-plt.ylim(ymin=0, ymax=1)
+plt.ylim(ymin=0.5, ymax=1.005)
 plt.xlim(xmin=dist[0], xmax=dist[-1])
 plt.plot(dist, DC_CT[i,:,1])
 plt.plot(dist, DC_MR[i,:,1])
