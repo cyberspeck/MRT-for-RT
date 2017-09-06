@@ -472,6 +472,31 @@ class Volume:
 
     def showCentroid(self, img=None, com2=0, title=None, pixel=False,
                      interpolation='nearest', ref=None, save=False):
+        '''
+        shows slice with centroid coordinates
+        
+        Parameters
+        ----------
+        img: SimpleITK.img, optional
+            slice of this volume will be shown
+            default: self.img
+        com2: numpy.ndarray
+            supposed to be of same length as img
+            will also be shown in plot alongside self.centroid
+            helps creating nice plot for comparing COM-shift
+        pixel: bool, optional
+            if True, changes axis from mm to pixels
+        interpolation: "string", optional, default: 'nearest'
+            using build-in interpolation of matplotlib.pyplot.imshow
+            Acceptable values are 'none', 'nearest', 'bilinear', 'bicubic',
+            'spline16', 'spline36', 'hanning', 'hamming', 'hermite', 'kaiser',
+            'quadric', 'catrom', 'gaussian', 'bessel', 'mitchell', 'sinc',
+            'lanczos'
+        ref: int, optional
+            slice to be plotted instead of self.ref (default: 0)
+        save: string, optional
+            save plot as save + ".png"
+        '''
         
         if self.centroid is False:
             print("Volume has no centroid yet. use Volume.getCentroid() first!")
@@ -750,7 +775,7 @@ def sitk_centroid(img, ref=False, percentLimit=False, threshold=False):
     return com
 
 def sitk_centroid_show(img, com, com2=0, extent=None, title=None,
-                       save=False, interpolation='nearest', ref=1):
+                       save=False, interpolation='nearest', ref=0):
 
         arr = sitk.GetArrayFromImage(img)
         fig = plt.figure()
@@ -809,6 +834,12 @@ def sitk_coordDist(shift):
 
 
 def sitk_getMask(img, seedList, upper, lower):
+    '''
+    creates new SimpleITK.img using a SimpleITK segmentation function
+    which is made up by all pixels with values between upper and lower and
+    connected to a seed from seedList.
+    Returns binary image (SimpleITK.img)
+    '''
 
     if seedList is False:
         print("no seeds given!")
