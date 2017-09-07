@@ -1,0 +1,10 @@
+all data exported with x1, but calculated with various other resolutions
+describe in file_name:
+
+
+'x1','x4','x9','x25','x100' - what resample rate was used to calculate data
+
+'warpX', 'warpY', 'warpMagnitude' or 'MR_DC' - what value was exported into volume
+
+'simple' or 'iter' - which method was used to calculate data
+
