@@ -1,6 +1,7 @@
 all data exported with x1, but calculated with various other resolutions
 describe in file_name:
 
+'ph2' or 'ph3_v2' - which set of MR/CT scans was used
 
 'x1','x4','x9','x25','x100' - what resample rate was used to calculate data
 

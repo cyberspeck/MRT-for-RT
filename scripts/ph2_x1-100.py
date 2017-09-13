@@ -258,26 +258,35 @@ for i in range(sets):
 #    vol_list[0][i].getMask()
 # creates CT.masked using CT.mask,
 # but assigns each slice the centroid distance*1000*spacing as pixel value
-    vol_list[0][i].applyMask(replaceArray=warpMagnitude_simple[i])
+    vol_list[0][0].applyMask(replaceArray=warp_simple[i][:,0])
 # exports 3D image as .mha file
-    fun.sitk_write(vol_list[0][i].masked, "../data/output_img/ph2_out_img/mha_files", "{}_x{}_warpMagnitude_simple.mha".format(vol_list[0][i].method, vol_list[0][i].resample))
+    fun.sitk_write(vol_list[0][0].masked, "../data/output_img/ph2_out_img/mha_files", "ph2_out_x{}_warpX_simple.mha".format(vol_list[0][i].resample))
+    vol_list[0][0].applyMask(replaceArray=warp_simple[i][:,1])
+    fun.sitk_write(vol_list[0][0].masked, "../data/output_img/ph2_out_img/mha_files", "ph2_out_x{}_warpY_simple.mha".format(vol_list[0][i].resample))
+
+    vol_list[0][0].applyMask(replaceArray=warp_iter[i][:,0])
+    fun.sitk_write(vol_list[0][0].masked, "../data/output_img/ph2_out_img/mha_files", "ph2_out_x{}_warpX_iter.mha".format(vol_list[0][i].resample))
+    vol_list[0][0].applyMask(replaceArray=warp_iter[i][:,1])
+    fun.sitk_write(vol_list[0][0].masked, "../data/output_img/ph2_out_img/mha_files", "ph2_out_x{}_warpY_iter.mha".format(vol_list[0][i].resample))
+
+    vol_list[0][0].applyMask(replaceArray=warpMagnitude_simple[i])
+    fun.sitk_write(vol_list[0][0].masked, "../data/output_img/ph2_out_img/mha_files", "ph2_out_x{}_warpMagnitude_simple.mha".format(vol_list[0][i].resample))
+
+    vol_list[0][0].applyMask(replaceArray=warpMagnitude_iter[i])
+    fun.sitk_write(vol_list[0][0].masked, "../data/output_img/ph2_out_img/mha_files", "ph2_out_x{}_warpMagnitude_iter.mha".format(vol_list[0][i].resample))
     
-    vol_list[0][i].applyMask(replaceArray=warpMagnitude_iter[i])
-# exports 3D image as .mha file
-    fun.sitk_write(vol_list[0][i].masked, "../data/output_img/ph2_out_img/mha_files", "{}_x{}_warpMagnitude_iter.mha".format(vol_list[0][i].method, vol_list[0][i].resample))
+    vol_list[0][0].applyMask(replaceArray=DC_MR[i,:,0])
+    fun.sitk_write(vol_list[0][0].masked, "../data/output_img/ph2_out_img/mha_files", "ph2_out_x{}_DC_MR_simple.mha".format(vol_list[0][i].resample))
     
-    vol_list[1][i].applyMask(replaceArray=DC_MR[i,:,0])
-    fun.sitk_write(vol_list[1][i].masked, "../data/output_img/ph2_out_img/mha_files", "{}_x{}_DC_MR_simple.mha".format(vol_list[1][i].method, vol_list[0][i].resample))
-    
-    vol_list[1][i].applyMask(replaceArray=DC_MR[i,:,2])
-    fun.sitk_write(vol_list[1][i].masked, "../data/output_img/ph2_out_img/mha_files", "{}_x{}_DC_MR_CT-COM_simple.mha".format(vol_list[1][i].method, vol_list[0][i].resample))
+    vol_list[0][0].applyMask(replaceArray=DC_MR[i,:,2])
+    fun.sitk_write(vol_list[0][0].masked, "../data/output_img/ph2_out_img/mha_files", "ph2_out_x{}_DC_MR_CT-COM_simple.mha".format(vol_list[0][i].resample))
 
 
-    vol_list[1][i].applyMask(replaceArray=DC_MR[i,:,1])
-    fun.sitk_write(vol_list[1][i].masked, "../data/output_img/ph2_out_img/mha_files", "{}_x{}_DC_MR_iter.mha".format(vol_list[1][i].method, vol_list[0][i].resample))
+    vol_list[0][0].applyMask(replaceArray=DC_MR[i,:,1])
+    fun.sitk_write(vol_list[0][0].masked, "../data/output_img/ph2_out_img/mha_files", "ph2_out_x{}_DC_MR_iter.mha".format(vol_list[0][i].resample))
     
-    vol_list[1][i].applyMask(replaceArray=DC_MR[i,:,3])
-    fun.sitk_write(vol_list[1][i].masked, "../data/output_img/ph2_out_img/mha_files", "{}_x{}_DC_MR_CT-COM_iter.mha".format(vol_list[1][i].method, vol_list[0][i].resample))
+    vol_list[0][0].applyMask(replaceArray=DC_MR[i,:,3])
+    fun.sitk_write(vol_list[0][0].masked, "../data/output_img/ph2_out_img/mha_files", "ph2_out_x{}_DC_MR_CT-COM_iter.mha".format(vol_list[0][i].resample))
 
 
 
