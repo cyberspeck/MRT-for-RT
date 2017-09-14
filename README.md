@@ -5,10 +5,7 @@
 Using MRT instead of CT for radiotherapy planning would reduce dose administered to patient before actually stating the curative treatment. However, using a distorted image for therapy planing can have fatal consequences (especially for proton & ion beam therapy). Therefore making sure the obtained images depict the patients geometry accurately is crucial.
 
 The aim of the project is to develop a tool that calculates the distortion of an MRT image by comparing it to an CT Image.
-
-To better show the outcome of the developed tools "jupyter notebook" is used. For more information look here:
-http://www.svds.com/jupyter-notebook-best-practices-for-data-science/
-http://stackoverflow.com/questions/30492623/using-both-python-2-x-and-python-3-x-in-ipython-notebook
+More information here: https://github.com/cyberspeck/warp-thesis/raw/master/latex2/bachelor-thesis.pdf
 
 -------------------------
 

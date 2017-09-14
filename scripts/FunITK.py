@@ -68,7 +68,7 @@ class Volume:
     leave: int, optional
         neglects last 'leave' number of slices
     rotate: bool, optional
-        if True: mirrors x- & z-axis, effectively rotating the image by 180°
+        if True: mirrors x- & z-axis, effectively rotating the image by 180 deg
         (looked at from above), this is applied after skip&size
     '''
     def __init__(self, path=None, method=None, denoise=False, ref=None,

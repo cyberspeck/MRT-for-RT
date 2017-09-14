@@ -23,16 +23,24 @@ if no seeds given: save location of brightest pixel in each regular slice as see
 ----------------------------------
 getCentroid:
 
-executes getThresholds
- based on imaging modality, known diameter of rod, and pixel spacing,
- the script calculates how pixelNumber that is needed to form a circular area corresponding to the (undistorted) cross section area visible on one slice
- max value of ref slice is saved as upper threshold
- value of brightest pixel after ignoring the brightest pixelNumber pixels is saved as lower threshold
+simple method:
+	executes getThresholds:
+	 based on imaging modality, known diameter of rod, and pixel spacing,
+	 the script calculates how many pixels (pixelNumber) are needed to form a circular area corresponding to the (undistorted) cross section area visible on one slice
+	 max pixel value of entire Volume is saved as upper threshold
+	 value of the 'pixelNumber'th brightest pixel in reference sclice is saved as lower threshold
 
-executes sitk_centroid
- loops through all slices:
-	if current slice has no pixel above lower threshold: set centroid to (-1,-1) ERROR
-	else: use all pixels above lower threshold to calculate their centre of mass (= centroid)
+	executes sitk_centroid
+	 loops through all slices:
+		if current slice has no pixel above lower threshold: set centroid to (-1,-1) ERROR
+		else: use all pixels above lower threshold to calculate their centre of mass (= centroid)
+
+iteration method:
+	similar to simple method, but instead of using the dimensions and pixel spacing to deduce
+	a good pixelNumber/threshold, it uses a bisection iteration calculating COM and DC for various
+	percentages of pixels, the iteration finds percentages yielding increasingly higher DC
+	settles for the percentage resulting in highest average DC for the whole Volume
+	returns corresponding COM
 
 ----------------------------------
 sitk_coordShift:
