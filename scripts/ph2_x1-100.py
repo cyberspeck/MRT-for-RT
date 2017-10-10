@@ -106,7 +106,7 @@ for i in range(sets):
     warpMagnitude_simple[i] = fun.sitk_coordDist(warp_simple[i])
     
 
-    vol_list[0][i].getCentroid(percentLimit='auto', iterations=6, top=0.20)
+    vol_list[0][i].getCentroid(percentLimit='auto', iterations=5, top=0.20)
     CT_DC_iter = vol_list[0][i].dice
     CT_DC_iter_average = vol_list[0][i].diceAverage
     CT_lower_iter = vol_list[0][i].lower
@@ -166,7 +166,13 @@ plt.xlabel(u"z-axis [mm]")
 #plt.title('Economic Cost over Time')
 #plt.show()
 
-
+# COM iter
+plt.ylim(ymin=0.3, ymax=1)
+plt.ylim(ymin=0.85, ymax=1)
+plt.xlim(xmin=0, xmax=100)
+plt.xlim(xmin=0, xmax=26)
+plt.ylabel(u"average DC")
+plt.xlabel(u"used pixels [%]")
 
 # x and y warp
 fig = plt.figure()

@@ -492,7 +492,7 @@ class Volume:
                                  centroidScoreA[index], 'bo')
                     if guess[index] > 0 and centroidScoreB[index] > 0:
                         plt.plot((guess[index] + right[index]) / 2*100,
-                                 centroidScoreB[index], 'go')                
+                                 centroidScoreB[index], 'rv')                
                 plt.show()
                 if save != False:
                     fig.savefig(str(save) + ".png")

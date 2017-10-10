@@ -206,6 +206,13 @@ plt.xlabel(u"z-axis [mm]")
 #plt.title('Economic Cost over Time')
 #plt.show()
 
+# COM iter
+plt.ylim(ymin=0.3, ymax=1)
+plt.ylim(ymin=0.85, ymax=1)
+plt.xlim(xmin=0, xmax=100)
+plt.xlim(xmin=0, xmax=26)
+plt.ylabel(u"average DC")
+plt.xlabel(u"used pixels [%]")
 
 plt.plot((-35, -35), (-100, 100), 'k-')
 plt.plot((-70, -70), (-100, 100), 'k-')
