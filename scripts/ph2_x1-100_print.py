@@ -1,4 +1,3 @@
-#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 """
 Created on Sun Jul 17 15:17:57 2016
@@ -46,7 +45,6 @@ sliceNumbers = np.arange(length, dtype=int)
 # for data centered around iso-centre, this is real x-axis:
 iso = 183
 dist = ( (sliceNumbers - iso ) ).round(2)
-
 
 warp_simple = np.zeros((sets, length, 2))
 warp_iter = np.zeros((sets, length, 2))
